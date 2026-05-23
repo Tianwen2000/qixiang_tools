@@ -1,0 +1,72 @@
+[
+  {
+    "slug": "dev",
+    "name": "开发",
+    "description": "面向开发场景的格式化、编码和调试工具。",
+    "enabled": true,
+    "sort_order": 100
+  },
+  {
+    "slug": "ops",
+    "name": "测试运维",
+    "description": "收纳测试、终端、版本管理和容器运维相关的命令速查工具。",
+    "enabled": true,
+    "sort_order": 98
+  },
+  {
+    "slug": "format",
+    "name": "格式转换",
+    "description": "集中放置文档、数据、图片等格式互转入口。",
+    "enabled": true,
+    "sort_order": 95
+  },
+  {
+    "slug": "text",
+    "name": "文本",
+    "description": "对文本进行转换、对比、提取和轻量处理。",
+    "enabled": true,
+    "sort_order": 90
+  },
+  {
+    "slug": "encode",
+    "name": "编码",
+    "description": "用于 Base64、URL 等编码转换。",
+    "enabled": true,
+    "sort_order": 80
+  },
+  {
+    "slug": "image",
+    "name": "图片",
+    "description": "轻量图片上传工具，处理完成后立即清理临时文件。",
+    "enabled": true,
+    "sort_order": 70
+  },
+  {
+    "slug": "chart",
+    "name": "图表",
+    "description": "从简单图表开始，逐步扩展到更丰富的数据可视化工具。",
+    "enabled": true,
+    "sort_order": 65
+  },
+  {
+    "slug": "time",
+    "name": "时间",
+    "description": "围绕日历、倒计时、日期换算与时间查看的轻量时间工具。",
+    "enabled": true,
+    "sort_order": 63
+  },
+  {
+    "slug": "game",
+    "name": "益智游戏",
+    "description": "适合摸鱼放松和轻量挑战的本地小游戏，不走后端执行。",
+    "enabled": true,
+    "sort_order": 60
+  },
+  {
+    "slug": "other",
+    "name": "其他",
+    "description": "先放一些不便归类但很实用的本地小工具和检测工具。",
+    "enabled": true,
+    "sort_order": 58
+  }
+]

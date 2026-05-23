@@ -1,0 +1,6905 @@
+[
+  {
+    "slug": "json-format",
+    "module": "json_format",
+    "name": "JSON 格式化",
+    "category": "dev",
+    "summary": "支持修正并格式化类 JSON，也支持严格校验标准 JSON。",
+    "description": "可在“修正并格式化”和“严格校验”两种模式之间切换，适合接口调试、结构清洗和 JSON 合法性确认。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "功能",
+        "type": "radio",
+        "default": "format",
+        "options": [
+          {
+            "label": "修正并格式化",
+            "value": "format"
+          },
+          {
+            "label": "严格校验",
+            "value": "validate"
+          }
+        ]
+      },
+      {
+        "key": "indent",
+        "label": "缩进空格数",
+        "type": "select",
+        "default": 2,
+        "showWhen": {
+          "action": "format"
+        },
+        "options": [
+          {
+            "label": "2 空格",
+            "value": 2
+          },
+          {
+            "label": "4 空格",
+            "value": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "base64-codec",
+    "module": "base64_tool",
+    "name": "Base64 编码/解码",
+    "category": "encode",
+    "summary": "对文本进行 Base64 编码或解码。",
+    "description": "适合处理接口鉴权串、基础文本转码和调试场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "动作",
+        "type": "radio",
+        "default": "encode",
+        "options": [
+          {
+            "label": "编码",
+            "value": "encode"
+          },
+          {
+            "label": "解码",
+            "value": "decode"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "url-codec",
+    "module": "url_codec",
+    "name": "URL 编码/解码",
+    "category": "encode",
+    "summary": "对 URL 字符串进行 encode 或 decode。",
+    "description": "用于查询参数调试、链接转义和文本还原。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "动作",
+        "type": "radio",
+        "default": "encode",
+        "options": [
+          {
+            "label": "编码",
+            "value": "encode"
+          },
+          {
+            "label": "解码",
+            "value": "decode"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "text-dedup",
+    "module": "text_dedup",
+    "name": "文本去重",
+    "category": "text",
+    "summary": "按行去重文本内容。",
+    "description": "适合处理名单、日志片段和批量文案整理。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "keep_empty",
+        "label": "空行处理",
+        "type": "radio",
+        "default": false,
+        "options": [
+          {
+            "label": "去掉空行",
+            "value": false
+          },
+          {
+            "label": "保留空行",
+            "value": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "json-xml-converter",
+    "module": "json_xml_converter",
+    "name": "JSON/XML 互转",
+    "category": "format",
+    "summary": "JSON 与 XML 双向转换。",
+    "description": "支持 JSON 转 XML，以及 XML 转 JSON，适合接口调试和结构搬运。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "json_to_xml",
+        "options": [
+          {
+            "label": "JSON 转 XML",
+            "value": "json_to_xml"
+          },
+          {
+            "label": "XML 转 JSON",
+            "value": "xml_to_json"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "json-url-params",
+    "module": "json_url_params",
+    "name": "JSON 与 URL 参数互转",
+    "category": "format",
+    "summary": "JSON 与 QueryString 双向转换。",
+    "description": "支持 JSON 对象与 URL 查询参数互转，适合接口联调和参数排查。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "json_to_params",
+        "options": [
+          {
+            "label": "JSON 转参数",
+            "value": "json_to_params"
+          },
+          {
+            "label": "参数转 JSON",
+            "value": "params_to_json"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "uuid-generator",
+    "module": "uuid_generator",
+    "name": "UUID 生成器",
+    "category": "dev",
+    "summary": "生成 UUID v1 或 v4。",
+    "description": "可直接生成单个或多个 UUID，适合测试数据和主键占位场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "version",
+        "label": "版本",
+        "type": "radio",
+        "default": "v4",
+        "options": [
+          {
+            "label": "UUID v4",
+            "value": "v4"
+          },
+          {
+            "label": "UUID v1",
+            "value": "v1"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "生成数量",
+        "type": "select",
+        "default": 1,
+        "options": [
+          {
+            "label": "1 个",
+            "value": 1
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "10 个",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "nanoid-generator",
+    "module": "nanoid_generator",
+    "name": "Nano ID 生成器",
+    "category": "dev",
+    "summary": "生成短 ID，支持长度与字符集预设。",
+    "description": "适合邀请码、短链 Key、前端临时标识等轻量随机 ID 生成。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "length",
+        "label": "长度",
+        "type": "select",
+        "default": 21,
+        "options": [
+          {
+            "label": "8 位",
+            "value": 8
+          },
+          {
+            "label": "12 位",
+            "value": 12
+          },
+          {
+            "label": "16 位",
+            "value": 16
+          },
+          {
+            "label": "21 位",
+            "value": 21
+          },
+          {
+            "label": "32 位",
+            "value": 32
+          }
+        ]
+      },
+      {
+        "key": "alphabet",
+        "label": "字符集",
+        "type": "select",
+        "default": "default",
+        "options": [
+          {
+            "label": "默认字符集",
+            "value": "default"
+          },
+          {
+            "label": "小写字母+数字",
+            "value": "lowercase"
+          },
+          {
+            "label": "纯数字",
+            "value": "digits"
+          },
+          {
+            "label": "HEX",
+            "value": "hex"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "生成数量",
+        "type": "select",
+        "default": 1,
+        "options": [
+          {
+            "label": "1 个",
+            "value": 1
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "10 个",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "adb-command-search",
+    "module": "adb_command_search",
+    "name": "ADB 命令大全",
+    "category": "ops",
+    "summary": "直接查看常用 ADB 调试命令和用途说明。",
+    "description": "打开后即可按表格查看，也可用关键词快速筛选安装、日志、端口、activity、pull 等命令。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolCommandCatalog",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "linux-command-search",
+    "module": "linux_command_search",
+    "name": "Linux 常用命令",
+    "category": "ops",
+    "summary": "直接查看 Linux 文件、日志、进程、网络和服务命令。",
+    "description": "打开后即可按表格查看，也可用关键词快速筛选端口、日志、进程、磁盘、systemctl 等命令。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolCommandCatalog",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "git-command-search",
+    "module": "git_command_search",
+    "name": "Git 常用命令",
+    "category": "ops",
+    "summary": "直接查看 Git 分支、提交、同步和回滚命令。",
+    "description": "打开后即可按表格查看，也可用关键词快速筛选分支、撤销、rebase、stash、远端等命令。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolCommandCatalog",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "docker-command-search",
+    "module": "docker_command_search",
+    "name": "Docker 命令大全",
+    "category": "ops",
+    "summary": "直接查看 Docker 容器、镜像、日志、Compose 和清理命令。",
+    "description": "打开后即可按表格查看，也可用关键词快速筛选日志、端口、镜像、compose、清理等命令。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolCommandCatalog",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "local-ip-lookup",
+    "module": "local_ip_lookup",
+    "name": "本地ip查询",
+    "category": "ops",
+    "summary": "查询本机内网 IP、公网出口 IP，并判断是否存在分流。",
+    "description": "参考命令行 IP 对比脚本实现，由后端查询国内视角、境外视角和多个公网服务，适合检查 VPN、代理、策略路由或多出口网络。",
+    "input_mode": "form",
+    "result_type": "text",
+    "component": "ToolLocalIpLookup",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "random-password-generator",
+    "module": "random_password_generator",
+    "name": "随机密码生成器",
+    "category": "dev",
+    "summary": "生成随机密码串。",
+    "description": "支持常用长度、密码强度预设和批量生成。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "length",
+        "label": "长度",
+        "type": "select",
+        "default": 12,
+        "options": [
+          {
+            "label": "8 位",
+            "value": 8
+          },
+          {
+            "label": "12 位",
+            "value": 12
+          },
+          {
+            "label": "16 位",
+            "value": 16
+          },
+          {
+            "label": "20 位",
+            "value": 20
+          },
+          {
+            "label": "32 位",
+            "value": 32
+          }
+        ]
+      },
+      {
+        "key": "profile",
+        "label": "复杂度",
+        "type": "radio",
+        "default": "strong",
+        "options": [
+          {
+            "label": "强密码",
+            "value": "strong"
+          },
+          {
+            "label": "数字字母",
+            "value": "letters_digits"
+          },
+          {
+            "label": "纯数字",
+            "value": "digits"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "生成数量",
+        "type": "select",
+        "default": 1,
+        "options": [
+          {
+            "label": "1 个",
+            "value": 1
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "10 个",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "base-converter",
+    "module": "base_converter",
+    "name": "进制转换",
+    "category": "dev",
+    "summary": "支持 2、8、10、16、32、36 进制互转。",
+    "description": "输入一个数值后，可在常用进制之间快速转换，支持负数。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "from_base",
+        "label": "原始进制",
+        "type": "select",
+        "default": 10,
+        "options": [
+          {
+            "label": "2 进制",
+            "value": 2
+          },
+          {
+            "label": "8 进制",
+            "value": 8
+          },
+          {
+            "label": "10 进制",
+            "value": 10
+          },
+          {
+            "label": "16 进制",
+            "value": 16
+          },
+          {
+            "label": "32 进制",
+            "value": 32
+          },
+          {
+            "label": "36 进制",
+            "value": 36
+          }
+        ]
+      },
+      {
+        "key": "to_base",
+        "label": "目标进制",
+        "type": "select",
+        "default": 16,
+        "options": [
+          {
+            "label": "2 进制",
+            "value": 2
+          },
+          {
+            "label": "8 进制",
+            "value": 8
+          },
+          {
+            "label": "10 进制",
+            "value": 10
+          },
+          {
+            "label": "16 进制",
+            "value": 16
+          },
+          {
+            "label": "32 进制",
+            "value": 32
+          },
+          {
+            "label": "36 进制",
+            "value": 36
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "byte-converter",
+    "module": "byte_converter",
+    "name": "字节转换",
+    "category": "dev",
+    "summary": "支持 B、KB、MB、GB、TB 与 KiB 系列互转。",
+    "description": "输入一个容量值后，可以在常见十进制和二进制单位之间切换。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "from_unit",
+        "label": "原始单位",
+        "type": "select",
+        "default": "B",
+        "options": [
+          {
+            "label": "B",
+            "value": "B"
+          },
+          {
+            "label": "KB",
+            "value": "KB"
+          },
+          {
+            "label": "MB",
+            "value": "MB"
+          },
+          {
+            "label": "GB",
+            "value": "GB"
+          },
+          {
+            "label": "TB",
+            "value": "TB"
+          },
+          {
+            "label": "KiB",
+            "value": "KiB"
+          },
+          {
+            "label": "MiB",
+            "value": "MiB"
+          },
+          {
+            "label": "GiB",
+            "value": "GiB"
+          },
+          {
+            "label": "TiB",
+            "value": "TiB"
+          }
+        ]
+      },
+      {
+        "key": "to_unit",
+        "label": "目标单位",
+        "type": "select",
+        "default": "MB",
+        "options": [
+          {
+            "label": "B",
+            "value": "B"
+          },
+          {
+            "label": "KB",
+            "value": "KB"
+          },
+          {
+            "label": "MB",
+            "value": "MB"
+          },
+          {
+            "label": "GB",
+            "value": "GB"
+          },
+          {
+            "label": "TB",
+            "value": "TB"
+          },
+          {
+            "label": "KiB",
+            "value": "KiB"
+          },
+          {
+            "label": "MiB",
+            "value": "MiB"
+          },
+          {
+            "label": "GiB",
+            "value": "GiB"
+          },
+          {
+            "label": "TiB",
+            "value": "TiB"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "roman-numeral-converter",
+    "module": "roman_numeral_converter",
+    "name": "罗马数字转换",
+    "category": "dev",
+    "summary": "阿拉伯数字与罗马数字互转。",
+    "description": "支持常见罗马数字与阿拉伯数字之间的双向转换。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "to_roman",
+        "options": [
+          {
+            "label": "数字转罗马",
+            "value": "to_roman"
+          },
+          {
+            "label": "罗马转数字",
+            "value": "from_roman"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "random-ip-generator",
+    "module": "random_ip_generator",
+    "name": "随机 IP 地址生成器",
+    "category": "dev",
+    "summary": "随机生成 IPv4 或 IPv6 地址。",
+    "description": "适合接口测试、脱敏样例和占位数据生成。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "version",
+        "label": "地址版本",
+        "type": "radio",
+        "default": "ipv4",
+        "options": [
+          {
+            "label": "IPv4",
+            "value": "ipv4"
+          },
+          {
+            "label": "IPv6",
+            "value": "ipv6"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "生成数量",
+        "type": "select",
+        "default": 1,
+        "options": [
+          {
+            "label": "1 个",
+            "value": 1
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "10 个",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "random-mac-generator",
+    "module": "random_mac_generator",
+    "name": "随机 MAC 地址生成器",
+    "category": "dev",
+    "summary": "随机生成常见格式的 MAC 地址。",
+    "description": "支持冒号、连字符和紧凑格式，适合网络测试和模拟数据。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "format_type",
+        "label": "输出格式",
+        "type": "radio",
+        "default": "colon",
+        "options": [
+          {
+            "label": "冒号格式",
+            "value": "colon"
+          },
+          {
+            "label": "连字符格式",
+            "value": "hyphen"
+          },
+          {
+            "label": "纯字符格式",
+            "value": "plain"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "生成数量",
+        "type": "select",
+        "default": 1,
+        "options": [
+          {
+            "label": "1 个",
+            "value": 1
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "10 个",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "file-hash",
+    "module": "file_hash",
+    "name": "文件 Hash 计算",
+    "category": "dev",
+    "summary": "上传文件后计算 MD5、SHA1、SHA256、SHA512。",
+    "description": "文件只在临时目录处理，返回摘要值后立即清理，不会落库。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "algorithm",
+        "label": "算法",
+        "type": "select",
+        "default": "sha256",
+        "options": [
+          {
+            "label": "MD5",
+            "value": "md5"
+          },
+          {
+            "label": "SHA1",
+            "value": "sha1"
+          },
+          {
+            "label": "SHA256",
+            "value": "sha256"
+          },
+          {
+            "label": "SHA512",
+            "value": "sha512"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "json-to-typescript",
+    "module": "json_to_typescript",
+    "name": "JSON 转 TypeScript",
+    "category": "format",
+    "summary": "根据 JSON 结构生成 TypeScript 类型。",
+    "description": "适合接口返回值建模、前端类型声明和快速生成 interface。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "root_name",
+        "label": "根类型名",
+        "type": "text",
+        "default": "Root",
+        "placeholder": "例如 Root、UserProfile"
+      }
+    ]
+  },
+  {
+    "slug": "json-to-java",
+    "module": "json_to_java",
+    "name": "JSON 转 Java 实体类",
+    "category": "format",
+    "summary": "根据 JSON 结构生成 Java POJO。",
+    "description": "适合接口对象建模、实体类占位和后端字段梳理。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "root_name",
+        "label": "类名",
+        "type": "text",
+        "default": "Root",
+        "placeholder": "例如 UserProfile"
+      }
+    ]
+  },
+  {
+    "slug": "json-to-csharp",
+    "module": "json_to_csharp",
+    "name": "JSON 转 C# 实体类",
+    "category": "format",
+    "summary": "根据 JSON 结构生成 C# 类定义。",
+    "description": "适合 .NET 项目里的 DTO、VO 和接口模型搭建。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "root_name",
+        "label": "类名",
+        "type": "text",
+        "default": "Root",
+        "placeholder": "例如 UserProfile"
+      }
+    ]
+  },
+  {
+    "slug": "json-to-golang",
+    "module": "json_to_golang",
+    "name": "JSON 转 Golang 结构体",
+    "category": "format",
+    "summary": "根据 JSON 结构生成 Go struct。",
+    "description": "适合接口联调、后端模型初稿和结构体字段定义。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "root_name",
+        "label": "结构体名",
+        "type": "text",
+        "default": "Root",
+        "placeholder": "例如 UserProfile"
+      }
+    ]
+  },
+  {
+    "slug": "json-to-sql",
+    "module": "json_to_sql",
+    "name": "JSON 转 SQL",
+    "category": "format",
+    "summary": "根据 JSON 字段生成 SQL 建表语句。",
+    "description": "适合快速产出数据表结构草稿，复杂字段会自动退回 JSON/TEXT。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "table_name",
+        "label": "表名",
+        "type": "text",
+        "default": "sample_table",
+        "placeholder": "例如 users、order_items"
+      }
+    ]
+  },
+  {
+    "slug": "jsonpath-parser",
+    "module": "jsonpath_parser",
+    "name": "JSONPath 解析器",
+    "category": "dev",
+    "summary": "根据 JSONPath 提取 JSON 里的目标数据。",
+    "description": "支持常见的点语法、下标和通配符，适合接口调试和结构排查。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "path",
+        "label": "JSONPath",
+        "type": "text",
+        "default": "$",
+        "placeholder": "例如 $.data.list[0].name"
+      }
+    ]
+  },
+  {
+    "slug": "xml-formatter",
+    "module": "xml_formatter",
+    "name": "XML 格式化/压缩",
+    "category": "dev",
+    "summary": "对 XML 文本进行格式化或压缩。",
+    "description": "适合接口报文调试、结构查看和 XML 文本整理。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "处理方式",
+        "type": "radio",
+        "default": "format",
+        "options": [
+          {
+            "label": "格式化",
+            "value": "format"
+          },
+          {
+            "label": "压缩",
+            "value": "minify"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "regex-tester",
+    "module": "regex_tester",
+    "name": "正则表达式测试",
+    "category": "dev",
+    "summary": "测试正则匹配结果并返回命中详情。",
+    "description": "适合快速校验匹配范围、捕获组和命中位置。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "pattern",
+        "label": "正则表达式",
+        "type": "text",
+        "default": "",
+        "placeholder": "例如 \\b\\w+@\\w+\\.com\\b"
+      },
+      {
+        "key": "flags",
+        "label": "标志位",
+        "type": "text",
+        "default": "",
+        "placeholder": "支持 i、m、s，可组合"
+      }
+    ]
+  },
+  {
+    "slug": "directory-tree-generator",
+    "module": "directory_tree_generator",
+    "name": "目录树生成",
+    "category": "dev",
+    "summary": "根据路径列表生成目录树文本。",
+    "description": "适合整理文件结构、生成文档示例和项目目录概览。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "color-converter",
+    "module": "color_converter",
+    "name": "颜色选择器转换器",
+    "category": "format",
+    "summary": "支持 HEX、RGB、RGBA 互转。",
+    "description": "适合前端颜色调试、设计稿还原和色值换算。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "to_format",
+        "label": "输出格式",
+        "type": "radio",
+        "default": "hex",
+        "options": [
+          {
+            "label": "HEX",
+            "value": "hex"
+          },
+          {
+            "label": "RGB",
+            "value": "rgb"
+          },
+          {
+            "label": "RGBA",
+            "value": "rgba"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "css-unit-converter",
+    "module": "css_unit_converter",
+    "name": "CSS 单位互转",
+    "category": "dev",
+    "summary": "支持 px、rem、rpx 互转。",
+    "description": "适合 Web 与小程序场景的单位换算，支持自定义根字号与屏宽。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "from_unit",
+        "label": "原始单位",
+        "type": "select",
+        "default": "px",
+        "options": [
+          {
+            "label": "px",
+            "value": "px"
+          },
+          {
+            "label": "rem",
+            "value": "rem"
+          },
+          {
+            "label": "rpx",
+            "value": "rpx"
+          }
+        ]
+      },
+      {
+        "key": "to_unit",
+        "label": "目标单位",
+        "type": "select",
+        "default": "rem",
+        "options": [
+          {
+            "label": "px",
+            "value": "px"
+          },
+          {
+            "label": "rem",
+            "value": "rem"
+          },
+          {
+            "label": "rpx",
+            "value": "rpx"
+          }
+        ]
+      },
+      {
+        "key": "root_font_size",
+        "label": "根字号(px)",
+        "type": "text",
+        "default": "16",
+        "placeholder": "默认 16"
+      },
+      {
+        "key": "screen_width",
+        "label": "屏宽(px)",
+        "type": "text",
+        "default": "375",
+        "placeholder": "默认 375"
+      }
+    ]
+  },
+  {
+    "slug": "css-gradient-generator",
+    "module": "css_gradient_generator",
+    "name": "CSS 渐变生成器",
+    "category": "dev",
+    "summary": "快速生成常用 CSS 渐变代码。",
+    "description": "支持线性和径向渐变，适合页面背景和按钮样式草稿。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "gradient_type",
+        "label": "渐变类型",
+        "type": "radio",
+        "default": "linear",
+        "options": [
+          {
+            "label": "线性渐变",
+            "value": "linear"
+          },
+          {
+            "label": "径向渐变",
+            "value": "radial"
+          }
+        ]
+      },
+      {
+        "key": "direction",
+        "label": "方向/角度",
+        "type": "select",
+        "default": "90deg",
+        "options": [
+          {
+            "label": "90deg",
+            "value": "90deg"
+          },
+          {
+            "label": "135deg",
+            "value": "135deg"
+          },
+          {
+            "label": "180deg",
+            "value": "180deg"
+          },
+          {
+            "label": "to right",
+            "value": "to right"
+          },
+          {
+            "label": "to bottom",
+            "value": "to bottom"
+          }
+        ]
+      },
+      {
+        "key": "start_color",
+        "label": "起始颜色",
+        "type": "text",
+        "default": "#4facfe",
+        "placeholder": "例如 #4facfe"
+      },
+      {
+        "key": "end_color",
+        "label": "结束颜色",
+        "type": "text",
+        "default": "#00f2fe",
+        "placeholder": "例如 #00f2fe"
+      }
+    ]
+  },
+  {
+    "slug": "json-yaml-converter",
+    "module": "json_yaml_converter",
+    "name": "JSON/YAML 互转",
+    "category": "format",
+    "summary": "支持 JSON 与 YAML 双向转换。",
+    "description": "适合配置文件整理、接口样例转换和结构调整。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "json_to_yaml",
+        "options": [
+          {
+            "label": "JSON 转 YAML",
+            "value": "json_to_yaml"
+          },
+          {
+            "label": "YAML 转 JSON",
+            "value": "yaml_to_json"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "html-formatter",
+    "module": "html_formatter",
+    "name": "HTML 格式化/压缩",
+    "category": "dev",
+    "summary": "对 HTML 文本进行格式化或压缩。",
+    "description": "适合模板整理、页面片段排版和快速清理空白。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "处理方式",
+        "type": "radio",
+        "default": "format",
+        "options": [
+          {
+            "label": "格式化",
+            "value": "format"
+          },
+          {
+            "label": "压缩",
+            "value": "minify"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "javascript-formatter",
+    "module": "javascript_formatter",
+    "name": "Javascript 格式化/压缩",
+    "category": "dev",
+    "summary": "对 Javascript 代码进行排版或压缩。",
+    "description": "适合脚本整理、片段压缩和调试时快速美化代码。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "处理方式",
+        "type": "radio",
+        "default": "format",
+        "options": [
+          {
+            "label": "格式化",
+            "value": "format"
+          },
+          {
+            "label": "压缩",
+            "value": "minify"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "css-formatter",
+    "module": "css_formatter",
+    "name": "CSS 格式化/压缩",
+    "category": "dev",
+    "summary": "对 CSS 文本进行排版或压缩。",
+    "description": "适合样式表整理、片段压缩和前端调试。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "处理方式",
+        "type": "radio",
+        "default": "format",
+        "options": [
+          {
+            "label": "格式化",
+            "value": "format"
+          },
+          {
+            "label": "压缩",
+            "value": "minify"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "crontab-next-run",
+    "module": "crontab_next_run",
+    "name": "Crontab 执行时间计算",
+    "category": "dev",
+    "summary": "解析 Cron 表达式并计算未来执行时间。",
+    "description": "适合排查定时任务、确认表达式是否符合预期。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "count",
+        "label": "输出条数",
+        "type": "select",
+        "default": 5,
+        "options": [
+          {
+            "label": "5 条",
+            "value": 5
+          },
+          {
+            "label": "10 条",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "text-sorter",
+    "module": "text_sorter",
+    "name": "字符串数组排序",
+    "category": "text",
+    "summary": "按行对字符串数组内容进行排序。",
+    "description": "每行视为一个元素，支持文本排序、数字排序、升序降序和去重。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "排序方式",
+        "type": "radio",
+        "default": "text",
+        "options": [
+          {
+            "label": "文本排序",
+            "value": "text"
+          },
+          {
+            "label": "数字排序",
+            "value": "number"
+          }
+        ]
+      },
+      {
+        "key": "order",
+        "label": "排序顺序",
+        "type": "radio",
+        "default": "asc",
+        "options": [
+          {
+            "label": "升序",
+            "value": "asc"
+          },
+          {
+            "label": "降序",
+            "value": "desc"
+          }
+        ]
+      },
+      {
+        "key": "unique",
+        "label": "重复处理",
+        "type": "radio",
+        "default": false,
+        "options": [
+          {
+            "label": "保留重复",
+            "value": false
+          },
+          {
+            "label": "去重后排序",
+            "value": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "text-statistics",
+    "module": "text_statistics",
+    "name": "字数统计",
+    "category": "text",
+    "summary": "统计字数、字符数、行数和字节数。",
+    "description": "适合快速查看文本规模、汉字数量、空行情况和 UTF-8 字节数。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "html-text-extractor",
+    "module": "html_text_extractor",
+    "name": "HTML 提取文字",
+    "category": "text",
+    "summary": "提取 HTML 中的纯文本内容。",
+    "description": "适合网页片段清洗、内容摘取和文本导出。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "join_mode",
+        "label": "输出方式",
+        "type": "radio",
+        "default": "multiline",
+        "options": [
+          {
+            "label": "按行输出",
+            "value": "multiline"
+          },
+          {
+            "label": "单行输出",
+            "value": "single_line"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "english-case-converter",
+    "module": "english_case_converter",
+    "name": "英文字母大小写转换",
+    "category": "text",
+    "summary": "对英文文本进行大小写和句式转换。",
+    "description": "支持全大写、全小写、标题格式、句首大写和大小写反转。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方式",
+        "type": "radio",
+        "default": "upper",
+        "options": [
+          {
+            "label": "全部大写",
+            "value": "upper"
+          },
+          {
+            "label": "全部小写",
+            "value": "lower"
+          },
+          {
+            "label": "标题格式",
+            "value": "title"
+          },
+          {
+            "label": "句首大写",
+            "value": "sentence"
+          },
+          {
+            "label": "大小写反转",
+            "value": "swap"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "text-diff-comparer",
+    "module": "text_diff_comparer",
+    "name": "文本差异对比",
+    "category": "text",
+    "summary": "对两段文本生成差异对比结果。",
+    "description": "适合比对配置、文案和代码片段差异，返回统一 diff 文本。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "compare_text",
+        "label": "对比文本",
+        "type": "textarea",
+        "default": "",
+        "placeholder": "请输入要对比的另一段文本"
+      },
+      {
+        "key": "context_lines",
+        "label": "上下文行数",
+        "type": "select",
+        "default": 3,
+        "options": [
+          {
+            "label": "1 行",
+            "value": 1
+          },
+          {
+            "label": "3 行",
+            "value": 3
+          },
+          {
+            "label": "5 行",
+            "value": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "regex-replacer",
+    "module": "regex_replacer",
+    "name": "正则替换字符串",
+    "category": "text",
+    "summary": "用正则表达式批量替换文本内容。",
+    "description": "支持常见 i、m、s 标记和替换次数控制。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "pattern",
+        "label": "正则表达式",
+        "type": "text",
+        "default": "",
+        "placeholder": "例如：\\d+"
+      },
+      {
+        "key": "replacement",
+        "label": "替换内容",
+        "type": "text",
+        "default": "",
+        "placeholder": "可留空表示删除匹配内容"
+      },
+      {
+        "key": "flags",
+        "label": "匹配标记",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选：i 忽略大小写，m 多行，s 单行"
+      },
+      {
+        "key": "count",
+        "label": "替换次数",
+        "type": "select",
+        "default": 0,
+        "options": [
+          {
+            "label": "全部替换",
+            "value": 0
+          },
+          {
+            "label": "仅替换 1 次",
+            "value": 1
+          },
+          {
+            "label": "最多替换 5 次",
+            "value": 5
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "pinyin-converter",
+    "module": "pinyin_converter",
+    "name": "汉字转拼音",
+    "category": "text",
+    "summary": "把中文内容转换为拼音或首字母。",
+    "description": "支持普通拼音、数字声调和首字母模式。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "style",
+        "label": "拼音格式",
+        "type": "radio",
+        "default": "normal",
+        "options": [
+          {
+            "label": "普通拼音",
+            "value": "normal"
+          },
+          {
+            "label": "数字声调",
+            "value": "tone"
+          },
+          {
+            "label": "首字母",
+            "value": "first_letter"
+          }
+        ]
+      },
+      {
+        "key": "separator",
+        "label": "分隔方式",
+        "type": "radio",
+        "default": "space",
+        "options": [
+          {
+            "label": "空格",
+            "value": "space"
+          },
+          {
+            "label": "直接拼接",
+            "value": "empty"
+          },
+          {
+            "label": "换行",
+            "value": "newline"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "mars-text-converter",
+    "module": "mars_text_converter",
+    "name": "火星文转换器",
+    "category": "text",
+    "summary": "将普通文本转换为常见火星文样式。",
+    "description": "支持普通文本与火星文互转，适合作为轻量娱乐工具。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "encode",
+        "options": [
+          {
+            "label": "转火星文",
+            "value": "encode"
+          },
+          {
+            "label": "转普通文本",
+            "value": "decode"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "traditional-simplified-converter",
+    "module": "traditional_simplified_converter",
+    "name": "简繁体转换",
+    "category": "text",
+    "summary": "在简体中文和繁体中文之间转换。",
+    "description": "适合文案整理、资料转换和内容校对。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "simplified_to_traditional",
+        "options": [
+          {
+            "label": "简体转繁体",
+            "value": "simplified_to_traditional"
+          },
+          {
+            "label": "繁体转简体",
+            "value": "traditional_to_simplified"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "fullwidth-halfwidth-converter",
+    "module": "fullwidth_halfwidth_converter",
+    "name": "全角半角转换",
+    "category": "text",
+    "summary": "在全角字符和半角字符之间转换。",
+    "description": "适合处理中英文排版、符号统一和输入法差异。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "to_halfwidth",
+        "options": [
+          {
+            "label": "转半角",
+            "value": "to_halfwidth"
+          },
+          {
+            "label": "转全角",
+            "value": "to_fullwidth"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "superscript-phone-generator",
+    "module": "superscript_phone_generator",
+    "name": "上标电话生成器",
+    "category": "text",
+    "summary": "将电话号码或数字转换为上标样式。",
+    "description": "支持手机号、座机号和带括号、加号的数字内容。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "subscript-phone-generator",
+    "module": "subscript_phone_generator",
+    "name": "下标电话生成器",
+    "category": "text",
+    "summary": "将电话号码或数字转换为下标样式。",
+    "description": "适合社媒昵称、小字装饰和个性化文本。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "copybook-generator",
+    "module": "copybook_generator",
+    "name": "描字帖",
+    "category": "text",
+    "summary": "按字生成可直接练习的重复描写文本。",
+    "description": "每个字会按设定次数重复输出，适合描字和临摹练习。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "repeat_count",
+        "label": "重复次数",
+        "type": "select",
+        "default": 6,
+        "options": [
+          {
+            "label": "3 次",
+            "value": 3
+          },
+          {
+            "label": "5 次",
+            "value": 5
+          },
+          {
+            "label": "6 次",
+            "value": 6
+          },
+          {
+            "label": "8 次",
+            "value": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "word-group-builder",
+    "module": "word_group_builder",
+    "name": "在线组词",
+    "category": "text",
+    "summary": "根据单个汉字输出常见组词结果。",
+    "description": "内置汉字词典，支持高频、常用和全部词条范围。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "level",
+        "label": "词条范围",
+        "type": "radio",
+        "default": "common",
+        "options": [
+          {
+            "label": "高频",
+            "value": "high"
+          },
+          {
+            "label": "常用",
+            "value": "common"
+          },
+          {
+            "label": "全部",
+            "value": "all"
+          }
+        ]
+      },
+      {
+        "key": "limit",
+        "label": "结果数量",
+        "type": "select",
+        "default": 10,
+        "options": [
+          {
+            "label": "5 条",
+            "value": 5
+          },
+          {
+            "label": "10 条",
+            "value": 10
+          },
+          {
+            "label": "20 条",
+            "value": 20
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "wubi-converter",
+    "module": "wubi_converter",
+    "name": "汉字转五笔码",
+    "category": "text",
+    "summary": "把汉字转换成五笔输入编码。",
+    "description": "支持逐字编码、词组编码和组合输出，适合输入法学习与校对。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "输出方式",
+        "type": "radio",
+        "default": "single",
+        "options": [
+          {
+            "label": "逐字编码",
+            "value": "single"
+          },
+          {
+            "label": "词组编码",
+            "value": "phrase"
+          },
+          {
+            "label": "组合输出",
+            "value": "both"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "stroke-query",
+    "module": "stroke_query",
+    "name": "汉字笔画查询",
+    "category": "text",
+    "summary": "查询汉字笔画数、部首和拼音。",
+    "description": "支持连续输入多个汉字，逐字返回笔画信息。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "idiom-cloze",
+    "module": "idiom_cloze",
+    "name": "成语填空",
+    "category": "text",
+    "summary": "按题面或关键词查找匹配成语。",
+    "description": "支持使用 ?、_、口 等占位符做成语填空，也支持直接按关键词搜索。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "limit",
+        "label": "结果数量",
+        "type": "select",
+        "default": 10,
+        "options": [
+          {
+            "label": "5 条",
+            "value": 5
+          },
+          {
+            "label": "10 条",
+            "value": 10
+          },
+          {
+            "label": "20 条",
+            "value": 20
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "xiehouyu-search",
+    "module": "xiehouyu_search",
+    "name": "歇后语",
+    "category": "text",
+    "summary": "按关键词或前半句搜索歇后语。",
+    "description": "适合查找常见歇后语、后半句和含义说明。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "limit",
+        "label": "结果数量",
+        "type": "select",
+        "default": 10,
+        "options": [
+          {
+            "label": "5 条",
+            "value": 5
+          },
+          {
+            "label": "10 条",
+            "value": 10
+          },
+          {
+            "label": "20 条",
+            "value": 20
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "name-generator",
+    "module": "name_generator",
+    "name": "姓名生成器",
+    "category": "text",
+    "summary": "批量生成中文姓名示例。",
+    "description": "适合测试数据、占位姓名和样例列表。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "gender",
+        "label": "姓名风格",
+        "type": "radio",
+        "default": "mixed",
+        "options": [
+          {
+            "label": "混合",
+            "value": "mixed"
+          },
+          {
+            "label": "偏男性",
+            "value": "male"
+          },
+          {
+            "label": "偏女性",
+            "value": "female"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "生成数量",
+        "type": "select",
+        "default": 10,
+        "options": [
+          {
+            "label": "1 个",
+            "value": 1
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "10 个",
+            "value": 10
+          },
+          {
+            "label": "20 个",
+            "value": 20
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "camel-snake-converter",
+    "module": "camel_snake_converter",
+    "name": "驼峰下划线互转",
+    "category": "text",
+    "summary": "在驼峰、下划线和 Pascal 命名之间转换。",
+    "description": "适合字段名整理、接口联调和代码片段处理。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "camel_to_snake",
+        "options": [
+          {
+            "label": "驼峰转下划线",
+            "value": "camel_to_snake"
+          },
+          {
+            "label": "下划线转驼峰",
+            "value": "snake_to_camel"
+          },
+          {
+            "label": "下划线转 Pascal",
+            "value": "snake_to_pascal"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "vertical-text-tool",
+    "module": "vertical_text_tool",
+    "name": "文字竖排工具",
+    "category": "text",
+    "summary": "将横排文本转为逐字换行的竖排文本。",
+    "description": "适合海报草稿、文案排版和特殊展示场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "blank_line_between_paragraphs",
+        "label": "段落间空行",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "保留",
+            "value": true
+          },
+          {
+            "label": "去掉",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "email-extractor",
+    "module": "email_extractor",
+    "name": "文本提取邮箱",
+    "category": "text",
+    "summary": "从文本中提取邮箱地址。",
+    "description": "适合表单内容清洗、联系人整理和数据抽取。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "unique",
+        "label": "结果去重",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "去重",
+            "value": true
+          },
+          {
+            "label": "保留重复",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "mobile-extractor",
+    "module": "mobile_extractor",
+    "name": "文本提取手机号码",
+    "category": "text",
+    "summary": "从文本中提取中国大陆手机号。",
+    "description": "支持识别带 +86、空格和短横线的常见写法。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "unique",
+        "label": "结果去重",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "去重",
+            "value": true
+          },
+          {
+            "label": "保留重复",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "link-extractor",
+    "module": "link_extractor",
+    "name": "文本提取链接",
+    "category": "text",
+    "summary": "从文本中批量提取 URL 链接。",
+    "description": "支持 http、https、ftp 和 www 开头的常见链接。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "unique",
+        "label": "结果去重",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "去重",
+            "value": true
+          },
+          {
+            "label": "保留重复",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "line-number-adder",
+    "module": "line_number_adder",
+    "name": "文本添加序号",
+    "category": "text",
+    "summary": "给多行文本按顺序添加编号。",
+    "description": "支持不同序号样式和起始数字设置。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "start_number",
+        "label": "起始序号",
+        "type": "select",
+        "default": 1,
+        "options": [
+          {
+            "label": "从 1 开始",
+            "value": 1
+          },
+          {
+            "label": "从 5 开始",
+            "value": 5
+          },
+          {
+            "label": "从 10 开始",
+            "value": 10
+          }
+        ]
+      },
+      {
+        "key": "style",
+        "label": "序号格式",
+        "type": "radio",
+        "default": "dot",
+        "options": [
+          {
+            "label": "1.",
+            "value": "dot"
+          },
+          {
+            "label": "1)",
+            "value": "right_paren"
+          },
+          {
+            "label": "(1)",
+            "value": "wrap_paren"
+          }
+        ]
+      },
+      {
+        "key": "keep_empty",
+        "label": "空行处理",
+        "type": "radio",
+        "default": false,
+        "options": [
+          {
+            "label": "空行不编号",
+            "value": false
+          },
+          {
+            "label": "空行也编号",
+            "value": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "text-rule-generator",
+    "module": "text_rule_generator",
+    "name": "文本规则生成器",
+    "category": "text",
+    "summary": "根据多行文本快速生成正则规则。",
+    "description": "适合白名单、关键词匹配和固定值过滤场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "规则模式",
+        "type": "radio",
+        "default": "exact_line",
+        "options": [
+          {
+            "label": "整行精确匹配",
+            "value": "exact_line"
+          },
+          {
+            "label": "包含任一项",
+            "value": "contains"
+          },
+          {
+            "label": "任一项开头",
+            "value": "starts_with"
+          },
+          {
+            "label": "任一项结尾",
+            "value": "ends_with"
+          }
+        ]
+      },
+      {
+        "key": "ignore_case",
+        "label": "大小写敏感",
+        "type": "radio",
+        "default": false,
+        "options": [
+          {
+            "label": "忽略大小写",
+            "value": true
+          },
+          {
+            "label": "区分大小写",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "text-reverser",
+    "module": "text_reverser",
+    "name": "文本反转",
+    "category": "text",
+    "summary": "按字符或按行反转文本内容。",
+    "description": "支持整段字符反转、按行顺序反转和逐行字符反转。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "反转方式",
+        "type": "radio",
+        "default": "chars",
+        "options": [
+          {
+            "label": "整段字符反转",
+            "value": "chars"
+          },
+          {
+            "label": "按行顺序反转",
+            "value": "lines"
+          },
+          {
+            "label": "逐行字符反转",
+            "value": "chars_per_line"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "whitespace-cleaner",
+    "module": "whitespace_cleaner",
+    "name": "空白字符清理",
+    "category": "text",
+    "summary": "清理空格、空行和每行首尾空白。",
+    "description": "适合整理复制内容、日志片段和表格文本。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "trim_each_line",
+        "label": "每行去首尾空格",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "开启",
+            "value": true
+          },
+          {
+            "label": "关闭",
+            "value": false
+          }
+        ]
+      },
+      {
+        "key": "remove_empty_lines",
+        "label": "删除空行",
+        "type": "radio",
+        "default": false,
+        "options": [
+          {
+            "label": "保留",
+            "value": false
+          },
+          {
+            "label": "删除",
+            "value": true
+          }
+        ]
+      },
+      {
+        "key": "collapse_spaces",
+        "label": "压缩连续空格",
+        "type": "radio",
+        "default": false,
+        "options": [
+          {
+            "label": "保留",
+            "value": false
+          },
+          {
+            "label": "压缩为一个空格",
+            "value": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "punctuation-converter",
+    "module": "punctuation_converter",
+    "name": "中英文标点转换",
+    "category": "text",
+    "summary": "在中文标点和英文标点之间快速转换。",
+    "description": "适合文案整理、代码注释和排版统一。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "cn_to_en",
+        "options": [
+          {
+            "label": "中文标点转英文",
+            "value": "cn_to_en"
+          },
+          {
+            "label": "英文标点转中文",
+            "value": "en_to_cn"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "duplicate-line-counter",
+    "module": "duplicate_line_counter",
+    "name": "重复行统计",
+    "category": "text",
+    "summary": "统计多行文本中每一行的重复次数。",
+    "description": "适合清洗名单、日志和导出数据，快速定位重复项。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "include_single",
+        "label": "单次出现项",
+        "type": "radio",
+        "default": false,
+        "options": [
+          {
+            "label": "只看重复项",
+            "value": false
+          },
+          {
+            "label": "全部显示",
+            "value": true
+          }
+        ]
+      },
+      {
+        "key": "sort_by",
+        "label": "排序方式",
+        "type": "radio",
+        "default": "count_desc",
+        "options": [
+          {
+            "label": "次数从高到低",
+            "value": "count_desc"
+          },
+          {
+            "label": "次数从低到高",
+            "value": "count_asc"
+          },
+          {
+            "label": "文本正序",
+            "value": "text_asc"
+          },
+          {
+            "label": "文本倒序",
+            "value": "text_desc"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "text-split-joiner",
+    "module": "text_split_joiner",
+    "name": "文本拆分合并",
+    "category": "text",
+    "summary": "按分隔符拆成多行，或把多行合并成一行。",
+    "description": "适合处理 CSV 片段、标签列表和批量参数。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "split_to_lines",
+        "options": [
+          {
+            "label": "按分隔符拆成多行",
+            "value": "split_to_lines"
+          },
+          {
+            "label": "把多行合并成一行",
+            "value": "join_lines"
+          }
+        ]
+      },
+      {
+        "key": "input_separator",
+        "label": "输入分隔符",
+        "type": "select",
+        "default": "comma",
+        "showWhen": {
+          "action": "split_to_lines"
+        },
+        "options": [
+          {
+            "label": "英文逗号 ,",
+            "value": "comma"
+          },
+          {
+            "label": "中文逗号 ，",
+            "value": "cn_comma"
+          },
+          {
+            "label": "空格",
+            "value": "space"
+          },
+          {
+            "label": "竖线 |",
+            "value": "pipe"
+          },
+          {
+            "label": "Tab",
+            "value": "tab"
+          },
+          {
+            "label": "自定义",
+            "value": "custom"
+          }
+        ]
+      },
+      {
+        "key": "custom_input_separator",
+        "label": "自定义输入分隔符",
+        "type": "text",
+        "default": "",
+        "showWhen": {
+          "action": "split_to_lines",
+          "input_separator": "custom"
+        },
+        "placeholder": "例如：@@"
+      },
+      {
+        "key": "output_separator",
+        "label": "输出分隔符",
+        "type": "select",
+        "default": "comma",
+        "showWhen": {
+          "action": "join_lines"
+        },
+        "options": [
+          {
+            "label": "英文逗号 ,",
+            "value": "comma"
+          },
+          {
+            "label": "中文逗号 ，",
+            "value": "cn_comma"
+          },
+          {
+            "label": "空格",
+            "value": "space"
+          },
+          {
+            "label": "竖线 |",
+            "value": "pipe"
+          },
+          {
+            "label": "Tab",
+            "value": "tab"
+          },
+          {
+            "label": "自定义",
+            "value": "custom"
+          }
+        ]
+      },
+      {
+        "key": "custom_output_separator",
+        "label": "自定义输出分隔符",
+        "type": "text",
+        "default": "",
+        "showWhen": {
+          "action": "join_lines",
+          "output_separator": "custom"
+        },
+        "placeholder": "例如：@@"
+      },
+      {
+        "key": "trim_items",
+        "label": "裁掉首尾空格",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "开启",
+            "value": true
+          },
+          {
+            "label": "关闭",
+            "value": false
+          }
+        ]
+      },
+      {
+        "key": "remove_empty_items",
+        "label": "移除空项",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "开启",
+            "value": true
+          },
+          {
+            "label": "关闭",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "prefix-suffix-adder",
+    "module": "prefix_suffix_adder",
+    "name": "文本加前后缀",
+    "category": "text",
+    "summary": "给每一行文本批量添加前缀和后缀。",
+    "description": "适合批量生成引号、标签、SQL 片段和路径前缀。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "prefix",
+        "label": "前缀",
+        "type": "text",
+        "default": "",
+        "placeholder": "例如：\""
+      },
+      {
+        "key": "suffix",
+        "label": "后缀",
+        "type": "text",
+        "default": "",
+        "placeholder": "例如：\","
+      },
+      {
+        "key": "skip_empty",
+        "label": "空行处理",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "空行不处理",
+            "value": true
+          },
+          {
+            "label": "空行也处理",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "docx-to-pdf",
+    "module": "docx_to_pdf",
+    "name": "Word 转 PDF",
+    "category": "format",
+    "summary": "把 docx 文档转换成轻量 PDF 文件。",
+    "description": "当前优先保留核心文本内容，适合资料归档和快速分享。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "pdf-to-word",
+    "module": "pdf_to_word",
+    "name": "PDF 转 Word",
+    "category": "format",
+    "summary": "提取 PDF 文本并生成 docx 文档。",
+    "description": "适合文本型 PDF 的内容整理，复杂版式会按轻量结构输出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "pdf-to-jpg",
+    "module": "pdf_to_jpg",
+    "name": "PDF 转 JPG",
+    "category": "format",
+    "summary": "把 PDF 每一页渲染成 JPG 图片并打包下载。",
+    "description": "适合分享单页海报、归档页面截图和做图片预览。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "scale",
+        "label": "清晰度倍数",
+        "type": "select",
+        "default": 2,
+        "options": [
+          {
+            "label": "1.5 倍",
+            "value": 1.5
+          },
+          {
+            "label": "2 倍",
+            "value": 2
+          },
+          {
+            "label": "3 倍",
+            "value": 3
+          }
+        ]
+      },
+      {
+        "key": "quality",
+        "label": "JPG 质量",
+        "type": "select",
+        "default": 90,
+        "options": [
+          {
+            "label": "80",
+            "value": 80
+          },
+          {
+            "label": "90",
+            "value": 90
+          },
+          {
+            "label": "95",
+            "value": 95
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "jpg-to-pdf",
+    "module": "jpg_to_pdf",
+    "name": "JPG 转 PDF",
+    "category": "format",
+    "summary": "把 JPG、PNG 等常见图片封装成 PDF 文件。",
+    "description": "适合票据、扫描件和海报图片快速生成 PDF。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "pdf-to-epub",
+    "module": "pdf_to_epub",
+    "name": "PDF 转 EPUB",
+    "category": "format",
+    "summary": "提取 PDF 文本后生成 EPUB 电子书文件。",
+    "description": "适合文本资料转电子书阅读，输出为轻量排版版本。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "电子书标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用转换后的标题"
+      }
+    ]
+  },
+  {
+    "slug": "epub-to-pdf",
+    "module": "epub_to_pdf",
+    "name": "EPUB 转 PDF",
+    "category": "format",
+    "summary": "提取 EPUB 正文内容并输出为 PDF 文件。",
+    "description": "适合把电子书正文快速转成可打印或分享的轻量 PDF。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "PDF 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用电子书标题"
+      }
+    ]
+  },
+  {
+    "slug": "pdf-to-txt",
+    "module": "pdf_to_txt",
+    "name": "PDF 转 TXT",
+    "category": "format",
+    "summary": "提取 PDF 文本并导出为 UTF-8 编码的 TXT 文件。",
+    "description": "适合内容摘录、二次清洗和轻量归档，复杂版式会按顺序输出为纯文本。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "word-to-txt",
+    "module": "word_to_txt",
+    "name": "Word 转 TXT",
+    "category": "format",
+    "summary": "提取 Word 正文内容并导出为 TXT 文件。",
+    "description": "适合做文本整理、内容抽取和批量二次处理。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "txt-to-word",
+    "module": "txt_to_word",
+    "name": "TXT 转 Word",
+    "category": "format",
+    "summary": "把纯文本内容快速封装成 docx 文档。",
+    "description": "适合笔记整理、草稿输出和简易文档排版。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "文档标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 TXT 转 Word"
+      }
+    ]
+  },
+  {
+    "slug": "txt-to-pdf",
+    "module": "txt_to_pdf",
+    "name": "TXT 转 PDF",
+    "category": "format",
+    "summary": "把纯文本内容生成轻量 PDF 文件。",
+    "description": "适合文本资料打印、分享和导出归档。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "PDF 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 TXT 转 PDF"
+      }
+    ]
+  },
+  {
+    "slug": "txt-to-epub",
+    "module": "txt_to_epub",
+    "name": "TXT 转 EPUB",
+    "category": "format",
+    "summary": "把纯文本内容生成 EPUB 电子书文件。",
+    "description": "适合长文档、小说稿和资料文本快速转为阅读格式。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "电子书标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 TXT 转 EPUB"
+      }
+    ]
+  },
+  {
+    "slug": "heic-to-pdf",
+    "module": "heic_to_pdf",
+    "name": "HEIC 转 PDF",
+    "category": "format",
+    "summary": "把 iPhone 常见的 HEIC/HEIF 图片转成 PDF 文件。",
+    "description": "适合相册导出、票据整理和跨平台分享。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "word-to-epub",
+    "module": "word_to_epub",
+    "name": "Word 转 EPUB",
+    "category": "format",
+    "summary": "把 Word 正文内容转换成 EPUB 电子书文件。",
+    "description": "适合长文稿、资料归档和移动端阅读场景。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "电子书标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 Word 转 EPUB"
+      }
+    ]
+  },
+  {
+    "slug": "epub-to-word",
+    "module": "epub_to_word",
+    "name": "EPUB 转 Word",
+    "category": "format",
+    "summary": "提取 EPUB 正文内容并生成 docx 文档。",
+    "description": "适合把电子书内容导出为可编辑文档，输出为轻量排版版本。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "文档标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用电子书标题"
+      }
+    ]
+  },
+  {
+    "slug": "epub-to-txt",
+    "module": "epub_to_txt",
+    "name": "EPUB 转 TXT",
+    "category": "format",
+    "summary": "提取 EPUB 正文内容并导出为 TXT 文件。",
+    "description": "适合做内容整理、关键词搜索和二次处理。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "word-to-html",
+    "module": "word_to_html",
+    "name": "Word 转 HTML",
+    "category": "format",
+    "summary": "把 Word 正文内容转换为可直接打开的 HTML 页面。",
+    "description": "适合做网页预览、在线阅读和静态文档展示。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "页面标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 Word 转 HTML"
+      }
+    ]
+  },
+  {
+    "slug": "pdf-to-html",
+    "module": "pdf_to_html",
+    "name": "PDF 转 HTML",
+    "category": "format",
+    "summary": "提取 PDF 文本并生成 HTML 页面。",
+    "description": "适合把文本型 PDF 转成网页内容，复杂版式会按轻量结构输出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "页面标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 PDF 转 HTML"
+      }
+    ]
+  },
+  {
+    "slug": "txt-to-html",
+    "module": "txt_to_html",
+    "name": "TXT 转 HTML",
+    "category": "format",
+    "summary": "把纯文本内容生成轻量 HTML 页面。",
+    "description": "适合快速发布说明文档、纯文本页面和阅读稿。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "页面标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 TXT 转 HTML"
+      }
+    ]
+  },
+  {
+    "slug": "excel-to-csv",
+    "module": "excel_to_csv",
+    "name": "Excel 转 CSV",
+    "category": "format",
+    "summary": "把 Excel 工作表导出为 CSV 文件，多工作表时自动打包为 zip。",
+    "description": "适合数据交换、导入导出和表格轻量处理。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "csv-to-excel",
+    "module": "csv_to_excel",
+    "name": "CSV 转 Excel",
+    "category": "format",
+    "summary": "把 CSV 文本数据封装成 xlsx 工作簿。",
+    "description": "适合导入表格、交付文档和后续二次编辑。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "sheet_name",
+        "label": "工作表名称",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 Sheet1"
+      }
+    ]
+  },
+  {
+    "slug": "excel-to-html",
+    "module": "excel_to_html",
+    "name": "Excel 转 HTML",
+    "category": "format",
+    "summary": "把 Excel 内容转换成可直接打开的 HTML 表格页面。",
+    "description": "适合网页预览、数据展示和静态表格发布。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "页面标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 Excel 转 HTML"
+      }
+    ]
+  },
+  {
+    "slug": "csv-to-html",
+    "module": "csv_to_html",
+    "name": "CSV 转 HTML",
+    "category": "format",
+    "summary": "把 CSV 数据生成轻量 HTML 表格页面。",
+    "description": "适合快速发布表格、做数据预览和分享。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "页面标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 CSV 转 HTML"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-to-txt",
+    "module": "ppt_to_txt",
+    "name": "PPT 转 TXT",
+    "category": "format",
+    "summary": "提取 PPT 每页文本内容并导出为 TXT 文件。",
+    "description": "适合演讲稿整理、内容汇总和文本检索。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "ppt-to-html",
+    "module": "ppt_to_html",
+    "name": "PPT 转 HTML",
+    "category": "format",
+    "summary": "提取 PPT 文本并生成 HTML 页面。",
+    "description": "适合分享课件内容、做网页阅读稿和静态归档。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "页面标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 PPT 转 HTML"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-to-word",
+    "module": "ppt_to_word",
+    "name": "PPT 转 Word",
+    "category": "format",
+    "summary": "提取 PPT 每页文本并生成 docx 文档。",
+    "description": "适合课件整理、内容归档和演讲稿导出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "文档标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 PPT 转 Word"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-to-pdf",
+    "module": "ppt_to_pdf",
+    "name": "PPT 转 PDF",
+    "category": "format",
+    "summary": "提取 PPT 每页文本并生成轻量 PDF 文件。",
+    "description": "适合课件分享、打印归档和阅读输出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "PDF 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 PPT 转 PDF"
+      }
+    ]
+  },
+  {
+    "slug": "excel-to-txt",
+    "module": "excel_to_txt",
+    "name": "Excel 转 TXT",
+    "category": "format",
+    "summary": "把 Excel 表格内容转成按行展开的 TXT 文件。",
+    "description": "适合数据抽取、日志比对和文本检索场景。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "excel-to-pdf",
+    "module": "excel_to_pdf",
+    "name": "Excel 转 PDF",
+    "category": "format",
+    "summary": "把 Excel 内容整理后生成轻量 PDF 文件。",
+    "description": "适合报表归档、打印分享和表格内容预览。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "PDF 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 Excel 转 PDF"
+      }
+    ]
+  },
+  {
+    "slug": "csv-to-txt",
+    "module": "csv_to_txt",
+    "name": "CSV 转 TXT",
+    "category": "format",
+    "summary": "把 CSV 数据转成按行展开的 TXT 文件。",
+    "description": "适合轻量清洗、文本搜索和内容比对。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "csv-to-pdf",
+    "module": "csv_to_pdf",
+    "name": "CSV 转 PDF",
+    "category": "format",
+    "summary": "把 CSV 数据整理后导出成轻量 PDF 文件。",
+    "description": "适合表格分享、数据归档和快速打印。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "PDF 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 CSV 转 PDF"
+      }
+    ]
+  },
+  {
+    "slug": "excel-to-word",
+    "module": "excel_to_word",
+    "name": "Excel 转 Word",
+    "category": "format",
+    "summary": "把 Excel 表格内容整理后导出为 Word 文档。",
+    "description": "适合表格归档、内容交付和进一步编辑整理。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "文档标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 Excel 转 Word"
+      }
+    ]
+  },
+  {
+    "slug": "csv-to-word",
+    "module": "csv_to_word",
+    "name": "CSV 转 Word",
+    "category": "format",
+    "summary": "把 CSV 数据整理后导出为 Word 文档。",
+    "description": "适合轻量表格内容交付和文档化存档。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "文档标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 CSV 转 Word"
+      }
+    ]
+  },
+  {
+    "slug": "excel-to-epub",
+    "module": "excel_to_epub",
+    "name": "Excel 转 EPUB",
+    "category": "format",
+    "summary": "把 Excel 内容整理后生成 EPUB 电子书文件。",
+    "description": "适合长表格资料、数据手册和移动端阅读。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "电子书标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 Excel 转 EPUB"
+      }
+    ]
+  },
+  {
+    "slug": "csv-to-epub",
+    "module": "csv_to_epub",
+    "name": "CSV 转 EPUB",
+    "category": "format",
+    "summary": "把 CSV 数据整理后生成 EPUB 电子书文件。",
+    "description": "适合把数据清单和轻量表格内容转成阅读格式。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "电子书标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 CSV 转 EPUB"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-to-epub",
+    "module": "ppt_to_epub",
+    "name": "PPT 转 EPUB",
+    "category": "format",
+    "summary": "提取 PPT 每页文本并生成 EPUB 电子书文件。",
+    "description": "适合课件阅读稿导出、归档和移动端查看。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "电子书标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用 PPT 转 EPUB"
+      }
+    ]
+  },
+  {
+    "slug": "random-phone-generator",
+    "module": "random_phone_generator",
+    "name": "随机手机号生成器",
+    "category": "dev",
+    "summary": "生成常见号段的随机手机号。",
+    "description": "适合表单测试、样例数据和接口占位。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "count",
+        "label": "生成数量",
+        "type": "select",
+        "default": 1,
+        "options": [
+          {
+            "label": "1 个",
+            "value": 1
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "10 个",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "random-id-card-generator",
+    "module": "random_id_card_generator",
+    "name": "随机身份证生成器",
+    "category": "dev",
+    "summary": "生成带校验位的 18 位身份证号。",
+    "description": "适合测试环境造数，支持随机、男、女三种性别尾号规则。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "gender",
+        "label": "性别",
+        "type": "radio",
+        "default": "random",
+        "options": [
+          {
+            "label": "随机",
+            "value": "random"
+          },
+          {
+            "label": "男",
+            "value": "male"
+          },
+          {
+            "label": "女",
+            "value": "female"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "生成数量",
+        "type": "select",
+        "default": 1,
+        "options": [
+          {
+            "label": "1 个",
+            "value": 1
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "10 个",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "markdown-editor",
+    "module": "markdown_editor",
+    "name": "Markdown 编辑器",
+    "category": "dev",
+    "summary": "将 Markdown 实时转换为 HTML 结果。",
+    "description": "支持标题、列表、表格和代码块，适合文档预处理与内容编辑。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "coordinate-converter",
+    "module": "coordinate_converter",
+    "name": "拾取坐标/坐标转换",
+    "category": "dev",
+    "summary": "支持 WGS84、GCJ-02、BD-09 之间互转。",
+    "description": "输入经纬度后即可完成坐标系转换，适合地图开发和定位调试。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "from_system",
+        "label": "原坐标系",
+        "type": "select",
+        "default": "wgs84",
+        "options": [
+          {
+            "label": "WGS84",
+            "value": "wgs84"
+          },
+          {
+            "label": "GCJ-02",
+            "value": "gcj02"
+          },
+          {
+            "label": "BD-09",
+            "value": "bd09"
+          }
+        ]
+      },
+      {
+        "key": "to_system",
+        "label": "目标坐标系",
+        "type": "select",
+        "default": "gcj02",
+        "options": [
+          {
+            "label": "GCJ-02",
+            "value": "gcj02"
+          },
+          {
+            "label": "WGS84",
+            "value": "wgs84"
+          },
+          {
+            "label": "BD-09",
+            "value": "bd09"
+          }
+        ]
+      },
+      {
+        "key": "precision",
+        "label": "结果精度",
+        "type": "select",
+        "default": 6,
+        "options": [
+          {
+            "label": "6 位小数",
+            "value": 6
+          },
+          {
+            "label": "7 位小数",
+            "value": 7
+          },
+          {
+            "label": "8 位小数",
+            "value": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "browser-info",
+    "module": "browser_info",
+    "name": "获取浏览器信息",
+    "category": "dev",
+    "summary": "在当前浏览器中查看 UA、语言、分辨率和运行环境。",
+    "description": "信息直接在本地读取，不经过后端接口，适合前端联调和环境排查。",
+    "input_mode": "form",
+    "result_type": "text",
+    "component": "ToolBrowserInfo",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "responsive-layout-checker",
+    "module": "responsive_layout_checker",
+    "name": "响应式布局检测",
+    "category": "dev",
+    "summary": "实时查看当前视口尺寸、断点和设备像素比。",
+    "description": "适合前端页面调试，缩放或调整窗口时会立即更新检测结果。",
+    "input_mode": "form",
+    "result_type": "text",
+    "component": "ToolResponsiveCheck",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "http-api-tester",
+    "module": "http_api_tester",
+    "name": "Http 接口测试",
+    "category": "dev",
+    "summary": "在浏览器中发起 GET、POST、PUT、PATCH、DELETE 请求。",
+    "description": "适合联调公开接口，支持自定义请求头、Body 和响应结果查看。",
+    "input_mode": "form",
+    "result_type": "text",
+    "component": "ToolHttpTester",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "websocket-tester",
+    "module": "websocket_tester",
+    "name": "Websocket 接口测试",
+    "category": "dev",
+    "summary": "在浏览器中直接连接 WebSocket 并收发消息。",
+    "description": "适合调试 WS 服务、消息推送和实时通信接口。",
+    "input_mode": "form",
+    "result_type": "text",
+    "component": "ToolWebsocketTester",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "json-to-xlsx",
+    "module": "json_to_xlsx",
+    "name": "JSON 转 XLSX",
+    "category": "format",
+    "summary": "将 JSON 数组或对象导出为 Excel 文件。",
+    "description": "适合把接口数据或结构化 JSON 快速导出为表格文件。",
+    "input_mode": "text",
+    "result_type": "file",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "sheet_name",
+        "label": "工作表名称",
+        "type": "text",
+        "default": "Sheet1",
+        "placeholder": "请输入工作表名称"
+      }
+    ]
+  },
+  {
+    "slug": "xlsx-to-json",
+    "module": "xlsx_to_json",
+    "name": "XLSX 转 JSON",
+    "category": "format",
+    "summary": "上传 Excel 文件并解析为 JSON。",
+    "description": "默认读取全部工作表，单工作表时直接输出数组结构。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "sqlite-viewer",
+    "module": "sqlite_viewer",
+    "name": "SQLite 查看器",
+    "category": "dev",
+    "summary": "上传 SQLite 数据库后查看表和示例数据。",
+    "description": "适合轻量查看表结构数据和快速预览数据库内容。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "preview_limit",
+        "label": "每表预览条数",
+        "type": "select",
+        "default": 20,
+        "options": [
+          {
+            "label": "10 条",
+            "value": 10
+          },
+          {
+            "label": "20 条",
+            "value": 20
+          },
+          {
+            "label": "50 条",
+            "value": 50
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "unicode-chinese-converter",
+    "module": "unicode_converter",
+    "name": "Unicode 中文互转",
+    "category": "encode",
+    "summary": "支持中文转 Unicode 转义和 Unicode 转中文。",
+    "description": "适合接口调试、转义文本处理和字符编码查看。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方式",
+        "type": "radio",
+        "default": "to_unicode",
+        "options": [
+          {
+            "label": "中文转 Unicode",
+            "value": "to_unicode"
+          },
+          {
+            "label": "Unicode 转中文",
+            "value": "to_text"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "sha-hash",
+    "module": "sha_hash",
+    "name": "SHA 加密",
+    "category": "encode",
+    "summary": "支持多种 SHA 摘要算法生成。",
+    "description": "适合密码摘要、签名预处理和快速校验场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "algorithm",
+        "label": "算法",
+        "type": "select",
+        "default": "sha256",
+        "options": [
+          {
+            "label": "SHA-256",
+            "value": "sha256"
+          },
+          {
+            "label": "SHA-1",
+            "value": "sha1"
+          },
+          {
+            "label": "SHA-224",
+            "value": "sha224"
+          },
+          {
+            "label": "SHA-384",
+            "value": "sha384"
+          },
+          {
+            "label": "SHA-512",
+            "value": "sha512"
+          }
+        ]
+      },
+      {
+        "key": "digest_case",
+        "label": "输出大小写",
+        "type": "radio",
+        "default": "lower",
+        "options": [
+          {
+            "label": "小写",
+            "value": "lower"
+          },
+          {
+            "label": "大写",
+            "value": "upper"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "hex-string-codec",
+    "module": "hex_string_codec",
+    "name": "16进制转字符串",
+    "category": "encode",
+    "summary": "支持字符串与 16 进制文本之间互转。",
+    "description": "适合调试二进制数据、十六进制日志和编码格式。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方式",
+        "type": "radio",
+        "default": "hex_to_text",
+        "options": [
+          {
+            "label": "16进制转字符串",
+            "value": "hex_to_text"
+          },
+          {
+            "label": "字符串转16进制",
+            "value": "text_to_hex"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "md5-hash",
+    "module": "md5_hash",
+    "name": "MD5 加密",
+    "category": "encode",
+    "summary": "生成 16 位或 32 位 MD5 摘要。",
+    "description": "适合常见摘要校验和旧系统兼容场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": false,
+    "params": [
+      {
+        "key": "digest_length",
+        "label": "摘要长度",
+        "type": "radio",
+        "default": 32,
+        "options": [
+          {
+            "label": "32 位",
+            "value": 32
+          },
+          {
+            "label": "16 位",
+            "value": 16
+          }
+        ]
+      },
+      {
+        "key": "digest_case",
+        "label": "输出大小写",
+        "type": "radio",
+        "default": "lower",
+        "options": [
+          {
+            "label": "小写",
+            "value": "lower"
+          },
+          {
+            "label": "大写",
+            "value": "upper"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "punycode-codec",
+    "module": "punycode_codec",
+    "name": "Punycode 编码/解码",
+    "category": "encode",
+    "summary": "支持 Unicode 域名与 Punycode 文本互转。",
+    "description": "适合国际化域名、编码排查和文本兼容处理。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方式",
+        "type": "radio",
+        "default": "encode",
+        "options": [
+          {
+            "label": "编码",
+            "value": "encode"
+          },
+          {
+            "label": "解码",
+            "value": "decode"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "shake-hash",
+    "module": "shake_hash",
+    "name": "Shake 加密",
+    "category": "encode",
+    "summary": "支持 SHAKE128 与 SHAKE256 可变长度摘要。",
+    "description": "适合需要自定义摘要长度的安全摘要场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "algorithm",
+        "label": "算法",
+        "type": "radio",
+        "default": "shake_128",
+        "options": [
+          {
+            "label": "SHAKE128",
+            "value": "shake_128"
+          },
+          {
+            "label": "SHAKE256",
+            "value": "shake_256"
+          }
+        ]
+      },
+      {
+        "key": "digest_bytes",
+        "label": "摘要字节数",
+        "type": "select",
+        "default": 16,
+        "options": [
+          {
+            "label": "16 字节",
+            "value": 16
+          },
+          {
+            "label": "32 字节",
+            "value": 32
+          },
+          {
+            "label": "64 字节",
+            "value": 64
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "morse-codec",
+    "module": "morse_codec",
+    "name": "摩斯密码加密/解密",
+    "category": "encode",
+    "summary": "支持英文字母、数字与常见符号的摩斯密码互转。",
+    "description": "适合简单文本编码演示、学习和消息趣味转换。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "转换方式",
+        "type": "radio",
+        "default": "encode",
+        "options": [
+          {
+            "label": "加密",
+            "value": "encode"
+          },
+          {
+            "label": "解密",
+            "value": "decode"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "jwt-decoder",
+    "module": "jwt_decoder",
+    "name": "JWT 解码",
+    "category": "encode",
+    "summary": "解析 JWT 的 Header、Payload 和签名信息。",
+    "description": "当前只做本地解码展示，不校验签名是否有效。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "text-hidden-codec",
+    "module": "text_hidden_codec",
+    "name": "文字隐蔽加密/解密",
+    "category": "encode",
+    "summary": "使用零宽字符隐藏文本内容或从文本中提取隐藏内容。",
+    "description": "适合隐写演示、趣味传递和不可见字符内容提取。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "hide",
+        "options": [
+          {
+            "label": "隐藏文字",
+            "value": "hide"
+          },
+          {
+            "label": "提取文字",
+            "value": "reveal"
+          }
+        ]
+      },
+      {
+        "key": "cover_text",
+        "label": "展示文本",
+        "type": "text",
+        "default": "",
+        "placeholder": "隐藏时可选，作为外层展示文本"
+      }
+    ]
+  },
+  {
+    "slug": "bcrypt-tool",
+    "module": "bcrypt_tool",
+    "name": "Bcrypt 加密/校验",
+    "category": "encode",
+    "summary": "支持生成 Bcrypt 哈希和校验明文密码。",
+    "description": "适合密码存储调试、登录逻辑验证和安全对比测试。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "hash",
+        "options": [
+          {
+            "label": "生成哈希",
+            "value": "hash"
+          },
+          {
+            "label": "校验密码",
+            "value": "verify"
+          }
+        ]
+      },
+      {
+        "key": "rounds",
+        "label": "安全轮数",
+        "type": "select",
+        "default": 12,
+        "options": [
+          {
+            "label": "10",
+            "value": 10
+          },
+          {
+            "label": "12",
+            "value": 12
+          },
+          {
+            "label": "14",
+            "value": 14
+          }
+        ]
+      },
+      {
+        "key": "hash_value",
+        "label": "目标哈希",
+        "type": "text",
+        "default": "",
+        "placeholder": "校验模式下请输入 bcrypt 哈希"
+      }
+    ]
+  },
+  {
+    "slug": "keccak-hash",
+    "module": "keccak_hash",
+    "name": "Keccak 加密",
+    "category": "encode",
+    "summary": "支持 224、256、384、512 位 Keccak 摘要。",
+    "description": "适合链上相关摘要调试和 Keccak 哈希计算场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "digest_bits",
+        "label": "摘要位数",
+        "type": "select",
+        "default": 256,
+        "options": [
+          {
+            "label": "256 位",
+            "value": 256
+          },
+          {
+            "label": "224 位",
+            "value": 224
+          },
+          {
+            "label": "384 位",
+            "value": 384
+          },
+          {
+            "label": "512 位",
+            "value": 512
+          }
+        ]
+      },
+      {
+        "key": "digest_case",
+        "label": "输出大小写",
+        "type": "radio",
+        "default": "lower",
+        "options": [
+          {
+            "label": "小写",
+            "value": "lower"
+          },
+          {
+            "label": "大写",
+            "value": "upper"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "aes-cipher",
+    "module": "aes_cipher",
+    "name": "AES 加密/解密",
+    "category": "encode",
+    "summary": "使用 AES-CBC 与随机 IV 完成文本加密和解密。",
+    "description": "加密结果格式为 iv:cipher，支持 utf8、hex、base64 三种密钥输入格式。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "encrypt",
+        "options": [
+          {
+            "label": "加密",
+            "value": "encrypt"
+          },
+          {
+            "label": "解密",
+            "value": "decrypt"
+          }
+        ]
+      },
+      {
+        "key": "key_text",
+        "label": "密钥",
+        "type": "text",
+        "default": "",
+        "placeholder": "请输入 16/24/32 字节 AES 密钥"
+      },
+      {
+        "key": "key_encoding",
+        "label": "密钥格式",
+        "type": "select",
+        "default": "utf8",
+        "options": [
+          {
+            "label": "UTF-8",
+            "value": "utf8"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          },
+          {
+            "label": "Base64",
+            "value": "base64"
+          }
+        ]
+      },
+      {
+        "key": "output_encoding",
+        "label": "结果格式",
+        "type": "radio",
+        "default": "base64",
+        "options": [
+          {
+            "label": "Base64",
+            "value": "base64"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "rsa-cipher",
+    "module": "rsa_cipher",
+    "name": "RSA 加密/解密",
+    "category": "encode",
+    "summary": "使用 RSA-OAEP 完成文本加密和解密。",
+    "description": "加密需公钥，解密需私钥，密钥可直接粘贴 PEM 文本。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "encrypt",
+        "options": [
+          {
+            "label": "加密",
+            "value": "encrypt"
+          },
+          {
+            "label": "解密",
+            "value": "decrypt"
+          }
+        ]
+      },
+      {
+        "key": "key_text",
+        "label": "RSA 密钥",
+        "type": "textarea",
+        "default": "",
+        "placeholder": "请输入 PEM 格式公钥或私钥"
+      },
+      {
+        "key": "output_encoding",
+        "label": "密文格式",
+        "type": "radio",
+        "default": "base64",
+        "options": [
+          {
+            "label": "Base64",
+            "value": "base64"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "rc4-cipher",
+    "module": "rc4_cipher",
+    "name": "RC4 加密/解密",
+    "category": "encode",
+    "summary": "使用 RC4 流加密进行文本加密与解密。",
+    "description": "支持 utf8、hex、base64 三种密钥输入格式，适合兼容旧场景。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "encrypt",
+        "options": [
+          {
+            "label": "加密",
+            "value": "encrypt"
+          },
+          {
+            "label": "解密",
+            "value": "decrypt"
+          }
+        ]
+      },
+      {
+        "key": "key_text",
+        "label": "密钥",
+        "type": "text",
+        "default": "",
+        "placeholder": "请输入 RC4 密钥"
+      },
+      {
+        "key": "key_encoding",
+        "label": "密钥格式",
+        "type": "select",
+        "default": "utf8",
+        "options": [
+          {
+            "label": "UTF-8",
+            "value": "utf8"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          },
+          {
+            "label": "Base64",
+            "value": "base64"
+          }
+        ]
+      },
+      {
+        "key": "output_encoding",
+        "label": "密文格式",
+        "type": "radio",
+        "default": "base64",
+        "options": [
+          {
+            "label": "Base64",
+            "value": "base64"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "des-cipher",
+    "module": "des_cipher",
+    "name": "DES 加密/解密",
+    "category": "encode",
+    "summary": "使用 DES-CBC 与随机 IV 完成文本加密和解密。",
+    "description": "加密结果格式为 iv:cipher，密钥长度必须是 8 字节。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "encrypt",
+        "options": [
+          {
+            "label": "加密",
+            "value": "encrypt"
+          },
+          {
+            "label": "解密",
+            "value": "decrypt"
+          }
+        ]
+      },
+      {
+        "key": "key_text",
+        "label": "密钥",
+        "type": "text",
+        "default": "",
+        "placeholder": "请输入 8 字节 DES 密钥"
+      },
+      {
+        "key": "key_encoding",
+        "label": "密钥格式",
+        "type": "select",
+        "default": "utf8",
+        "options": [
+          {
+            "label": "UTF-8",
+            "value": "utf8"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          },
+          {
+            "label": "Base64",
+            "value": "base64"
+          }
+        ]
+      },
+      {
+        "key": "output_encoding",
+        "label": "结果格式",
+        "type": "radio",
+        "default": "base64",
+        "options": [
+          {
+            "label": "Base64",
+            "value": "base64"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "sm4-cipher",
+    "module": "sm4_cipher",
+    "name": "国密 SM4 加密/解密",
+    "category": "encode",
+    "summary": "使用 SM4-CBC 与随机 IV 完成文本加密和解密。",
+    "description": "加密结果格式为 iv:cipher，密钥长度必须是 16 字节。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "encrypt",
+        "options": [
+          {
+            "label": "加密",
+            "value": "encrypt"
+          },
+          {
+            "label": "解密",
+            "value": "decrypt"
+          }
+        ]
+      },
+      {
+        "key": "key_text",
+        "label": "密钥",
+        "type": "text",
+        "default": "",
+        "placeholder": "请输入 16 字节 SM4 密钥"
+      },
+      {
+        "key": "key_encoding",
+        "label": "密钥格式",
+        "type": "select",
+        "default": "utf8",
+        "options": [
+          {
+            "label": "UTF-8",
+            "value": "utf8"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          },
+          {
+            "label": "Base64",
+            "value": "base64"
+          }
+        ]
+      },
+      {
+        "key": "output_encoding",
+        "label": "结果格式",
+        "type": "radio",
+        "default": "base64",
+        "options": [
+          {
+            "label": "Base64",
+            "value": "base64"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "sm2-cipher",
+    "module": "sm2_cipher",
+    "name": "国密 SM2 加密/解密",
+    "category": "encode",
+    "summary": "支持生成密钥、SM2 公钥加密和私钥解密。",
+    "description": "密钥使用 16 进制原始文本格式，生成后可直接复制使用。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "generate_keypair",
+        "options": [
+          {
+            "label": "生成密钥",
+            "value": "generate_keypair"
+          },
+          {
+            "label": "加密",
+            "value": "encrypt"
+          },
+          {
+            "label": "解密",
+            "value": "decrypt"
+          }
+        ]
+      },
+      {
+        "key": "public_key",
+        "label": "公钥",
+        "type": "textarea",
+        "default": "",
+        "placeholder": "请输入 SM2 公钥 16 进制文本"
+      },
+      {
+        "key": "private_key",
+        "label": "私钥",
+        "type": "textarea",
+        "default": "",
+        "placeholder": "请输入 SM2 私钥 16 进制文本"
+      },
+      {
+        "key": "output_encoding",
+        "label": "密文格式",
+        "type": "radio",
+        "default": "base64",
+        "options": [
+          {
+            "label": "Base64",
+            "value": "base64"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "md5-decoder",
+    "module": "md5_decoder",
+    "name": "MD5 加密/解密",
+    "category": "encode",
+    "summary": "支持 16/32 位 MD5 生成，也支持候选词匹配模式。",
+    "description": "加密模式用于生成 MD5 摘要；解密模式本质是候选词匹配，不保证能还原所有 MD5。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "hash",
+        "options": [
+          {
+            "label": "加密",
+            "value": "hash"
+          },
+          {
+            "label": "解密",
+            "value": "decode"
+          }
+        ]
+      },
+      {
+        "key": "digest_length",
+        "label": "摘要长度",
+        "type": "radio",
+        "default": 32,
+        "showWhen": {
+          "action": "hash"
+        },
+        "options": [
+          {
+            "label": "32 位",
+            "value": 32
+          },
+          {
+            "label": "16 位",
+            "value": 16
+          }
+        ]
+      },
+      {
+        "key": "digest_case",
+        "label": "输出大小写",
+        "type": "radio",
+        "default": "lower",
+        "showWhen": {
+          "action": "hash"
+        },
+        "options": [
+          {
+            "label": "小写",
+            "value": "lower"
+          },
+          {
+            "label": "大写",
+            "value": "upper"
+          }
+        ]
+      },
+      {
+        "key": "include_common",
+        "label": "内置词典",
+        "type": "radio",
+        "default": true,
+        "showWhen": {
+          "action": "decode"
+        },
+        "options": [
+          {
+            "label": "启用",
+            "value": true
+          },
+          {
+            "label": "关闭",
+            "value": false
+          }
+        ]
+      },
+      {
+        "key": "custom_candidates",
+        "label": "自定义候选词",
+        "type": "textarea",
+        "default": "",
+        "showWhen": {
+          "action": "decode"
+        },
+        "placeholder": "每行一个候选词，可用于补充匹配范围"
+      }
+    ]
+  },
+  {
+    "slug": "javascript-obfuscator",
+    "module": "javascript_obfuscator",
+    "name": "Javascript 混淆加密",
+    "category": "encode",
+    "summary": "将 Javascript 压缩后包装为可执行的混淆代码。",
+    "description": "适合演示级混淆和简单分发场景，不等同于专业级反混淆防护。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "混淆方式",
+        "type": "radio",
+        "default": "base64_wrapper",
+        "options": [
+          {
+            "label": "Base64 包装",
+            "value": "base64_wrapper"
+          },
+          {
+            "label": "字符码包装",
+            "value": "charcode_wrapper"
+          }
+        ]
+      },
+      {
+        "key": "minify_first",
+        "label": "先压缩代码",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "启用",
+            "value": true
+          },
+          {
+            "label": "关闭",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "rabbit-cipher",
+    "module": "rabbit_cipher",
+    "name": "Rabbit 加密/解密",
+    "category": "encode",
+    "summary": "使用 Rabbit 流加密完成文本加密与解密。",
+    "description": "支持 128 位密钥和可选 64 位 IV；如果加密时填了 IV，结果会返回 iv:cipher。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "操作方式",
+        "type": "radio",
+        "default": "encrypt",
+        "options": [
+          {
+            "label": "加密",
+            "value": "encrypt"
+          },
+          {
+            "label": "解密",
+            "value": "decrypt"
+          }
+        ]
+      },
+      {
+        "key": "key_text",
+        "label": "密钥",
+        "type": "text",
+        "default": "",
+        "placeholder": "请输入 16 字节密钥"
+      },
+      {
+        "key": "key_encoding",
+        "label": "密钥格式",
+        "type": "select",
+        "default": "utf8",
+        "options": [
+          {
+            "label": "UTF-8",
+            "value": "utf8"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          },
+          {
+            "label": "Base64",
+            "value": "base64"
+          }
+        ]
+      },
+      {
+        "key": "iv_text",
+        "label": "IV",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，输入 8 字节 IV"
+      },
+      {
+        "key": "iv_encoding",
+        "label": "IV 格式",
+        "type": "select",
+        "default": "utf8",
+        "options": [
+          {
+            "label": "UTF-8",
+            "value": "utf8"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          },
+          {
+            "label": "Base64",
+            "value": "base64"
+          }
+        ]
+      },
+      {
+        "key": "output_encoding",
+        "label": "结果格式",
+        "type": "radio",
+        "default": "base64",
+        "options": [
+          {
+            "label": "Base64",
+            "value": "base64"
+          },
+          {
+            "label": "Hex",
+            "value": "hex"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "art-qr-generator",
+    "module": "art_qr_generator",
+    "name": "艺术二维码生成",
+    "category": "image",
+    "summary": "生成带圆角模块和渐变色的艺术二维码。",
+    "description": "适合海报、活动页和更好看的二维码分享图。",
+    "input_mode": "text",
+    "result_type": "file",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "style",
+        "label": "模块样式",
+        "type": "radio",
+        "default": "rounded",
+        "options": [
+          {
+            "label": "圆角",
+            "value": "rounded"
+          },
+          {
+            "label": "圆点",
+            "value": "circle"
+          },
+          {
+            "label": "方块",
+            "value": "square"
+          }
+        ]
+      },
+      {
+        "key": "color_mode",
+        "label": "配色模式",
+        "type": "radio",
+        "default": "gradient",
+        "options": [
+          {
+            "label": "径向渐变",
+            "value": "gradient"
+          },
+          {
+            "label": "纵向渐变",
+            "value": "vertical"
+          },
+          {
+            "label": "纯色",
+            "value": "solid"
+          }
+        ]
+      },
+      {
+        "key": "fill_color",
+        "label": "主色",
+        "type": "text",
+        "default": "#1d4ed8",
+        "placeholder": "例如：#1d4ed8"
+      },
+      {
+        "key": "accent_color",
+        "label": "辅助色",
+        "type": "text",
+        "default": "#14b8a6",
+        "showWhen": {
+          "color_mode": [
+            "gradient",
+            "vertical"
+          ]
+        },
+        "placeholder": "例如：#14b8a6"
+      },
+      {
+        "key": "back_color",
+        "label": "背景色",
+        "type": "text",
+        "default": "#ffffff",
+        "placeholder": "例如：#ffffff"
+      }
+    ]
+  },
+  {
+    "slug": "handwritten-signature",
+    "module": "handwritten_signature",
+    "name": "在线手写签名",
+    "category": "image",
+    "summary": "根据文字生成透明底签名图片。",
+    "description": "适合合同演示、图片署名和文档签名素材。",
+    "input_mode": "text",
+    "result_type": "file",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "color",
+        "label": "签名颜色",
+        "type": "text",
+        "default": "#111111",
+        "placeholder": "例如：#111111"
+      },
+      {
+        "key": "font_size",
+        "label": "字号",
+        "type": "select",
+        "default": 120,
+        "options": [
+          {
+            "label": "80",
+            "value": 80
+          },
+          {
+            "label": "120",
+            "value": 120
+          },
+          {
+            "label": "160",
+            "value": 160
+          }
+        ]
+      },
+      {
+        "key": "transparent_bg",
+        "label": "背景模式",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "透明背景",
+            "value": true
+          },
+          {
+            "label": "白色背景",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "svg-placeholder-generator",
+    "module": "svg_placeholder_generator",
+    "name": "SVG 占位符生成器",
+    "category": "image",
+    "summary": "生成可直接使用的 SVG 占位图。",
+    "description": "适合设计稿占位、开发演示和接口默认图。",
+    "input_mode": "text",
+    "result_type": "file",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "width",
+        "label": "宽度",
+        "type": "select",
+        "default": 800,
+        "options": [
+          {
+            "label": "400",
+            "value": 400
+          },
+          {
+            "label": "800",
+            "value": 800
+          },
+          {
+            "label": "1200",
+            "value": 1200
+          }
+        ]
+      },
+      {
+        "key": "height",
+        "label": "高度",
+        "type": "select",
+        "default": 450,
+        "options": [
+          {
+            "label": "300",
+            "value": 300
+          },
+          {
+            "label": "450",
+            "value": 450
+          },
+          {
+            "label": "630",
+            "value": 630
+          }
+        ]
+      },
+      {
+        "key": "background_color",
+        "label": "背景色",
+        "type": "text",
+        "default": "#dbeafe",
+        "placeholder": "例如：#dbeafe"
+      },
+      {
+        "key": "text_color",
+        "label": "文字色",
+        "type": "text",
+        "default": "#1e3a8a",
+        "placeholder": "例如：#1e3a8a"
+      }
+    ]
+  },
+  {
+    "slug": "stamp-generator",
+    "module": "stamp_generator",
+    "name": "印章生成器",
+    "category": "image",
+    "summary": "生成带圆环、星标和文字的印章图片。",
+    "description": "适合演示图、海报素材和视觉装饰。",
+    "input_mode": "text",
+    "result_type": "file",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "center_text",
+        "label": "中心文字",
+        "type": "text",
+        "default": "专用章",
+        "placeholder": "例如：已通过"
+      },
+      {
+        "key": "subtitle",
+        "label": "副标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "例如：2026"
+      },
+      {
+        "key": "color",
+        "label": "印章颜色",
+        "type": "text",
+        "default": "#d40000",
+        "placeholder": "例如：#d40000"
+      }
+    ]
+  },
+  {
+    "slug": "funny-certificate-generator",
+    "module": "funny_certificate_generator",
+    "name": "搞笑奖状批量生成器",
+    "category": "image",
+    "summary": "批量生成带姓名的趣味奖状图片。",
+    "description": "每行一个姓名，处理后返回奖状图片 zip 压缩包。",
+    "input_mode": "text",
+    "result_type": "file",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "title",
+        "label": "奖状标题",
+        "type": "text",
+        "default": "沙雕奖状",
+        "placeholder": "例如：最佳摸鱼奖"
+      },
+      {
+        "key": "reason",
+        "label": "获奖理由",
+        "type": "text",
+        "default": "因表现过于优秀，特授予“人间清醒选手”称号",
+        "placeholder": "例如：因准点下班能力过强"
+      },
+      {
+        "key": "signer",
+        "label": "署名",
+        "type": "text",
+        "default": "摸鱼委员会",
+        "placeholder": "例如：琦湘评审团"
+      }
+    ]
+  },
+  {
+    "slug": "flag-avatar-generator",
+    "module": "flag_avatar_generator",
+    "name": "国旗头像生成器",
+    "category": "image",
+    "summary": "给头像叠加半透明国旗效果和圆形边框。",
+    "description": "适合社媒头像、活动主题头像和纪念日头像。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "flag_code",
+        "label": "国旗样式",
+        "type": "radio",
+        "default": "cn",
+        "options": [
+          {
+            "label": "中国",
+            "value": "cn"
+          },
+          {
+            "label": "日本",
+            "value": "jp"
+          },
+          {
+            "label": "美国",
+            "value": "us"
+          },
+          {
+            "label": "法国",
+            "value": "fr"
+          },
+          {
+            "label": "德国",
+            "value": "de"
+          }
+        ]
+      },
+      {
+        "key": "opacity",
+        "label": "叠加透明度",
+        "type": "select",
+        "default": 45,
+        "options": [
+          {
+            "label": "30%",
+            "value": 30
+          },
+          {
+            "label": "45%",
+            "value": 45
+          },
+          {
+            "label": "60%",
+            "value": 60
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "online-whiteboard",
+    "module": "browser_info",
+    "name": "在线白板",
+    "category": "image",
+    "summary": "本地涂鸦和草图白板，支持导出 PNG。",
+    "description": "纯前端本地运行，不上传画布内容。",
+    "input_mode": "form",
+    "result_type": "text",
+    "component": "ToolWhiteboard",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "image-grid-splitter",
+    "module": "image_grid_splitter",
+    "name": "九宫格/多格切图",
+    "category": "image",
+    "summary": "把一张图片切成九宫格或更多宫格，并打包下载。",
+    "description": "上传单张图片后按行列数自动切片，返回 zip 压缩包。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "rows",
+        "label": "行数",
+        "type": "select",
+        "default": 3,
+        "options": [
+          {
+            "label": "2 行",
+            "value": 2
+          },
+          {
+            "label": "3 行",
+            "value": 3
+          },
+          {
+            "label": "4 行",
+            "value": 4
+          }
+        ]
+      },
+      {
+        "key": "cols",
+        "label": "列数",
+        "type": "select",
+        "default": 3,
+        "options": [
+          {
+            "label": "2 列",
+            "value": 2
+          },
+          {
+            "label": "3 列",
+            "value": 3
+          },
+          {
+            "label": "4 列",
+            "value": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-compressor",
+    "module": "image_compressor",
+    "name": "图片压缩",
+    "category": "image",
+    "summary": "压缩图片体积，并可顺手限制最大宽高。",
+    "description": "适合网页上传前压缩、缩小图片体积和统一尺寸。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "quality",
+        "label": "压缩质量",
+        "type": "select",
+        "default": 75,
+        "options": [
+          {
+            "label": "高质量 90",
+            "value": 90
+          },
+          {
+            "label": "标准 75",
+            "value": 75
+          },
+          {
+            "label": "更小 60",
+            "value": 60
+          }
+        ]
+      },
+      {
+        "key": "output_format",
+        "label": "输出格式",
+        "type": "select",
+        "default": "original",
+        "options": [
+          {
+            "label": "保持原格式",
+            "value": "original"
+          },
+          {
+            "label": "JPEG",
+            "value": "jpg"
+          },
+          {
+            "label": "PNG",
+            "value": "png"
+          },
+          {
+            "label": "WEBP",
+            "value": "webp"
+          }
+        ]
+      },
+      {
+        "key": "max_width",
+        "label": "最大宽度",
+        "type": "select",
+        "default": 0,
+        "options": [
+          {
+            "label": "不限制",
+            "value": 0
+          },
+          {
+            "label": "1920",
+            "value": 1920
+          },
+          {
+            "label": "1080",
+            "value": 1080
+          },
+          {
+            "label": "800",
+            "value": 800
+          }
+        ]
+      },
+      {
+        "key": "max_height",
+        "label": "最大高度",
+        "type": "select",
+        "default": 0,
+        "options": [
+          {
+            "label": "不限制",
+            "value": 0
+          },
+          {
+            "label": "1920",
+            "value": 1920
+          },
+          {
+            "label": "1080",
+            "value": 1080
+          },
+          {
+            "label": "800",
+            "value": 800
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-upscaler",
+    "module": "image_upscaler",
+    "name": "图片增大",
+    "category": "image",
+    "summary": "支持按目标 KB 增大体积，或按倍数增大宽高尺寸。",
+    "description": "可选择增大图片文件体积，或保持宽高比放大图片尺寸。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "增大方式",
+        "type": "radio",
+        "default": "byte_size",
+        "options": [
+          {
+            "label": "体积 KB 增大",
+            "value": "byte_size"
+          },
+          {
+            "label": "宽高尺寸增大",
+            "value": "dimensions"
+          }
+        ]
+      },
+      {
+        "key": "target_kb",
+        "label": "目标大小 KB",
+        "type": "text",
+        "default": 1024,
+        "showWhen": {
+          "mode": "byte_size"
+        },
+        "placeholder": "例如：2048，表示 2MB"
+      },
+      {
+        "key": "scale",
+        "label": "宽高倍数",
+        "type": "radio",
+        "default": 2,
+        "showWhen": {
+          "mode": "dimensions"
+        },
+        "options": [
+          {
+            "label": "2 倍",
+            "value": 2
+          },
+          {
+            "label": "3 倍",
+            "value": 3
+          },
+          {
+            "label": "4 倍",
+            "value": 4
+          },
+          {
+            "label": "10 倍",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-cropper",
+    "module": "image_cropper",
+    "name": "图片裁剪",
+    "category": "image",
+    "summary": "支持中心正方形裁剪和手动坐标裁剪。",
+    "description": "适合头像裁剪、局部截图和素材预处理。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "裁剪方式",
+        "type": "radio",
+        "default": "center_square",
+        "options": [
+          {
+            "label": "中心正方形",
+            "value": "center_square"
+          },
+          {
+            "label": "手动坐标",
+            "value": "manual"
+          }
+        ]
+      },
+      {
+        "key": "x",
+        "label": "起始 X",
+        "type": "text",
+        "default": "0",
+        "showWhen": {
+          "mode": "manual"
+        },
+        "placeholder": "例如：50"
+      },
+      {
+        "key": "y",
+        "label": "起始 Y",
+        "type": "text",
+        "default": "0",
+        "showWhen": {
+          "mode": "manual"
+        },
+        "placeholder": "例如：50"
+      },
+      {
+        "key": "width",
+        "label": "裁剪宽度",
+        "type": "text",
+        "default": "300",
+        "showWhen": {
+          "mode": "manual"
+        },
+        "placeholder": "例如：300"
+      },
+      {
+        "key": "height",
+        "label": "裁剪高度",
+        "type": "text",
+        "default": "300",
+        "showWhen": {
+          "mode": "manual"
+        },
+        "placeholder": "例如：300"
+      }
+    ]
+  },
+  {
+    "slug": "image-filter-processor",
+    "module": "image_filter_processor",
+    "name": "图片滤镜处理",
+    "category": "image",
+    "summary": "给图片快速套用灰度、模糊、锐化等滤镜。",
+    "description": "适合快速预览常见图片滤镜效果。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "filter_name",
+        "label": "滤镜类型",
+        "type": "select",
+        "default": "grayscale",
+        "options": [
+          {
+            "label": "黑白灰度",
+            "value": "grayscale"
+          },
+          {
+            "label": "柔和模糊",
+            "value": "blur"
+          },
+          {
+            "label": "锐化增强",
+            "value": "sharpen"
+          },
+          {
+            "label": "细节增强",
+            "value": "detail"
+          },
+          {
+            "label": "轮廓线稿",
+            "value": "contour"
+          },
+          {
+            "label": "浮雕效果",
+            "value": "emboss"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-watermarker",
+    "module": "image_watermarker",
+    "name": "图片加水印",
+    "category": "image",
+    "summary": "给图片添加文字水印。",
+    "description": "支持位置、透明度、字号和颜色设置。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "text",
+        "label": "水印文字",
+        "type": "text",
+        "default": "",
+        "placeholder": "例如：琦湘工具集合"
+      },
+      {
+        "key": "position",
+        "label": "水印位置",
+        "type": "select",
+        "default": "bottom_right",
+        "options": [
+          {
+            "label": "左上",
+            "value": "top_left"
+          },
+          {
+            "label": "中上",
+            "value": "top_center"
+          },
+          {
+            "label": "右上",
+            "value": "top_right"
+          },
+          {
+            "label": "正中",
+            "value": "center"
+          },
+          {
+            "label": "左下",
+            "value": "bottom_left"
+          },
+          {
+            "label": "中下",
+            "value": "bottom_center"
+          },
+          {
+            "label": "右下",
+            "value": "bottom_right"
+          }
+        ]
+      },
+      {
+        "key": "opacity",
+        "label": "透明度",
+        "type": "select",
+        "default": 45,
+        "options": [
+          {
+            "label": "30%",
+            "value": 30
+          },
+          {
+            "label": "45%",
+            "value": 45
+          },
+          {
+            "label": "60%",
+            "value": 60
+          },
+          {
+            "label": "80%",
+            "value": 80
+          }
+        ]
+      },
+      {
+        "key": "font_size",
+        "label": "字号",
+        "type": "select",
+        "default": 32,
+        "options": [
+          {
+            "label": "24",
+            "value": 24
+          },
+          {
+            "label": "32",
+            "value": 32
+          },
+          {
+            "label": "40",
+            "value": 40
+          },
+          {
+            "label": "56",
+            "value": 56
+          }
+        ]
+      },
+      {
+        "key": "color",
+        "label": "颜色",
+        "type": "text",
+        "default": "#ffffff",
+        "placeholder": "例如：#ffffff"
+      }
+    ]
+  },
+  {
+    "slug": "image-format-converter",
+    "module": "image_format_converter",
+    "name": "图片格式转换",
+    "category": "format",
+    "summary": "在 PNG、JPEG、WEBP、BMP、ICO 等格式之间转换。",
+    "description": "适合网页素材转换、图标处理和兼容性导出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "output_format",
+        "label": "输出格式",
+        "type": "radio",
+        "default": "png",
+        "options": [
+          {
+            "label": "PNG",
+            "value": "png"
+          },
+          {
+            "label": "JPEG",
+            "value": "jpg"
+          },
+          {
+            "label": "WEBP",
+            "value": "webp"
+          },
+          {
+            "label": "BMP",
+            "value": "bmp"
+          },
+          {
+            "label": "ICO",
+            "value": "ico"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-merger",
+    "module": "image_merger",
+    "name": "图片拼接",
+    "category": "image",
+    "summary": "把多张图片按上下或左右方向拼成一张图。",
+    "description": "请上传包含多张图片的 zip 压缩包，适合长图和对比图生成。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "拼接方向",
+        "type": "radio",
+        "default": "vertical",
+        "options": [
+          {
+            "label": "上下拼接",
+            "value": "vertical"
+          },
+          {
+            "label": "左右拼接",
+            "value": "horizontal"
+          }
+        ]
+      },
+      {
+        "key": "gap",
+        "label": "间距",
+        "type": "select",
+        "default": 0,
+        "options": [
+          {
+            "label": "0 像素",
+            "value": 0
+          },
+          {
+            "label": "8 像素",
+            "value": 8
+          },
+          {
+            "label": "16 像素",
+            "value": 16
+          },
+          {
+            "label": "24 像素",
+            "value": 24
+          }
+        ]
+      },
+      {
+        "key": "output_format",
+        "label": "输出格式",
+        "type": "select",
+        "default": "png",
+        "options": [
+          {
+            "label": "PNG",
+            "value": "png"
+          },
+          {
+            "label": "JPEG",
+            "value": "jpg"
+          },
+          {
+            "label": "WEBP",
+            "value": "webp"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-color-analyzer",
+    "module": "image_color_analyzer",
+    "name": "图片颜色分析",
+    "category": "image",
+    "summary": "统计图片中的主色和大致占比。",
+    "description": "适合做配色提取、封面主色分析和视觉风格判断。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "top_n",
+        "label": "主色数量",
+        "type": "select",
+        "default": 5,
+        "options": [
+          {
+            "label": "3 个",
+            "value": 3
+          },
+          {
+            "label": "5 个",
+            "value": 5
+          },
+          {
+            "label": "8 个",
+            "value": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-color-picker",
+    "module": "image_color_picker",
+    "name": "图片取色器",
+    "category": "image",
+    "summary": "按坐标读取图片中的像素颜色。",
+    "description": "不填坐标时默认读取图片中心点颜色。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "x",
+        "label": "X 坐标",
+        "type": "text",
+        "default": "-1",
+        "placeholder": "默认中心点"
+      },
+      {
+        "key": "y",
+        "label": "Y 坐标",
+        "type": "text",
+        "default": "-1",
+        "placeholder": "默认中心点"
+      }
+    ]
+  },
+  {
+    "slug": "image-exif-reader",
+    "module": "image_exif_reader",
+    "name": "图片 EXIF 读取",
+    "category": "image",
+    "summary": "读取图片的尺寸、格式和 EXIF 元数据。",
+    "description": "适合查看拍摄时间、设备信息和图片基础属性。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "image-text-recognizer",
+    "module": "image_text_recognizer",
+    "name": "图片识别文字",
+    "category": "image",
+    "summary": "识别图片中的印刷体文字并返回纯文本结果。",
+    "description": "适合截图提词、海报文字提取和图片内容整理。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "image-adjuster",
+    "module": "image_adjuster",
+    "name": "图片调整",
+    "category": "image",
+    "summary": "调整亮度、对比度、锐度、饱和度和旋转翻转。",
+    "description": "适合快速做基础修图和内容预处理。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "brightness",
+        "label": "亮度",
+        "type": "select",
+        "default": 100,
+        "options": [
+          {
+            "label": "80%",
+            "value": 80
+          },
+          {
+            "label": "100%",
+            "value": 100
+          },
+          {
+            "label": "120%",
+            "value": 120
+          },
+          {
+            "label": "150%",
+            "value": 150
+          }
+        ]
+      },
+      {
+        "key": "contrast",
+        "label": "对比度",
+        "type": "select",
+        "default": 100,
+        "options": [
+          {
+            "label": "80%",
+            "value": 80
+          },
+          {
+            "label": "100%",
+            "value": 100
+          },
+          {
+            "label": "120%",
+            "value": 120
+          },
+          {
+            "label": "150%",
+            "value": 150
+          }
+        ]
+      },
+      {
+        "key": "sharpness",
+        "label": "锐度",
+        "type": "select",
+        "default": 100,
+        "options": [
+          {
+            "label": "80%",
+            "value": 80
+          },
+          {
+            "label": "100%",
+            "value": 100
+          },
+          {
+            "label": "120%",
+            "value": 120
+          },
+          {
+            "label": "160%",
+            "value": 160
+          }
+        ]
+      },
+      {
+        "key": "saturation",
+        "label": "饱和度",
+        "type": "select",
+        "default": 100,
+        "options": [
+          {
+            "label": "80%",
+            "value": 80
+          },
+          {
+            "label": "100%",
+            "value": 100
+          },
+          {
+            "label": "120%",
+            "value": 120
+          },
+          {
+            "label": "150%",
+            "value": 150
+          }
+        ]
+      },
+      {
+        "key": "rotate",
+        "label": "旋转角度",
+        "type": "select",
+        "default": 0,
+        "options": [
+          {
+            "label": "不旋转",
+            "value": 0
+          },
+          {
+            "label": "顺时针 90°",
+            "value": 90
+          },
+          {
+            "label": "180°",
+            "value": 180
+          },
+          {
+            "label": "逆时针 90°",
+            "value": 270
+          }
+        ]
+      },
+      {
+        "key": "flip",
+        "label": "翻转方式",
+        "type": "radio",
+        "default": "none",
+        "options": [
+          {
+            "label": "不翻转",
+            "value": "none"
+          },
+          {
+            "label": "水平翻转",
+            "value": "horizontal"
+          },
+          {
+            "label": "垂直翻转",
+            "value": "vertical"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "gif-splitter",
+    "module": "gif_splitter",
+    "name": "GIF 图片分解",
+    "category": "image",
+    "summary": "把 GIF 动图拆成多张逐帧图片。",
+    "description": "上传 GIF 后返回每一帧 PNG 的 zip 压缩包。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "gif-maker",
+    "module": "gif_maker",
+    "name": "GIF 图片制作",
+    "category": "image",
+    "summary": "把多张图片合成为一张 GIF 动图。",
+    "description": "请上传包含多张图片的 zip 压缩包。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "duration",
+        "label": "帧间隔",
+        "type": "select",
+        "default": 180,
+        "options": [
+          {
+            "label": "120 毫秒",
+            "value": 120
+          },
+          {
+            "label": "180 毫秒",
+            "value": 180
+          },
+          {
+            "label": "240 毫秒",
+            "value": 240
+          },
+          {
+            "label": "400 毫秒",
+            "value": 400
+          }
+        ]
+      },
+      {
+        "key": "loop",
+        "label": "循环次数",
+        "type": "select",
+        "default": 0,
+        "options": [
+          {
+            "label": "无限循环",
+            "value": 0
+          },
+          {
+            "label": "循环 1 次",
+            "value": 1
+          },
+          {
+            "label": "循环 3 次",
+            "value": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "gif-scaler",
+    "module": "gif_scaler",
+    "name": "GIF 图片缩放",
+    "category": "image",
+    "summary": "按比例缩放 GIF 动图的宽高。",
+    "description": "适合压缩 GIF 尺寸和生成轻量版本。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "scale_percent",
+        "label": "缩放比例",
+        "type": "select",
+        "default": 50,
+        "options": [
+          {
+            "label": "25%",
+            "value": 25
+          },
+          {
+            "label": "50%",
+            "value": 50
+          },
+          {
+            "label": "75%",
+            "value": 75
+          },
+          {
+            "label": "100%",
+            "value": 100
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "gif-merger",
+    "module": "gif_merger",
+    "name": "GIF 图片合并",
+    "category": "image",
+    "summary": "把多个 GIF 按时间顺序拼成一个 GIF。",
+    "description": "请上传包含多个 GIF 的 zip 压缩包。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "qr-code-generator",
+    "module": "qr_code_generator",
+    "name": "二维码生成",
+    "category": "image",
+    "summary": "把文本、链接或联系方式生成为二维码图片。",
+    "description": "支持设置尺寸、边距和前景背景颜色。",
+    "input_mode": "text",
+    "result_type": "file",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "box_size",
+        "label": "点阵尺寸",
+        "type": "select",
+        "default": 10,
+        "options": [
+          {
+            "label": "小",
+            "value": 6
+          },
+          {
+            "label": "中",
+            "value": 10
+          },
+          {
+            "label": "大",
+            "value": 14
+          }
+        ]
+      },
+      {
+        "key": "border",
+        "label": "边距",
+        "type": "select",
+        "default": 4,
+        "options": [
+          {
+            "label": "1",
+            "value": 1
+          },
+          {
+            "label": "2",
+            "value": 2
+          },
+          {
+            "label": "4",
+            "value": 4
+          },
+          {
+            "label": "8",
+            "value": 8
+          }
+        ]
+      },
+      {
+        "key": "fill_color",
+        "label": "前景色",
+        "type": "text",
+        "default": "#000000",
+        "placeholder": "例如：#000000"
+      },
+      {
+        "key": "back_color",
+        "label": "背景色",
+        "type": "text",
+        "default": "#ffffff",
+        "placeholder": "例如：#ffffff"
+      }
+    ]
+  },
+  {
+    "slug": "qr-code-decoder",
+    "module": "qr_code_decoder",
+    "name": "二维码解析",
+    "category": "image",
+    "summary": "解析二维码图片中的文本内容。",
+    "description": "上传二维码图片后直接返回识别结果。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "barcode-generator",
+    "module": "barcode_generator",
+    "name": "条形码生成器",
+    "category": "image",
+    "summary": "把编号、文本等内容生成为条形码图片。",
+    "description": "支持 Code128 和 EAN-13 两种常见类型。",
+    "input_mode": "text",
+    "result_type": "file",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "barcode_type",
+        "label": "条形码类型",
+        "type": "radio",
+        "default": "code128",
+        "options": [
+          {
+            "label": "Code128",
+            "value": "code128"
+          },
+          {
+            "label": "EAN-13",
+            "value": "ean13"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "favicon-generator",
+    "module": "favicon_generator",
+    "name": "在线生成 Favicon.ico",
+    "category": "image",
+    "summary": "把图片生成为浏览器站点图标文件。",
+    "description": "适合网站 logo 和应用图标快速导出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "size",
+        "label": "最大尺寸",
+        "type": "select",
+        "default": 64,
+        "options": [
+          {
+            "label": "32",
+            "value": 32
+          },
+          {
+            "label": "64",
+            "value": 64
+          },
+          {
+            "label": "128",
+            "value": 128
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "rounded-corner-image",
+    "module": "rounded_corner_image",
+    "name": "生成圆角图片",
+    "category": "image",
+    "summary": "把原图处理为带透明圆角的 PNG。",
+    "description": "适合头像、卡片封面和电商素材的圆角处理。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "radius",
+        "label": "圆角半径",
+        "type": "select",
+        "default": 32,
+        "options": [
+          {
+            "label": "12",
+            "value": 12
+          },
+          {
+            "label": "24",
+            "value": 24
+          },
+          {
+            "label": "32",
+            "value": 32
+          },
+          {
+            "label": "48",
+            "value": 48
+          },
+          {
+            "label": "72",
+            "value": 72
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "id-photo-cropper",
+    "module": "id_photo_cropper",
+    "name": "证件照裁剪",
+    "category": "image",
+    "summary": "将图片裁成常见证件照比例和尺寸。",
+    "description": "使用中心裁剪后按预设尺寸缩放输出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "preset",
+        "label": "证件照尺寸",
+        "type": "radio",
+        "default": "one_inch",
+        "options": [
+          {
+            "label": "一寸",
+            "value": "one_inch"
+          },
+          {
+            "label": "二寸",
+            "value": "two_inch"
+          },
+          {
+            "label": "小一寸",
+            "value": "small_one_inch"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "word-image-extractor",
+    "module": "word_image_extractor",
+    "name": "Word 提取图片",
+    "category": "image",
+    "summary": "提取 docx 文档中的所有图片资源。",
+    "description": "上传 Word 文档后返回图片 zip 压缩包。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "excel-image-extractor",
+    "module": "excel_image_extractor",
+    "name": "Excel 提取图片",
+    "category": "image",
+    "summary": "提取 xlsx 文件中的所有图片资源。",
+    "description": "上传 Excel 文件后返回图片 zip 压缩包。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "ppt-image-extractor",
+    "module": "ppt_image_extractor",
+    "name": "PPT 提取图片",
+    "category": "image",
+    "summary": "提取 pptx 文件中的所有图片资源。",
+    "description": "上传 PPT 文件后返回图片 zip 压缩包。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "image-background-remover",
+    "module": "image_background_remover",
+    "name": "图片抠图",
+    "category": "image",
+    "summary": "支持快速抠图和智能抠图，并可输出透明底或棋盘格预览图。",
+    "description": "快速模式适合白底和浅底图片，智能模式更适合复杂背景，棋盘格预览方便检查边缘效果。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "抠图模式",
+        "type": "radio",
+        "default": "smart",
+        "options": [
+          {
+            "label": "智能抠图",
+            "value": "smart"
+          },
+          {
+            "label": "快速抠图",
+            "value": "simple"
+          }
+        ]
+      },
+      {
+        "key": "strength",
+        "label": "抠图强度",
+        "type": "radio",
+        "default": "standard",
+        "options": [
+          {
+            "label": "柔和",
+            "value": "gentle"
+          },
+          {
+            "label": "标准",
+            "value": "standard"
+          },
+          {
+            "label": "加强",
+            "value": "strong"
+          }
+        ]
+      },
+      {
+        "key": "output_background",
+        "label": "输出背景",
+        "type": "radio",
+        "default": "transparent",
+        "options": [
+          {
+            "label": "透明底 PNG",
+            "value": "transparent"
+          },
+          {
+            "label": "黑白棋盘格",
+            "value": "checkerboard"
+          }
+        ]
+      },
+      {
+        "key": "trim_border",
+        "label": "裁掉透明边缘",
+        "type": "radio",
+        "default": "yes",
+        "options": [
+          {
+            "label": "是",
+            "value": "yes"
+          },
+          {
+            "label": "否",
+            "value": "no"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-to-base64",
+    "module": "image_to_base64",
+    "name": "图片转 Base64",
+    "category": "image",
+    "summary": "上传图片后返回 Base64 Data URL。",
+    "description": "文件只做临时处理，结果返回后立即清理请求目录。",
+    "input_mode": "file",
+    "result_type": "text",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "off-work-countdown",
+    "module": "time_studio",
+    "name": "下班计算",
+    "category": "time",
+    "summary": "实时查看午休、下班、发薪日和节假日倒计时。",
+    "description": "参考命令行下班倒计时脚本的计算逻辑，改造成站内时间工具，可自动刷新当前北京时间、农历、下班倒计时、发薪日、节假日、除夕和全年休息日统计。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolOffWorkCountdown",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "online-calendar",
+    "module": "time_studio",
+    "name": "在线万年历",
+    "category": "time",
+    "summary": "查看公历月份、日期和农历简要信息。",
+    "description": "适合快速翻看月份、点击具体日期并查看当天的公历与农历概览。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolOnlineCalendar",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "world-time-clock",
+    "module": "time_studio",
+    "name": "世界各地时间",
+    "category": "time",
+    "summary": "同时查看多个城市的当前时间与时区偏移。",
+    "description": "适合远程协作、跨时区沟通和快速查看主要城市当前时间。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolWorldTimeClock",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "time-converter",
+    "module": "time_studio",
+    "name": "时间转换",
+    "category": "time",
+    "summary": "把一个时间点转换为本地、北京时间、UTC 和时间戳。",
+    "description": "适合排查接口时间、日志时间和前后端时间字段格式差异。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolTimeConverter",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "timestamp-converter",
+    "module": "time_studio",
+    "name": "时间戳转换",
+    "category": "time",
+    "summary": "把秒级或毫秒级时间戳快速转换为可读时间。",
+    "description": "适合调试日志、数据库时间字段和接口返回里的 Unix 时间戳。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolTimestampConverter",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "date-interval-calculator",
+    "module": "time_studio",
+    "name": "日期间隔查询",
+    "category": "time",
+    "summary": "计算两个日期之间相差多少天、周和工作日。",
+    "description": "适合排期评估、项目节点计算和任意日期间隔查询。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolDateIntervalCalculator",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "age-calculator",
+    "module": "time_studio",
+    "name": "年龄计算器",
+    "category": "time",
+    "summary": "根据出生日期快速计算年龄、总天数和下次生日。",
+    "description": "适合基础年龄计算、生日提醒和阶段时间跨度查看。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolAgeCalculator",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "countdown-timer",
+    "module": "time_studio",
+    "name": "在线倒计时",
+    "category": "time",
+    "summary": "设定目标时间后实时查看剩余倒计时。",
+    "description": "适合活动开始、会议提醒、任务收尾和临时专注时间管理。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolCountdownTimer",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "stopwatch-timer",
+    "module": "time_studio",
+    "name": "秒表计时器",
+    "category": "time",
+    "summary": "支持开始、暂停、重置和分段记录的本地秒表。",
+    "description": "适合训练计时、实验测试、专注记录和快速分段统计。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolStopwatchTimer",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "solar-lunar-viewer",
+    "module": "time_studio",
+    "name": "公历农历日期转换",
+    "category": "time",
+    "summary": "输入公历日期后快速查看当天的农历和日期信息。",
+    "description": "适合日常查询、日期核对和快速查看公历转农历的结果概览。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolSolarLunarViewer",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "schedule-memo",
+    "module": "time_studio",
+    "name": "日程表/备忘录",
+    "category": "time",
+    "summary": "记录日期、标题和备注，保存在当前浏览器。",
+    "description": "适合轻量记录日程节点、提醒事项和临时待办，不依赖后端存储。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolScheduleMemo",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "holiday-schedule-2026",
+    "module": "time_studio",
+    "name": "放假安排",
+    "category": "time",
+    "summary": "按当前公历年份查看节假日与调休上班安排。",
+    "description": "适合快速查阅假期区间、调休上班日期和当前年份最近节假日提醒。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolHolidaySchedule2026",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "solar-terms-viewer",
+    "module": "time_studio",
+    "name": "二十四节气",
+    "category": "time",
+    "summary": "查看全年二十四节气与当前节气阶段。",
+    "description": "适合快速了解节气节奏、节气日期和下一个节气时间。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolSolarTermsViewer",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "zodiac-sign-finder",
+    "module": "time_studio",
+    "name": "生肖星座查询",
+    "category": "time",
+    "summary": "输入生日后查看生肖、星座和干支年份。",
+    "description": "适合快速查询生肖、星座、星期和基础农历信息。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolZodiacSignFinder",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "shelf-life-calculator",
+    "module": "time_studio",
+    "name": "计算保质期",
+    "category": "time",
+    "summary": "根据生产日期和保质期数值计算到期时间。",
+    "description": "适合食品、护肤品和生活用品的到期时间快速估算。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolShelfLifeCalculator",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "pregnancy-due-calculator",
+    "module": "time_studio",
+    "name": "预产期计算器",
+    "category": "time",
+    "summary": "根据末次月经和周期长度推算孕周与预产期。",
+    "description": "适合查看当前孕周、孕期阶段和预产期剩余时间。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolPregnancyDueCalculator",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "baby-hundred-days-calculator",
+    "module": "time_studio",
+    "name": "宝宝百日计算器",
+    "category": "time",
+    "summary": "根据出生日期计算满月、百日和周岁节点。",
+    "description": "适合快速查看宝宝成长节点和距离百日还剩多少天。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolBabyHundredDaysCalculator",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "chinese-history-table",
+    "module": "time_studio",
+    "name": "中国历史朝代时间查询表",
+    "category": "time",
+    "summary": "按朝代查看中国历史时期与时间范围。",
+    "description": "适合快速检索朝代顺序、年代范围和基础历史时期备注。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChineseHistoryTable",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "pie-chart-maker",
+    "module": "chart_studio",
+    "name": "饼图制作",
+    "category": "chart",
+    "summary": "输入标签和数值，实时生成饼图或环形图。",
+    "description": "第一版先提供最常用的饼图制作能力，支持自定义标题、颜色、图例和下载导出。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "donut-chart-maker",
+    "module": "chart_studio",
+    "name": "环形图制作",
+    "category": "chart",
+    "summary": "适合展示占比关系，同时保留中间留白区域。",
+    "description": "支持名称、数值、颜色和中心统计展示，适合做结构占比和汇总型图表。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "bar-chart-maker",
+    "module": "chart_studio",
+    "name": "柱状图制作",
+    "category": "chart",
+    "summary": "按分类展示单组数据大小对比。",
+    "description": "适合做指标比较、销量排行和基础统计展示，支持网格、标签和导出。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "horizontal-bar-chart-maker",
+    "module": "chart_studio",
+    "name": "条形图制作",
+    "category": "chart",
+    "summary": "更适合名称较长的分类比较图表。",
+    "description": "横向排列更适合排行榜、部门名称或条目文案较长的场景。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "stacked-bar-chart-maker",
+    "module": "chart_studio",
+    "name": "堆叠柱状图制作",
+    "category": "chart",
+    "summary": "在同一分类中对比多组数据构成。",
+    "description": "适合查看各分类总量和内部占比关系，支持多系列堆叠展示。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "combo-chart-maker",
+    "module": "chart_studio",
+    "name": "折柱图制作",
+    "category": "chart",
+    "summary": "用柱状图和折线图同时展示两组相关指标。",
+    "description": "适合把总量和趋势放在一张图里，例如销量和转化率、访问量和成交量。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "line-chart-maker",
+    "module": "chart_studio",
+    "name": "折线图制作",
+    "category": "chart",
+    "summary": "适合展示变化趋势和时间序列走势。",
+    "description": "支持节点、标签和网格线，适合查看增长、波动和阶段变化。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "area-chart-maker",
+    "module": "chart_studio",
+    "name": "面积图制作",
+    "category": "chart",
+    "summary": "在折线趋势基础上强化体量感。",
+    "description": "适合展示累计规模、访问走势和阶段总量变化。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "stacked-area-chart-maker",
+    "module": "chart_studio",
+    "name": "堆叠面积图制作",
+    "category": "chart",
+    "summary": "展示多系列在时间或阶段上的叠加构成。",
+    "description": "适合看整体走势以及各组成部分的占比变化。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "scatter-chart-maker",
+    "module": "chart_studio",
+    "name": "散点图制作",
+    "category": "chart",
+    "summary": "展示两个数值维度之间的分布关系。",
+    "description": "适合看相关性、聚类分布和异常点，支持气泡大小维度。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "radar-chart-maker",
+    "module": "chart_studio",
+    "name": "雷达图制作",
+    "category": "chart",
+    "summary": "展示多个维度的综合能力或评分对比。",
+    "description": "适合人物画像、能力模型、产品维度评分等多指标场景。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "funnel-chart-maker",
+    "module": "chart_studio",
+    "name": "漏斗图制作",
+    "category": "chart",
+    "summary": "展示逐级转化或筛选过程。",
+    "description": "适合销售漏斗、注册转化、流程流失等层层递减场景。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "rose-chart-maker",
+    "module": "chart_studio",
+    "name": "南丁格尔玫瑰图制作",
+    "category": "chart",
+    "summary": "用半径变化强化各类目差异感。",
+    "description": "适合做视觉更强的占比与排序展示，兼具饼图和极坐标风格。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "heatmap-chart-maker",
+    "module": "chart_studio",
+    "name": "热力图制作",
+    "category": "chart",
+    "summary": "通过颜色深浅展示矩阵型强弱分布。",
+    "description": "适合星期与时段、页面与指标、地区与时段等双维数据。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "treemap-chart-maker",
+    "module": "chart_studio",
+    "name": "矩形树图制作",
+    "category": "chart",
+    "summary": "在一个画布里展示多类目的面积占比。",
+    "description": "适合看流量来源、预算分配、业务模块体量等面积对比关系。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "tree-chart-maker",
+    "module": "chart_studio",
+    "name": "树形图制作",
+    "category": "chart",
+    "summary": "用层级节点和连线展示树状结构关系。",
+    "description": "适合组织架构、栏目结构、模块关系和分层分类等层级可视化场景。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "sankey-chart-maker",
+    "module": "chart_studio",
+    "name": "桑基图制作",
+    "category": "chart",
+    "summary": "用流向宽度展示来源到去向之间的分配关系。",
+    "description": "适合看流量路径、预算去向、用户转化和流程流动等多阶段分配场景。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "word-cloud-maker",
+    "module": "chart_studio",
+    "name": "词云图制作",
+    "category": "chart",
+    "summary": "根据词频大小自动生成词云展示。",
+    "description": "适合关键词热度、评论高频词和标签热度的快速可视化。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "kline-chart-maker",
+    "module": "chart_studio",
+    "name": "K 线图制作",
+    "category": "chart",
+    "summary": "展示开高低收数据的蜡烛图。",
+    "description": "适合金融价格走势、区间波动和阶段收盘情况展示。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolChartStudio",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "dino-runner",
+    "module": "dino_runner",
+    "name": "恐龙快跑",
+    "category": "game",
+    "summary": "Chrome 断网小游戏风格的本地跑酷挑战。",
+    "description": "点击即玩，空格跳跃、下键下蹲，分数和最高纪录保存在当前浏览器。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolDinoRunner",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "keyboard-tester",
+    "module": "keyboard_tester",
+    "name": "键盘测试",
+    "category": "other",
+    "summary": "按下实体键盘时实时高亮对应键位，快速排查是否失灵。",
+    "description": "适合检测主键区、方向键和数字小键盘是否正常响应，不依赖后端执行。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolKeyboardTester",
+    "enabled": true,
+    "params": []
+  }
+]

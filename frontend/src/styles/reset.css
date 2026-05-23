@@ -1,0 +1,22 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+body,
+h1,
+h2,
+h3,
+p,
+pre {
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+}
