@@ -5,6 +5,7 @@ import { useRoute } from "vue-router";
 import { getTool } from "../api/tools.js";
 import LoadingState from "../components/LoadingState.vue";
 import SiteHeader from "../components/SiteHeader.vue";
+import ToolAbstractAppliance from "../components/ToolAbstractAppliance.vue";
 import ToolBrowserInfo from "../components/ToolBrowserInfo.vue";
 import ToolChartStudio from "../components/ToolChartStudio.vue";
 import ToolDateTimeCard from "../components/ToolDateTimeCard.vue";
@@ -15,6 +16,7 @@ import ToolFileForm from "../components/ToolFileForm.vue";
 import ToolHttpTester from "../components/ToolHttpTester.vue";
 import ToolKeyboardTester from "../components/ToolKeyboardTester.vue";
 import ToolLocalIpLookup from "../components/ToolLocalIpLookup.vue";
+import ToolMarketQuote from "../components/ToolMarketQuote.vue";
 import ToolOffWorkCountdown from "../components/ToolOffWorkCountdown.vue";
 import ToolOnlineCalendar from "../components/ToolOnlineCalendar.vue";
 import ToolResponsiveCheck from "../components/ToolResponsiveCheck.vue";
@@ -51,6 +53,7 @@ const formComponent = computed(() => {
   const componentMap = {
     ToolTextForm,
     ToolFileForm,
+    ToolAbstractAppliance,
     ToolBrowserInfo,
     ToolChartStudio,
     ToolDateIntervalCalculator,
@@ -58,6 +61,7 @@ const formComponent = computed(() => {
     ToolHttpTester,
     ToolKeyboardTester,
     ToolLocalIpLookup,
+    ToolMarketQuote,
     ToolOffWorkCountdown,
     ToolOnlineCalendar,
     ToolScheduleMemo,

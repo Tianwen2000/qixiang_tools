@@ -82,6 +82,9 @@ export function getToolModeLabel(tool) {
     return "时间工具";
   }
   if (tool?.input_mode === "local" && tool?.category === "other") {
+    if (tool?.component === "ToolAbstractAppliance") {
+      return "本地趣味";
+    }
     return "本地测试";
   }
   if (tool?.input_mode === "local" && tool?.category === "ops") {

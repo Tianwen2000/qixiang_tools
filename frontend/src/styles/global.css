@@ -711,6 +711,27 @@ textarea {
   line-height: 1.55;
 }
 
+.preview-option-thumb {
+  display: block;
+  width: 100%;
+  height: 96px;
+  margin-bottom: 2px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 1px solid rgba(197, 216, 235, 0.6);
+}
+
+/* “自动”用四季渐变缩略图（春绿 → 夏蓝 → 秋金 → 冬白）表示跟随节气 */
+.preview-option-thumb-auto {
+  background-image: linear-gradient(135deg, #bfe6d4 0%, #cdeaf5 34%, #f3e4b8 67%, #eef2f6 100%);
+}
+
+.preview-option-card.active .preview-option-thumb {
+  border-color: rgba(52, 214, 176, 0.6);
+}
+
 .preview-option-card.active {
   border-color: rgba(52, 214, 176, 0.52);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(228, 255, 245, 0.82) 56%, rgba(231, 240, 255, 0.74));
@@ -1043,6 +1064,39 @@ textarea {
 
   .ribbon-top {
     top: 16vh;
+  }
+
+  /* 分类导航在手机端改为单行横向滑动，避免换行铺多行占满屏幕 */
+  .site-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .site-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* 关掉顶栏玻璃模糊改实色：Android 键盘弹出 resize 时 backdrop-filter + fixed 会渲染错乱 */
+  .site-header {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  /* 高度跟随键盘动态变化（dvh），避免 100vh 不缩导致重排、卡片重叠；老浏览器自动回退 100vh */
+  .catalog-page,
+  .tool-detail-page,
+  #app,
+  .app-shell {
+    min-height: 100dvh;
   }
 }
 

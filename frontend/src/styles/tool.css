@@ -910,6 +910,40 @@
   font-weight: 600;
 }
 
+.solar-lunar-mode {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 460px;
+  padding: 6px;
+  border-radius: 18px;
+  border: 1px solid rgba(197, 216, 235, 0.78);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.solar-lunar-mode button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.solar-lunar-mode button.active {
+  background: linear-gradient(135deg, rgba(52, 214, 176, 0.96), rgba(30, 179, 207, 0.92));
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(43, 177, 190, 0.2);
+}
+
+.solar-lunar-lunar-inputs {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(160px, 1fr) minmax(150px, 0.8fr);
+  gap: 12px;
+  align-items: end;
+}
+
 .time-tool-toggle {
   display: inline-flex;
   align-items: center;
@@ -2198,6 +2232,29 @@
     justify-content: flex-start;
     width: fit-content;
   }
+
+  /* 通用表单参数区在手机端改单列，避免控件被挤成两列、输入框过窄 */
+  .param-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* 关掉卡片玻璃模糊改实色：修复 Android 键盘弹出时卡片重叠/渲染异常，并减少背景透出影响阅读 */
+  .tool-card,
+  .tool-form,
+  .result-panel,
+  .detail-actions-card {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  .detail-header,
+  .tool-form input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  .glass-select-trigger,
+  .glass-select-menu {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 @media (max-width: 560px) {
@@ -2243,6 +2300,12 @@
 
   .time-tool-card.wide {
     grid-column: auto;
+  }
+
+  .solar-lunar-mode,
+  .solar-lunar-lunar-inputs {
+    grid-template-columns: 1fr;
+    max-width: none;
   }
 
   .time-tool-calendar-week,

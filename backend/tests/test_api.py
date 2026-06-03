@@ -175,6 +175,8 @@ def test_meta_endpoints() -> None:
         "git-command-search",
         "docker-command-search",
     ]
+    assert "text-format-cleaner" in ops_tool_slugs
+    assert "invisible-control-chars" in ops_tool_slugs
     command_tool_items = [item for item in ops_tool_items if item["component"] == "ToolCommandCatalog"]
     assert all(item["input_mode"] == "local" for item in command_tool_items)
     assert any(
@@ -187,6 +189,17 @@ def test_meta_endpoints() -> None:
     local_tools = client.get("/api/tools", params={"category": "game"})
     assert local_tools.status_code == 200
     assert any(item["slug"] == "dino-runner" for item in local_tools.json()["data"])
+
+    other_tools = client.get("/api/tools", params={"category": "other"})
+    assert other_tools.status_code == 200
+    other_tool_items = other_tools.json()["data"]
+    other_tool_slugs = [item["slug"] for item in other_tool_items]
+    assert "market-quote" in other_tool_slugs
+    assert "douyin-id-extractor" in other_tool_slugs
+    assert "abstract-fan" in other_tool_slugs
+    assert "abstract-ac" in other_tool_slugs
+    assert any(item["slug"] == "market-quote" and item["component"] == "ToolMarketQuote" for item in other_tool_items)
+    assert any(item["slug"] == "abstract-fan" and item["component"] == "ToolAbstractAppliance" for item in other_tool_items)
 
     image_tools = client.get("/api/tools", params={"category": "image"})
     assert image_tools.status_code == 200
@@ -211,6 +224,117 @@ def test_local_ip_lookup_helpers() -> None:
     assert same["status"] == "same"
     assert split["status"] == "split"
     assert unknown["status"] == "unknown"
+
+
+def test_market_quote_helpers() -> None:
+    import httpx
+
+    from app.tools import market_quote
+
+    assert ("1.600519", "沪市") in market_quote._eastmoney_candidates("600519", "auto")
+    assert ("116.00700", "港股") in market_quote._eastmoney_candidates("HK00700", "auto")
+    assert ("105.AAPL", "美股") in market_quote._eastmoney_candidates("AAPL", "auto")
+
+    parsed = market_quote._parse_fund_response(
+        'jsonpgz({"fundcode":"110022","name":"易方达消费行业股票","jzrq":"2026-06-02","dwjz":"2.8930","gsz":"2.8491","gszzl":"-1.52","gztime":"2026-06-03 10:56"});'
+    )
+    assert parsed["fundcode"] == "110022"
+    assert parsed["gszzl"] == "-1.52"
+
+    robot_text = market_quote._build_robot_text(
+        [
+            {
+                "name": "贵州茅台",
+                "symbol": "600519",
+                "latest": 1281.01,
+                "currency": "CNY",
+                "change_percent": -2.01,
+                "change": -26.21,
+                "updated_at": "2026-06-03 10:59:32",
+                "source": "东方财富公开行情",
+            }
+        ],
+        [],
+    )
+    assert "贵州茅台(600519)" in robot_text
+    assert "东方财富公开行情" in robot_text
+
+    class FakeResponse:
+        def __init__(self, status_code: int, payload: dict) -> None:
+            self.status_code = status_code
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            if self.status_code < 400:
+                return
+            request = httpx.Request("GET", "https://example.test")
+            response = httpx.Response(self.status_code, request=request)
+            raise httpx.HTTPStatusError("mock error", request=request, response=response)
+
+        def json(self) -> dict:
+            return self._payload
+
+    class FakeClient:
+        def __init__(self) -> None:
+            self.urls: list[str] = []
+
+        def get(self, url: str, **_: object) -> FakeResponse:
+            self.urls.append(url)
+            if url == market_quote.EASTMONEY_URL:
+                return FakeResponse(502, {})
+            return FakeResponse(
+                200,
+                {
+                    "data": {
+                        "diff": [
+                            {
+                                "f1": 2,
+                                "f2": 693771,
+                                "f3": -116,
+                                "f4": -8132,
+                                "f5": 2348447,
+                                "f6": 15515966819.73,
+                                "f7": 218,
+                                "f8": 138,
+                                "f12": "399997",
+                                "f13": 0,
+                                "f14": "中证白酒",
+                                "f15": 699887,
+                                "f16": 684578,
+                                "f17": 698787,
+                                "f18": 701903,
+                                "f20": 2472012797975,
+                                "f21": 2471856071232,
+                                "f124": 1780474296,
+                                "f152": 2,
+                            }
+                        ]
+                    }
+                },
+            )
+
+    fake_client = FakeClient()
+    fallback_card, fallback_error = market_quote._query_eastmoney("399997", "auto", fake_client)  # type: ignore[arg-type]
+    assert fallback_error is None
+    assert fallback_card["name"] == "中证白酒"
+    assert fallback_card["latest"] == 6937.71
+    assert fake_client.urls == [market_quote.EASTMONEY_URL, market_quote.EASTMONEY_ULIST_URL]
+
+
+def test_douyin_id_extractor_execute_offline() -> None:
+    sec_uid = "MS4wLjABAAAAabcdef1234567890"
+    response = client.post(
+        "/api/tools/douyin-id-extractor/execute",
+        json={
+            "text": f"https://www.douyin.com/user/{sec_uid}?uid=123456789&unique_id=qixiang_tools",
+            "params": {"resolve_links": False},
+        },
+    )
+    assert response.status_code == 200
+    result = response.json()["data"]["result"]
+    assert sec_uid in result
+    assert "123456789" in result
+    assert "qixiang_tools" in result
 
 
 def test_json_format_execute() -> None:
@@ -1596,6 +1720,41 @@ def test_text_cleanup_and_conversion_tools_execute() -> None:
     )
     assert whitespace_response.status_code == 200
     assert whitespace_response.json()["data"]["result"] == "hello world\nsecond line"
+
+    format_cleaner_response = client.post(
+        "/api/tools/text-format-cleaner/execute",
+        json={"text": "  A\tB\u200b  \n\n  C\r\nD  ", "params": {}},
+    )
+    assert format_cleaner_response.status_code == 200
+    assert format_cleaner_response.json()["data"]["result"] == "A B C D"
+
+    keep_lines_response = client.post(
+        "/api/tools/text-format-cleaner/execute",
+        json={"text": "  A\tB\u200b  \n\n  C   D  ", "params": {"mode": "keep_lines"}},
+    )
+    assert keep_lines_response.status_code == 200
+    assert keep_lines_response.json()["data"]["result"] == "A B\nC D"
+
+    invisible_response = client.post(
+        "/api/tools/invisible-control-chars/execute",
+        json={"text": "", "params": {}},
+    )
+    assert invisible_response.status_code == 200
+    invisible_result = invisible_response.json()["data"]["result"]
+    assert "U+2028" in invisible_result
+    assert "LINE SEPARATOR" in invisible_result
+    assert "所有 Raw Char" in invisible_result
+    assert "以上是所有的不可见字符" in invisible_result
+
+    raw_only_response = client.post(
+        "/api/tools/invisible-control-chars/execute",
+        json={"text": "", "params": {"output_mode": "raw_only", "joiner": "comma"}},
+    )
+    assert raw_only_response.status_code == 200
+    raw_only_result = raw_only_response.json()["data"]["result"]
+    assert "、" in raw_only_result
+    assert "U+2028" not in raw_only_result
+    assert raw_only_result.endswith("以上是所有的不可见字符")
 
     punctuation_response = client.post(
         "/api/tools/punctuation-converter/execute",

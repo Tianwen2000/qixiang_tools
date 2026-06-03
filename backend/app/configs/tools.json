@@ -387,6 +387,102 @@
     "params": []
   },
   {
+    "slug": "text-format-cleaner",
+    "module": "text_format_cleaner",
+    "name": "文本格式清理",
+    "category": "ops",
+    "summary": "把复制来的多行文本、制表符和异常空白整理成干净文本。",
+    "description": "默认按一行输出：换行、制表符等格式符会转为空格，连续空白会合并为一个空格。也可选择保留换行，只整理每行内部空白。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "清理方式",
+        "type": "radio",
+        "default": "single_line",
+        "options": [
+          {
+            "label": "压成一行",
+            "value": "single_line"
+          },
+          {
+            "label": "保留换行",
+            "value": "keep_lines"
+          }
+        ]
+      },
+      {
+        "key": "remove_zero_width",
+        "label": "清除零宽字符",
+        "type": "radio",
+        "default": true,
+        "options": [
+          {
+            "label": "开启",
+            "value": true
+          },
+          {
+            "label": "关闭",
+            "value": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "invisible-control-chars",
+    "module": "invisible_control_chars",
+    "name": "隐形控制字符串打印",
+    "category": "ops",
+    "summary": "打印常见不可见字符、控制字符和双向文本控制符。",
+    "description": "无需输入即可生成 Unicode 对照表和一行可复制的 Raw 字符串，适合调试日志、复制污染、JS 分隔符和零宽字符问题。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "output_mode",
+        "label": "输出内容",
+        "type": "radio",
+        "default": "table_and_raw",
+        "options": [
+          {
+            "label": "表格 + Raw",
+            "value": "table_and_raw"
+          },
+          {
+            "label": "仅 Raw",
+            "value": "raw_only"
+          }
+        ]
+      },
+      {
+        "key": "joiner",
+        "label": "Raw 连接方式",
+        "type": "radio",
+        "default": "none",
+        "options": [
+          {
+            "label": "直接拼接",
+            "value": "none"
+          },
+          {
+            "label": "中文顿号",
+            "value": "comma"
+          },
+          {
+            "label": "逐行输出",
+            "value": "newline"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "slug": "local-ip-lookup",
     "module": "local_ip_lookup",
     "name": "本地ip查询",
@@ -6517,8 +6613,8 @@
     "module": "time_studio",
     "name": "公历农历日期转换",
     "category": "time",
-    "summary": "输入公历日期后快速查看当天的农历和日期信息。",
-    "description": "适合日常查询、日期核对和快速查看公历转农历的结果概览。",
+    "summary": "支持公历查农历、农历反查公历，并显示干支生肖年。",
+    "description": "适合日常查询、日期核对、农历生日反查和快速查看干支生肖年份。",
     "input_mode": "local",
     "result_type": "text",
     "component": "ToolSolarLunarViewer",
@@ -6886,6 +6982,58 @@
     "input_mode": "local",
     "result_type": "text",
     "component": "ToolDinoRunner",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "market-quote",
+    "module": "market_quote",
+    "name": "股票基金实时行情",
+    "category": "other",
+    "summary": "用 FastAPI 聚合免费公开行情端点，输出卡片、JSON 和机器人文本。",
+    "description": "支持 A 股、ETF/LOF、指数、场外基金、港股和部分美股代码，适合快速查看行情并复制结构化结果。",
+    "input_mode": "form",
+    "result_type": "text",
+    "component": "ToolMarketQuote",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "douyin-id-extractor",
+    "module": "douyin_id_extractor",
+    "name": "抖音 UID / sec_uid 提取",
+    "category": "other",
+    "summary": "粘贴抖音主页链接或「分享」短链，自动提取 uid、sec_uid 和抖音号。",
+    "description": "粘贴抖音主页链接或「分享」按钮复制的短链，会自动跟随跳转后提取 uid 与 sec_uid。注意：纯抖音号无法离线换算成 uid，请配合主页或分享链接使用。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "abstract-fan",
+    "module": "abstract_fan",
+    "name": "抽象小风扇",
+    "category": "other",
+    "summary": "纯前端小风扇按钮和风声合成。",
+    "description": "点击电源、档位、摆头和音量即可在浏览器里体验抽象小风扇，不依赖后端执行。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolAbstractAppliance",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "abstract-ac",
+    "module": "abstract_ac",
+    "name": "抽象小空调",
+    "category": "other",
+    "summary": "纯前端小空调按钮和空调声合成。",
+    "description": "包含电源、制冷/送风、温度、摆风和音量控制，声音由浏览器实时合成。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolAbstractAppliance",
     "enabled": true,
     "params": []
   },

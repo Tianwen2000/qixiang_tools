@@ -28,11 +28,11 @@ const currentModeLabel = computed(() => {
 });
 
 const previewOptions = [
-  { key: "auto", label: "自动", description: "恢复按节气自动切换" },
-  { key: "spring", label: "春分", description: "蓝绿晨雾、清透芽影、轻粒子与嫩芽气息" },
-  { key: "summer", label: "夏至", description: "薄荷绿意、清透水光、轻盈日影与微风" },
-  { key: "autumn", label: "秋分", description: "柔金暖光、淡杏叶影、清爽明亮的秋色" },
-  { key: "winter", label: "冬至", description: "雪白蓝光、霜面留白、雪粒微光与安静感" },
+  { key: "auto", label: "自动", description: "恢复按节气自动切换", image: "" },
+  { key: "spring", label: "春分", description: "樱花嫩绿、清透芽影与春日气息", image: "/wallpaper/spring.jpg" },
+  { key: "summer", label: "夏至", description: "蓝色水光、白花日影与清凉微风", image: "/wallpaper/summer.jpg" },
+  { key: "autumn", label: "秋分", description: "金黄落叶、暖光小路与明亮秋色", image: "/wallpaper/autumn.jpg" },
+  { key: "winter", label: "冬至", description: "雪白霜林、安静雪路与冬日微光", image: "/wallpaper/winter.jpg" },
 ];
 
 function applyPreviewMode(mode) {
@@ -82,8 +82,14 @@ onBeforeUnmount(() => {
           :class="{ active: previewMode === item.key }"
           @click="applyPreviewMode(item.key)"
         >
+          <span
+            class="preview-option-thumb"
+            :class="{ 'preview-option-thumb-auto': !item.image }"
+            :style="item.image ? { backgroundImage: `url(${item.image})` } : null"
+            aria-hidden="true"
+          ></span>
           <strong>{{ item.label }}</strong>
-          <span>{{ item.description }}</span>
+          <span class="preview-option-desc">{{ item.description }}</span>
         </button>
       </div>
     </section>
