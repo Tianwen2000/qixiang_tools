@@ -245,6 +245,7 @@ def test_market_quote_helpers() -> None:
     assert ("1.600519", "沪市") in market_quote._eastmoney_candidates("600519", "auto")
     assert ("116.00700", "港股") in market_quote._eastmoney_candidates("HK00700", "auto")
     assert ("105.AAPL", "美股") in market_quote._eastmoney_candidates("AAPL", "auto")
+    assert market_quote._sina_cn_symbol("2.931787") == "si931787"
 
     parsed = market_quote._parse_fund_response(
         'jsonpgz({"fundcode":"110022","name":"易方达消费行业股票","jzrq":"2026-06-02","dwjz":"2.8930","gsz":"2.8491","gszzl":"-1.52","gztime":"2026-06-03 10:56"});'

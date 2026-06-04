@@ -455,6 +455,8 @@ def _sina_cn_symbol(secid: str) -> str | None:
         return None
     if market_prefix in {"105", "106", "116", "150"}:
         return None
+    if market_prefix == "2":
+        return f"si{code}"
     if market_prefix == "1" or code.startswith(("5", "6", "9")):
         return f"sh{code}"
     return f"sz{code}"
