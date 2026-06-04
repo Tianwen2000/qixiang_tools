@@ -240,11 +240,57 @@ function buildLinePath(points, key) {
   return usable
     .map((point, index) => {
       const previous = usable[index - 1];
-      const isLargeGap = previous && point.absolute - previous.absolute > 30;
-      const command = index === 0 || isLargeGap ? "M" : "L";
+      // 同一交易日内（含午休）连续连线，仅跨交易日才断开
+      const crossDay = previous && previous.date && point.date && point.date !== previous.date;
+      const command = index === 0 || crossDay ? "M" : "L";
       return `${command}${point.x.toFixed(1)},${point[key].toFixed(1)}`;
     })
     .join(" ");
+}
+
+// 把交易时段拼接成连续 X 轴：午休等非交易段不占宽度，跨段处两侧映射到同一 x（视觉无缝衔接）
+function finalizeAxis(segments, ticks, firstPoint, lastPoint) {
+  const segs = segments.map((seg) => ({ start: seg.start, end: seg.end }));
+  // 扩展首末段以覆盖实际数据点（防盘前集合竞价/数据越界）
+  segs[0].start = Math.min(segs[0].start, firstPoint.absolute);
+  const tail = segs[segs.length - 1];
+  tail.end = Math.max(tail.end, lastPoint.absolute, tail.start + 1);
+
+  let total = 0;
+  const spans = segs.map((seg) => {
+    const before = total;
+    total += Math.max(0, seg.end - seg.start);
+    return { start: seg.start, end: seg.end, before };
+  });
+  total = Math.max(total, 1);
+
+  // 绝对分钟 -> 累计交易分钟（午休不计入长度）
+  const tradingIndex = (absolute) => {
+    let acc = 0;
+    for (const seg of spans) {
+      if (absolute <= seg.start) {
+        return seg.before;
+      }
+      if (absolute <= seg.end) {
+        return seg.before + (absolute - seg.start);
+      }
+      acc = seg.before + (seg.end - seg.start);
+    }
+    return acc;
+  };
+
+  const projectX = (absolute) => chartBox.left + (tradingIndex(absolute) / total) * chartInnerWidth;
+
+  return {
+    start: spans[0].start,
+    end: spans[spans.length - 1].end,
+    segments: spans,
+    totalTradingMinutes: total,
+    projectX,
+    ticks: ticks
+      .filter((tick) => tick && tick.absolute !== null && tick.absolute !== undefined)
+      .map((tick) => ({ ...tick, x: projectX(tick.absolute) })),
+  };
 }
 
 function makeMarketAxis(card, points, chart) {
@@ -253,55 +299,71 @@ function makeMarketAxis(card, points, chart) {
   const baseDate = chart?.trade_date || firstPoint.date || lastPoint.date;
   const region = String(card?.market_region || "").toUpperCase();
   const marketText = `${card?.market || ""}${card?.asset_type || ""}`;
-  const makeTick = (absolute, label = formatAbsoluteMinute(absolute)) => ({ absolute, label });
-  const makeWindow = (startClock, endClock, tickClocks) => {
-    const start = absoluteMinute(baseDate, startClock);
-    const end = absoluteMinute(baseDate, endClock);
-    if (start === null || end === null) {
-      return null;
-    }
-    const ticks = tickClocks
-      .map((clock) => {
-        const absolute = absoluteMinute(baseDate, clock);
-        return absolute === null ? null : makeTick(absolute, clock);
-      })
-      .filter(Boolean);
-    return { start, end, ticks };
-  };
+  const abs = (clock) => absoluteMinute(baseDate, clock);
 
-  let axis = null;
-  if (region === "HK" || marketText.includes("港股")) {
-    axis = makeWindow("09:30", "16:00", ["09:30", "10:30", "12:00", "13:00", "14:30", "16:00"]);
-  } else if (region === "US" || marketText.includes("美股") || marketText.includes("纳斯达克") || marketText.includes("纽交所")) {
+  // 美股：连续无午休
+  if (region === "US" || marketText.includes("美股") || marketText.includes("纳斯达克") || marketText.includes("纽交所")) {
     const start = firstPoint.absolute;
     const end = start + 390;
-    axis = {
-      start,
-      end,
-      ticks: [0, 90, 195, 300, 390].map((offset) => makeTick(start + offset)),
-    };
-  } else if (region === "CN" || marketText.includes("沪市") || marketText.includes("深市") || marketText.includes("指数")) {
-    axis = makeWindow("09:30", "15:00", ["09:30", "10:30", "11:30", "13:00", "14:00", "15:00"]);
+    const ticks = [0, 90, 195, 300, 390].map((offset) => ({ absolute: start + offset, label: formatAbsoluteMinute(start + offset) }));
+    return finalizeAxis([{ start, end }], ticks, firstPoint, lastPoint);
   }
 
-  const fallback = {
-    start: firstPoint.absolute,
-    end: lastPoint.absolute,
-    ticks: [0, 0.25, 0.5, 0.75, 1].map((position) => {
-      const absolute = firstPoint.absolute + (lastPoint.absolute - firstPoint.absolute) * position;
-      return makeTick(absolute);
-    }),
-  };
-  const resolved = axis || fallback;
-  resolved.start = Math.min(resolved.start, firstPoint.absolute);
-  resolved.end = Math.max(resolved.end, lastPoint.absolute, resolved.start + 1);
-  resolved.ticks = resolved.ticks
-    .filter((tick) => tick.absolute >= resolved.start && tick.absolute <= resolved.end)
-    .map((tick) => ({
-      ...tick,
-      x: chartBox.left + ((tick.absolute - resolved.start) / (resolved.end - resolved.start)) * chartInnerWidth,
-    }));
-  return resolved;
+  // 港股 / A 股：午休在 X 轴上不占宽度，分界处用合并刻度
+  let spec = null;
+  if (region === "HK" || marketText.includes("港股")) {
+    spec = {
+      segments: [["09:30", "12:00"], ["13:00", "16:00"]],
+      ticks: [
+        { clock: "09:30" },
+        { clock: "10:45" },
+        { clock: "12:00", label: "12:00 / 13:00" },
+        { clock: "14:30" },
+        { clock: "16:00" },
+      ],
+    };
+  } else if (
+    region === "CN" ||
+    marketText.includes("沪市") ||
+    marketText.includes("深市") ||
+    marketText.includes("北交所") ||
+    marketText.includes("指数") ||
+    marketText.includes("基金")
+  ) {
+    spec = {
+      segments: [["09:30", "11:30"], ["13:00", "15:00"]],
+      ticks: [
+        { clock: "09:30" },
+        { clock: "10:30" },
+        { clock: "11:30", label: "11:30 / 13:00" },
+        { clock: "14:00" },
+        { clock: "15:00" },
+      ],
+    };
+  }
+
+  if (spec) {
+    const segments = spec.segments
+      .map(([s, e]) => ({ start: abs(s), end: abs(e) }))
+      .filter((seg) => seg.start !== null && seg.end !== null);
+    if (segments.length === spec.segments.length) {
+      const ticks = spec.ticks
+        .map((t) => {
+          const absolute = abs(t.clock);
+          return absolute === null ? null : { absolute, label: t.label || t.clock };
+        })
+        .filter(Boolean);
+      return finalizeAxis(segments, ticks, firstPoint, lastPoint);
+    }
+  }
+
+  // 兜底：单段按首末点
+  const fallbackEnd = Math.max(lastPoint.absolute, firstPoint.absolute + 1);
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((position) => {
+    const absolute = firstPoint.absolute + (fallbackEnd - firstPoint.absolute) * position;
+    return { absolute, label: formatAbsoluteMinute(absolute) };
+  });
+  return finalizeAxis([{ start: firstPoint.absolute, end: fallbackEnd }], ticks, firstPoint, lastPoint);
 }
 
 function buildChartTimeText(chart, points, axis) {
@@ -327,7 +389,7 @@ function withUnit(value, unit) {
 }
 
 function volumeBarWidth(axis, pointCount) {
-  const duration = Math.max(axis.end - axis.start, pointCount, 1);
+  const duration = Math.max(axis.totalTradingMinutes || (axis.end - axis.start), pointCount, 1);
   return Math.max(1, Math.min(4, (chartInnerWidth / duration) * 0.7));
 }
 
@@ -388,7 +450,7 @@ function buildChartModel(card) {
   }
 
   const maxVolume = Math.max(...visiblePoints.map((point) => point.volume), 1);
-  const xFor = (absolute) => chartBox.left + ((absolute - axis.start) / (axis.end - axis.start)) * chartInnerWidth;
+  const xFor = axis.projectX;
   const yForPrice = (value) => chartBox.priceTop + ((maxPrice - value) / (maxPrice - minPrice)) * chartBox.priceHeight;
   const yForVolume = (value) => chartBox.volumeTop + (1 - value / maxVolume) * chartBox.volumeHeight;
   const barWidth = volumeBarWidth(axis, visiblePoints.length);
