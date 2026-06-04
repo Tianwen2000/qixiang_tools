@@ -4847,6 +4847,314 @@
     ]
   },
   {
+    "slug": "image-compressor",
+    "module": "image_compressor",
+    "name": "图片压缩",
+    "category": "image",
+    "summary": "支持按目标 KB 压缩体积，或按倍数缩小宽高尺寸。",
+    "description": "和图片增大反向对应：可选择压缩图片文件体积，或保持宽高比缩小图片尺寸。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "压缩方式",
+        "type": "radio",
+        "default": "byte_size",
+        "options": [
+          {
+            "label": "体积 KB 压缩",
+            "value": "byte_size"
+          },
+          {
+            "label": "宽高尺寸缩小",
+            "value": "dimensions"
+          }
+        ]
+      },
+      {
+        "key": "target_kb",
+        "label": "目标大小 KB",
+        "type": "text",
+        "default": "50%",
+        "showWhen": {
+          "mode": "byte_size"
+        },
+        "placeholder": "例如：512，或 50%"
+      },
+      {
+        "key": "scale",
+        "label": "宽高缩小倍数",
+        "type": "radio",
+        "default": 2,
+        "showWhen": {
+          "mode": "dimensions"
+        },
+        "options": [
+          {
+            "label": "缩小 2 倍",
+            "value": 2
+          },
+          {
+            "label": "缩小 3 倍",
+            "value": 3
+          },
+          {
+            "label": "缩小 4 倍",
+            "value": 4
+          },
+          {
+            "label": "缩小 10 倍",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-upscaler",
+    "module": "image_upscaler",
+    "name": "图片增大",
+    "category": "image",
+    "summary": "支持按目标 KB 增大体积，或按倍数增大宽高尺寸。",
+    "description": "可选择增大图片文件体积，或保持宽高比放大图片尺寸。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "增大方式",
+        "type": "radio",
+        "default": "byte_size",
+        "options": [
+          {
+            "label": "体积 KB 增大",
+            "value": "byte_size"
+          },
+          {
+            "label": "宽高尺寸增大",
+            "value": "dimensions"
+          }
+        ]
+      },
+      {
+        "key": "target_kb",
+        "label": "目标大小 KB",
+        "type": "text",
+        "default": 1024,
+        "showWhen": {
+          "mode": "byte_size"
+        },
+        "placeholder": "例如：2048，表示 2MB"
+      },
+      {
+        "key": "scale",
+        "label": "宽高倍数",
+        "type": "radio",
+        "default": 2,
+        "showWhen": {
+          "mode": "dimensions"
+        },
+        "options": [
+          {
+            "label": "2 倍",
+            "value": 2
+          },
+          {
+            "label": "3 倍",
+            "value": 3
+          },
+          {
+            "label": "4 倍",
+            "value": 4
+          },
+          {
+            "label": "10 倍",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-background-remover",
+    "module": "image_background_remover",
+    "name": "图片抠图",
+    "category": "image",
+    "summary": "支持快速抠图和智能抠图，并可输出透明底或棋盘格预览图。",
+    "description": "快速模式适合白底和浅底图片，智能模式更适合复杂背景，棋盘格预览方便检查边缘效果。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "抠图模式",
+        "type": "radio",
+        "default": "smart",
+        "options": [
+          {
+            "label": "智能抠图",
+            "value": "smart"
+          },
+          {
+            "label": "快速抠图",
+            "value": "simple"
+          }
+        ]
+      },
+      {
+        "key": "strength",
+        "label": "抠图强度",
+        "type": "radio",
+        "default": "standard",
+        "options": [
+          {
+            "label": "柔和",
+            "value": "gentle"
+          },
+          {
+            "label": "标准",
+            "value": "standard"
+          },
+          {
+            "label": "加强",
+            "value": "strong"
+          }
+        ]
+      },
+      {
+        "key": "output_background",
+        "label": "输出背景",
+        "type": "radio",
+        "default": "transparent",
+        "options": [
+          {
+            "label": "透明底 PNG",
+            "value": "transparent"
+          },
+          {
+            "label": "黑白棋盘格",
+            "value": "checkerboard"
+          }
+        ]
+      },
+      {
+        "key": "trim_border",
+        "label": "裁掉透明边缘",
+        "type": "radio",
+        "default": "yes",
+        "options": [
+          {
+            "label": "是",
+            "value": "yes"
+          },
+          {
+            "label": "否",
+            "value": "no"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "image-inspector",
+    "module": "image_inspector",
+    "name": "图片详情查看",
+    "category": "image",
+    "summary": "在浏览器本地查看图片的体积、尺寸、宽高比、格式等信息，不上传服务器。",
+    "description": "本地读取图片的文件大小、宽高、宽高比（标准比或最近似比）、像素总量、真实格式（按文件头识别）、是否支持透明等信息，全程不上传、不依赖后端。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolImageInspector",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "image-resizer",
+    "module": "image_resizer",
+    "name": "图片像素比调整",
+    "category": "image",
+    "summary": "自定义图片的像素尺寸或宽高比，直接拉伸重塑（会改变比例、可能变形）。",
+    "description": "按目标宽×高（如 640×640 → 750×400）或目标宽高比（如 3:4 → 9:16）重塑图片，直接拉伸重采样、不裁剪不补边，会改变画面比例甚至变形，适合需要强行改尺寸/比例的场景。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "mode",
+        "label": "调整方式",
+        "type": "select",
+        "default": "size",
+        "options": [
+          {
+            "label": "自定义像素（宽×高）",
+            "value": "size"
+          },
+          {
+            "label": "自定义宽高比",
+            "value": "ratio"
+          }
+        ]
+      },
+      {
+        "key": "width",
+        "label": "目标宽度（像素）",
+        "type": "text",
+        "default": "",
+        "placeholder": "如 750",
+        "showWhen": {
+          "mode": "size"
+        }
+      },
+      {
+        "key": "height",
+        "label": "目标高度（像素）",
+        "type": "text",
+        "default": "",
+        "placeholder": "如 400",
+        "showWhen": {
+          "mode": "size"
+        }
+      },
+      {
+        "key": "ratio",
+        "label": "目标宽高比",
+        "type": "text",
+        "default": "",
+        "placeholder": "如 9:16",
+        "showWhen": {
+          "mode": "ratio"
+        }
+      },
+      {
+        "key": "ratio_base",
+        "label": "基准边",
+        "type": "select",
+        "default": "width",
+        "options": [
+          {
+            "label": "保持原宽度，改高度",
+            "value": "width"
+          },
+          {
+            "label": "保持原高度，改宽度",
+            "value": "height"
+          }
+        ],
+        "showWhen": {
+          "mode": "ratio"
+        }
+      }
+    ]
+  },
+  {
     "slug": "art-qr-generator",
     "module": "art_qr_generator",
     "name": "艺术二维码生成",
@@ -5246,140 +5554,6 @@
           {
             "label": "4 列",
             "value": 4
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "image-compressor",
-    "module": "image_compressor",
-    "name": "图片压缩",
-    "category": "image",
-    "summary": "支持按目标 KB 压缩体积，或按倍数缩小宽高尺寸。",
-    "description": "和图片增大反向对应：可选择压缩图片文件体积，或保持宽高比缩小图片尺寸。",
-    "input_mode": "file",
-    "result_type": "file",
-    "component": "ToolFileForm",
-    "enabled": true,
-    "params": [
-      {
-        "key": "mode",
-        "label": "压缩方式",
-        "type": "radio",
-        "default": "byte_size",
-        "options": [
-          {
-            "label": "体积 KB 压缩",
-            "value": "byte_size"
-          },
-          {
-            "label": "宽高尺寸缩小",
-            "value": "dimensions"
-          }
-        ]
-      },
-      {
-        "key": "target_kb",
-        "label": "目标大小 KB",
-        "type": "text",
-        "default": "50%",
-        "showWhen": {
-          "mode": "byte_size"
-        },
-        "placeholder": "例如：512，或 50%"
-      },
-      {
-        "key": "scale",
-        "label": "宽高缩小倍数",
-        "type": "radio",
-        "default": 2,
-        "showWhen": {
-          "mode": "dimensions"
-        },
-        "options": [
-          {
-            "label": "缩小 2 倍",
-            "value": 2
-          },
-          {
-            "label": "缩小 3 倍",
-            "value": 3
-          },
-          {
-            "label": "缩小 4 倍",
-            "value": 4
-          },
-          {
-            "label": "缩小 10 倍",
-            "value": 10
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "image-upscaler",
-    "module": "image_upscaler",
-    "name": "图片增大",
-    "category": "image",
-    "summary": "支持按目标 KB 增大体积，或按倍数增大宽高尺寸。",
-    "description": "可选择增大图片文件体积，或保持宽高比放大图片尺寸。",
-    "input_mode": "file",
-    "result_type": "file",
-    "component": "ToolFileForm",
-    "enabled": true,
-    "params": [
-      {
-        "key": "mode",
-        "label": "增大方式",
-        "type": "radio",
-        "default": "byte_size",
-        "options": [
-          {
-            "label": "体积 KB 增大",
-            "value": "byte_size"
-          },
-          {
-            "label": "宽高尺寸增大",
-            "value": "dimensions"
-          }
-        ]
-      },
-      {
-        "key": "target_kb",
-        "label": "目标大小 KB",
-        "type": "text",
-        "default": 1024,
-        "showWhen": {
-          "mode": "byte_size"
-        },
-        "placeholder": "例如：2048，表示 2MB"
-      },
-      {
-        "key": "scale",
-        "label": "宽高倍数",
-        "type": "radio",
-        "default": 2,
-        "showWhen": {
-          "mode": "dimensions"
-        },
-        "options": [
-          {
-            "label": "2 倍",
-            "value": 2
-          },
-          {
-            "label": "3 倍",
-            "value": 3
-          },
-          {
-            "label": "4 倍",
-            "value": 4
-          },
-          {
-            "label": "10 倍",
-            "value": 10
           }
         ]
       }
@@ -6356,88 +6530,6 @@
     "component": "ToolFileForm",
     "enabled": true,
     "params": []
-  },
-  {
-    "slug": "image-background-remover",
-    "module": "image_background_remover",
-    "name": "图片抠图",
-    "category": "image",
-    "summary": "支持快速抠图和智能抠图，并可输出透明底或棋盘格预览图。",
-    "description": "快速模式适合白底和浅底图片，智能模式更适合复杂背景，棋盘格预览方便检查边缘效果。",
-    "input_mode": "file",
-    "result_type": "file",
-    "component": "ToolFileForm",
-    "enabled": true,
-    "params": [
-      {
-        "key": "mode",
-        "label": "抠图模式",
-        "type": "radio",
-        "default": "smart",
-        "options": [
-          {
-            "label": "智能抠图",
-            "value": "smart"
-          },
-          {
-            "label": "快速抠图",
-            "value": "simple"
-          }
-        ]
-      },
-      {
-        "key": "strength",
-        "label": "抠图强度",
-        "type": "radio",
-        "default": "standard",
-        "options": [
-          {
-            "label": "柔和",
-            "value": "gentle"
-          },
-          {
-            "label": "标准",
-            "value": "standard"
-          },
-          {
-            "label": "加强",
-            "value": "strong"
-          }
-        ]
-      },
-      {
-        "key": "output_background",
-        "label": "输出背景",
-        "type": "radio",
-        "default": "transparent",
-        "options": [
-          {
-            "label": "透明底 PNG",
-            "value": "transparent"
-          },
-          {
-            "label": "黑白棋盘格",
-            "value": "checkerboard"
-          }
-        ]
-      },
-      {
-        "key": "trim_border",
-        "label": "裁掉透明边缘",
-        "type": "radio",
-        "default": "yes",
-        "options": [
-          {
-            "label": "是",
-            "value": "yes"
-          },
-          {
-            "label": "否",
-            "value": "no"
-          }
-        ]
-      }
-    ]
   },
   {
     "slug": "image-to-base64",

@@ -28,6 +28,7 @@ IMAGE_TOOL_SLUGS = {
     "flag-avatar-generator",
     "image-upscaler",
     "image-background-remover",
+    "image-resizer",
 }
 IMAGE_COMPRESSOR_EXTRA_SUFFIXES = {"heic", "heif"}
 ZIP_IMAGE_TOOL_SLUGS = {

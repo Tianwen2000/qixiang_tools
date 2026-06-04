@@ -14,6 +14,7 @@ import ToolDetailActions from "../components/ToolDetailActions.vue";
 import ToolDinoRunner from "../components/ToolDinoRunner.vue";
 import ToolFileForm from "../components/ToolFileForm.vue";
 import ToolHttpTester from "../components/ToolHttpTester.vue";
+import ToolImageInspector from "../components/ToolImageInspector.vue";
 import ToolKeyboardTester from "../components/ToolKeyboardTester.vue";
 import ToolLocalIpLookup from "../components/ToolLocalIpLookup.vue";
 import ToolMarketQuote from "../components/ToolMarketQuote.vue";
@@ -59,6 +60,7 @@ const formComponent = computed(() => {
     ToolDateIntervalCalculator,
     ToolDinoRunner,
     ToolHttpTester,
+    ToolImageInspector,
     ToolKeyboardTester,
     ToolLocalIpLookup,
     ToolMarketQuote,
