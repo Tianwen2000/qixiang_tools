@@ -423,6 +423,7 @@ def test_market_quote_helpers() -> None:
         (market_quote.EASTMONEY_URL, "1.931787"),
         (market_quote.EASTMONEY_ULIST_URL, "1.931787"),
         (market_quote.EASTMONEY_TRENDS_URL, "1.931787"),
+        (market_quote.EASTMONEY_KLINE_URL, "1.931787"),
         (market_quote.EASTMONEY_URL, "2.931787"),
         (market_quote.EASTMONEY_ULIST_URL, "2.931787"),
         (market_quote.EASTMONEY_TRENDS_URL, "2.931787"),
@@ -467,6 +468,50 @@ def test_market_quote_helpers() -> None:
         (market_quote.EASTMONEY_URL, "0.399997"),
         (market_quote.EASTMONEY_ULIST_URL, "0.399997"),
         (market_quote.EASTMONEY_TRENDS_URL, "0.399997"),
+    ]
+
+    class KlineOnlyClient:
+        def __init__(self) -> None:
+            self.requests: list[tuple[str, str]] = []
+
+        def get(self, url: str, **kwargs: object) -> FakeResponse:
+            params = kwargs.get("params")
+            params = params if isinstance(params, dict) else {}
+            secid = str(params.get("secid") or params.get("secids") or "")
+            self.requests.append((url, secid))
+            if url in {market_quote.EASTMONEY_URL, market_quote.EASTMONEY_ULIST_URL}:
+                return FakeResponse(502, {})
+            if url == market_quote.EASTMONEY_TRENDS_URL:
+                return FakeResponse(200, {"data": {}})
+            return FakeResponse(
+                200,
+                {
+                    "data": {
+                        "code": "399997",
+                        "name": "中证白酒",
+                        "market": 0,
+                        "klines": [
+                            "2026-06-01,7000.00,7010.00,7030.00,6990.00,1000,1000000.00,1.00,0.10,7.00,0.10",
+                            "2026-06-02,7010.00,6990.00,7020.00,6980.00,1200,1200000.00,1.00,-0.29,-20.00,0.12",
+                            "2026-06-03,6990.00,6899.51,7000.00,6880.00,1400,1400000.00,1.00,-1.29,-90.49,0.14",
+                        ],
+                    }
+                },
+            )
+
+    kline_client = KlineOnlyClient()
+    kline_card, kline_error = market_quote._query_eastmoney("399997", "auto", kline_client)  # type: ignore[arg-type]
+    assert kline_error is None
+    assert kline_card["name"] == "中证白酒"
+    assert kline_card["latest"] == 6899.51
+    assert kline_card["previous_close"] == 6990.0
+    assert kline_card["chart"]["kind"] == "daily_kline"
+    assert kline_card["chart"]["points"][-1] == ["2026-06-03", 6899.51, 6966.5033, 1400.0]
+    assert kline_client.requests == [
+        (market_quote.EASTMONEY_URL, "0.399997"),
+        (market_quote.EASTMONEY_ULIST_URL, "0.399997"),
+        (market_quote.EASTMONEY_TRENDS_URL, "0.399997"),
+        (market_quote.EASTMONEY_KLINE_URL, "0.399997"),
     ]
 
 

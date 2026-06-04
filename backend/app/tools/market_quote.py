@@ -1,5 +1,7 @@
 import json
 import re
+import urllib.parse
+import urllib.request
 from datetime import datetime
 from typing import Any
 
@@ -43,6 +45,7 @@ EASTMONEY_URL = "https://push2.eastmoney.com/api/qt/stock/get"
 EASTMONEY_ULIST_URL = "https://push2.eastmoney.com/api/qt/ulist.np/get"
 EASTMONEY_SUGGEST_URL = "https://searchapi.eastmoney.com/api/suggest/get"
 EASTMONEY_TRENDS_URL = "https://push2his.eastmoney.com/api/qt/stock/trends2/get"
+EASTMONEY_KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 FUND_URL_TEMPLATE = "https://fundgz.1234567.com.cn/js/{code}.js"
 EASTMONEY_UT_TOKEN = "fa5fd1943c7b386f172d6893dbfba10b"
 EASTMONEY_SEARCH_TOKEN = "D43BF722C8E33C743DEC4FA52FCA5277"
@@ -84,6 +87,8 @@ EASTMONEY_ULIST_FIELDS = ",".join(
 )
 EASTMONEY_TRENDS_FIELDS1 = "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13"
 EASTMONEY_TRENDS_FIELDS2 = "f51,f52,f53,f54,f55,f56,f57,f58"
+EASTMONEY_KLINE_FIELDS1 = "f1,f2,f3,f4,f5,f6"
+EASTMONEY_KLINE_FIELDS2 = "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61"
 
 
 def _split_symbols(text: str) -> list[str]:
@@ -283,6 +288,39 @@ def _format_timestamp(value: Any) -> str:
     return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _request_json(
+    client: httpx.Client,
+    url: str,
+    params: dict[str, Any],
+    headers: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    request_headers = headers or DEFAULT_HEADERS
+    try:
+        response = client.get(url, params=params, headers=request_headers)
+        response.raise_for_status()
+        payload = response.json()
+        if isinstance(payload, dict):
+            return payload
+    except Exception:
+        pass
+
+    query = urllib.parse.urlencode(params)
+    request = urllib.request.Request(
+        f"{url}?{query}",
+        headers={
+            "User-Agent": request_headers.get("User-Agent", DEFAULT_HEADERS["User-Agent"]),
+            "Accept": request_headers.get("Accept", DEFAULT_HEADERS["Accept"]),
+            "Referer": request_headers.get("Referer", DEFAULT_HEADERS["Referer"]),
+        },
+    )
+    with urllib.request.urlopen(request, timeout=8) as response:
+        body = response.read().decode("utf-8", errors="replace")
+    payload = json.loads(body)
+    if not isinstance(payload, dict):
+        raise ValueError("JSON 根节点不是对象")
+    return payload
+
+
 def _sample_chart_points(points: list[list[Any]], max_points: int = MAX_CHART_POINTS) -> list[list[Any]]:
     if len(points) <= max_points:
         return points
@@ -327,9 +365,34 @@ def _parse_trend_item(value: Any) -> list[Any] | None:
     ]
 
 
+def _parse_kline_item(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, str):
+        return None
+
+    parts = value.split(",")
+    if len(parts) < 6:
+        return None
+
+    date_text = parts[0].strip()
+    close = _plain_number(parts[2])
+    if not date_text or close is None:
+        return None
+
+    return {
+        "date": date_text,
+        "open": _plain_number(parts[1]),
+        "close": close,
+        "high": _plain_number(parts[3]),
+        "low": _plain_number(parts[4]),
+        "volume": _plain_number(parts[5]) or 0,
+        "amount": _plain_number(parts[6]) if len(parts) > 6 else None,
+    }
+
+
 def _query_intraday_chart(secid: str, client: httpx.Client) -> dict[str, Any] | None:
     try:
-        response = client.get(
+        payload = _request_json(
+            client,
             EASTMONEY_TRENDS_URL,
             params={
                 "secid": secid,
@@ -341,8 +404,6 @@ def _query_intraday_chart(secid: str, client: httpx.Client) -> dict[str, Any] | 
                 "iscca": 0,
             },
         )
-        response.raise_for_status()
-        payload = response.json()
     except Exception:
         return None
 
@@ -386,17 +447,84 @@ def _query_intraday_chart(secid: str, client: httpx.Client) -> dict[str, Any] | 
     }
 
 
+def _query_daily_kline_chart(secid: str, client: httpx.Client) -> dict[str, Any] | None:
+    try:
+        payload = _request_json(
+            client,
+            EASTMONEY_KLINE_URL,
+            params={
+                "secid": secid,
+                "fields1": EASTMONEY_KLINE_FIELDS1,
+                "fields2": EASTMONEY_KLINE_FIELDS2,
+                "ut": EASTMONEY_UT_TOKEN,
+                "klt": 101,
+                "fqt": 1,
+                "beg": f"{datetime.now().year - 1}0101",
+                "end": "20500101",
+            },
+        )
+    except Exception:
+        return None
+
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, dict):
+        return None
+
+    raw_klines = data.get("klines")
+    if not isinstance(raw_klines, list):
+        return None
+
+    parsed_items = [item for item in (_parse_kline_item(value) for value in raw_klines) if item]
+    if len(parsed_items) < 2:
+        return None
+
+    visible_items = parsed_items[-MAX_CHART_POINTS:]
+    points = []
+    for index, item in enumerate(visible_items):
+        window = visible_items[max(0, index - 4) : index + 1]
+        close_values = [_plain_number(row.get("close")) for row in window]
+        close_values = [value for value in close_values if value is not None]
+        ma5 = round(sum(close_values) / len(close_values), 4) if close_values else None
+        points.append([item["date"], item["close"], ma5, item["volume"]])
+
+    latest_bar = visible_items[-1]
+    previous_bar = parsed_items[-2]
+    start_time = str(points[0][0])
+    end_time = str(points[-1][0])
+
+    return {
+        "kind": "daily_kline",
+        "point_format": ["date", "close", "ma5", "volume"],
+        "code": str(data.get("code") or ""),
+        "name": str(data.get("name") or ""),
+        "market_code": _int_number(data.get("market")),
+        "points": points,
+        "point_count": len(parsed_items),
+        "sampled": len(parsed_items) > MAX_CHART_POINTS,
+        "pre_close": previous_bar.get("close"),
+        "start_time": start_time,
+        "end_time": end_time,
+        "trade_date": end_time,
+        "time_range": f"{start_time} - {end_time}",
+        "updated_at": end_time,
+        "source": "东方财富日K行情",
+        "source_url": f"{EASTMONEY_KLINE_URL}?secid={secid}",
+        "latest_bar": latest_bar,
+        "previous_bar": previous_bar,
+    }
+
+
 def _attach_intraday_chart(card: dict[str, Any], secid: str, client: httpx.Client) -> dict[str, Any]:
-    chart = _query_intraday_chart(secid, client)
+    chart = _query_intraday_chart(secid, client) or _query_daily_kline_chart(secid, client)
     if chart:
         card["chart"] = chart
     return card
 
 
 def _query_eastmoney_trends_quote(secid: str, client: httpx.Client) -> tuple[dict[str, Any] | None, str | None]:
-    chart = _query_intraday_chart(secid, client)
+    chart = _query_intraday_chart(secid, client) or _query_daily_kline_chart(secid, client)
     if not chart:
-        return None, f"{secid} 分时端点暂无数据"
+        return None, f"{secid} 图表端点暂无数据"
 
     _market_prefix, _, secid_code = secid.partition(".")
     code = str(chart.get("code") or secid_code)
@@ -406,13 +534,14 @@ def _query_eastmoney_trends_quote(secid: str, client: httpx.Client) -> tuple[dic
         market_code = _int_number(_market_prefix)
     market_label, market_region, currency = _market_label(market_code, code)
 
+    latest_bar = chart.get("latest_bar") if isinstance(chart.get("latest_bar"), dict) else {}
     points = chart.get("points") if isinstance(chart.get("points"), list) else []
     prices = [_plain_number(point[1]) for point in points if isinstance(point, list) and len(point) > 1]
     prices = [price for price in prices if price is not None]
     if len(prices) < 2:
-        return None, f"{secid} 分时端点暂无有效价格"
+        return None, f"{secid} 图表端点暂无有效价格"
 
-    latest = prices[-1]
+    latest = _plain_number(latest_bar.get("close")) or prices[-1]
     previous_close = _plain_number(chart.get("pre_close"))
     change = round(latest - previous_close, 4) if previous_close else None
     change_percent = round(change / previous_close * 100, 2) if change is not None and previous_close else None
@@ -428,16 +557,16 @@ def _query_eastmoney_trends_quote(secid: str, client: httpx.Client) -> tuple[dic
         "latest": latest,
         "change": change,
         "change_percent": change_percent,
-        "open": prices[0],
-        "high": max(prices),
-        "low": min(prices),
+        "open": _plain_number(latest_bar.get("open")) or prices[0],
+        "high": _plain_number(latest_bar.get("high")) or max(prices),
+        "low": _plain_number(latest_bar.get("low")) or min(prices),
         "previous_close": previous_close,
         "volume": sum(_plain_number(point[3]) or 0 for point in points if isinstance(point, list) and len(point) > 3),
-        "amount": None,
+        "amount": _plain_number(latest_bar.get("amount")),
         "updated_at": chart.get("updated_at") or chart.get("end_time") or "",
-        "source": "东方财富分时行情",
+        "source": chart.get("source") or "东方财富图表行情",
         "provider": "eastmoney",
-        "source_url": f"{EASTMONEY_TRENDS_URL}?secid={secid}",
+        "source_url": chart.get("source_url") or f"{EASTMONEY_KLINE_URL}?secid={secid}",
         "chart": chart,
     }
     return card, None

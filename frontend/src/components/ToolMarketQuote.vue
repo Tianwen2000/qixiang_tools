@@ -175,6 +175,19 @@ function dateToDayNumber(dateText) {
   return Math.floor(Date.UTC(Number(year), Number(month) - 1, Number(day)) / 86400000);
 }
 
+function dayNumberToDateText(dayNumber) {
+  const date = new Date(Math.round(dayNumber) * 86400000);
+  const year = date.getUTCFullYear();
+  const month = padTime(date.getUTCMonth() + 1);
+  const day = padTime(date.getUTCDate());
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateLabel(dateText) {
+  const matched = String(dateText || "").match(/^\d{4}-(\d{2})-(\d{2})$/);
+  return matched ? `${matched[1]}/${matched[2]}` : dateText || "--";
+}
+
 function clockToMinute(value) {
   const matched = String(value || "").match(/^(\d{1,2}):(\d{2})$/);
   if (!matched) {
@@ -206,6 +219,17 @@ function normalizeChartTime(value) {
   const raw = String(value || "");
   const matched = raw.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
   if (!matched) {
+    const dateOnlyMatched = raw.match(/^(\d{4}-\d{2}-\d{2})$/);
+    if (dateOnlyMatched) {
+      const day = dateToDayNumber(dateOnlyMatched[1]);
+      return {
+        raw,
+        date: dateOnlyMatched[1],
+        axis: formatDateLabel(dateOnlyMatched[1]),
+        compact: raw,
+        absolute: day === null ? null : day * 1440,
+      };
+    }
     return {
       raw,
       date: "",
@@ -241,7 +265,7 @@ function buildLinePath(points, key) {
     .map((point, index) => {
       const previous = usable[index - 1];
       // 同一交易日内（含午休）连续连线，仅跨交易日才断开
-      const crossDay = previous && previous.date && point.date && point.date !== previous.date;
+      const crossDay = !point.isDaily && previous && previous.date && point.date && point.date !== previous.date;
       const command = index === 0 || crossDay ? "M" : "L";
       return `${command}${point.x.toFixed(1)},${point[key].toFixed(1)}`;
     })
@@ -296,6 +320,17 @@ function finalizeAxis(segments, ticks, firstPoint, lastPoint) {
 function makeMarketAxis(card, points, chart) {
   const firstPoint = points[0];
   const lastPoint = points[points.length - 1];
+  if (chart?.kind === "daily_kline") {
+    const fallbackEnd = Math.max(lastPoint.absolute, firstPoint.absolute + 1440);
+    const ticks = [0, 0.25, 0.5, 0.75, 1].map((position) => {
+      const index = Math.round((points.length - 1) * position);
+      const point = points[index];
+      const absolute = point?.absolute ?? firstPoint.absolute + (fallbackEnd - firstPoint.absolute) * position;
+      return { absolute, label: formatDateLabel(point?.date || dayNumberToDateText(absolute / 1440)) };
+    });
+    return finalizeAxis([{ start: firstPoint.absolute, end: fallbackEnd }], ticks, firstPoint, lastPoint);
+  }
+
   const baseDate = chart?.trade_date || firstPoint.date || lastPoint.date;
   const region = String(card?.market_region || "").toUpperCase();
   const marketText = `${card?.market || ""}${card?.asset_type || ""}`;
@@ -369,6 +404,9 @@ function makeMarketAxis(card, points, chart) {
 function buildChartTimeText(chart, points, axis) {
   const start = chart?.start_time || points[0]?.fullTime || "";
   const end = chart?.end_time || points[points.length - 1]?.fullTime || "";
+  if (chart?.kind === "daily_kline") {
+    return start && end ? `${compactChartTime(start)} - ${compactChartTime(end)}` : chart?.updated_at ? `更新 ${chart.updated_at}` : "";
+  }
   const axisRange = `${formatAbsoluteMinute(axis.start)}-${formatAbsoluteMinute(axis.end)}`;
   if (start && end) {
     const startInfo = normalizeChartTime(start);
@@ -389,6 +427,9 @@ function withUnit(value, unit) {
 }
 
 function volumeBarWidth(axis, pointCount) {
+  if (axis.kind === "daily") {
+    return Math.max(1, Math.min(4, (chartInnerWidth / Math.max(pointCount, 1)) * 0.58));
+  }
   const duration = Math.max(axis.totalTradingMinutes || (axis.end - axis.start), pointCount, 1);
   return Math.max(1, Math.min(4, (chartInnerWidth / duration) * 0.7));
 }
@@ -397,7 +438,7 @@ function visiblePoint(point, axis) {
   return point.absolute >= axis.start && point.absolute <= axis.end;
 }
 
-function buildChartPoints(rawPoints) {
+function buildChartPoints(rawPoints, chartKind = "") {
   return rawPoints
     .map((item) => {
       const timeInfo = normalizeChartTime(item?.[0]);
@@ -409,6 +450,7 @@ function buildChartPoints(rawPoints) {
         price: finiteNumber(item?.[1]),
         avg: finiteNumber(item?.[2]),
         volume: finiteNumber(item?.[3]) || 0,
+        isDaily: chartKind === "daily_kline",
       };
     })
     .filter((point) => point.time && point.absolute !== null && point.price !== null)
@@ -418,13 +460,16 @@ function buildChartPoints(rawPoints) {
 function buildChartModel(card) {
   const chart = card?.chart;
   const rawPoints = Array.isArray(chart?.points) ? chart.points : [];
-  const points = buildChartPoints(rawPoints);
+  const points = buildChartPoints(rawPoints, chart?.kind || "");
 
   if (points.length < 2) {
     return null;
   }
 
   const axis = makeMarketAxis(card, points, chart);
+  if (chart?.kind === "daily_kline") {
+    axis.kind = "daily";
+  }
   const visiblePoints = points.filter((point) => visiblePoint(point, axis));
   if (visiblePoints.length < 2) {
     return null;
@@ -477,7 +522,7 @@ function buildChartModel(card) {
 
   return {
     ...chartBox,
-    title: `${card.name} 分时走势`,
+    title: `${card.name} ${chart?.kind === "daily_kline" ? "日 K 走势" : "分时走势"}`,
     subtitle: `${card.symbol} · ${chart?.source || "公开分时"}${chart?.sampled ? " · 已抽样" : ""}`,
     timeText: buildChartTimeText(chart, visiblePoints, axis),
     updatedAt: chart?.updated_at || card.updated_at || "",
@@ -495,6 +540,7 @@ function buildChartModel(card) {
     points: drawPoints,
     lastPrice: withUnit(formatChartPrice(lastPoint.price), priceUnit),
     lastTime: shortChartTime(lastPoint.fullTime || lastPoint.time),
+    avgLabel: chart?.kind === "daily_kline" ? "MA5" : "均线",
   };
 }
 
@@ -719,7 +765,7 @@ function clearOutput() {
             </svg>
             <div class="market-chart-legend">
               <span><i class="price"></i>价格 {{ chart.lastPrice }}</span>
-              <span><i class="avg"></i>均线</span>
+              <span><i class="avg"></i>{{ chart.avgLabel }}</span>
               <span><i class="preclose"></i>昨收 {{ chart.preCloseLabel }}</span>
               <span>{{ chart.lastTime }}</span>
             </div>
