@@ -46,6 +46,8 @@ EASTMONEY_ULIST_URL = "https://push2.eastmoney.com/api/qt/ulist.np/get"
 EASTMONEY_SUGGEST_URL = "https://searchapi.eastmoney.com/api/suggest/get"
 EASTMONEY_TRENDS_URL = "https://push2his.eastmoney.com/api/qt/stock/trends2/get"
 EASTMONEY_KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+SINA_KLINE_URL = "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData"
+SINA_HQ_URL = "https://hq.sinajs.cn/list="
 FUND_URL_TEMPLATE = "https://fundgz.1234567.com.cn/js/{code}.js"
 EASTMONEY_UT_TOKEN = "fa5fd1943c7b386f172d6893dbfba10b"
 EASTMONEY_SEARCH_TOKEN = "D43BF722C8E33C743DEC4FA52FCA5277"
@@ -57,6 +59,11 @@ DEFAULT_HEADERS = {
     ),
     "Accept": "application/json,text/plain,*/*",
     "Referer": "https://quote.eastmoney.com/",
+}
+SINA_HEADERS = {
+    "User-Agent": DEFAULT_HEADERS["User-Agent"],
+    "Accept": DEFAULT_HEADERS["Accept"],
+    "Referer": "https://finance.sina.com.cn/",
 }
 MAX_SYMBOLS = 8
 MAX_CHART_POINTS = 150
@@ -288,18 +295,19 @@ def _format_timestamp(value: Any) -> str:
     return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def _request_json(
+def _request_any_json(
     client: httpx.Client,
     url: str,
     params: dict[str, Any],
     headers: dict[str, str] | None = None,
-) -> dict[str, Any]:
+    timeout: float = 8,
+) -> Any:
     request_headers = headers or DEFAULT_HEADERS
     try:
-        response = client.get(url, params=params, headers=request_headers)
+        response = client.get(url, params=params, headers=request_headers, timeout=timeout)
         response.raise_for_status()
         payload = response.json()
-        if isinstance(payload, dict):
+        if isinstance(payload, (dict, list)):
             return payload
     except Exception:
         pass
@@ -313,12 +321,42 @@ def _request_json(
             "Referer": request_headers.get("Referer", DEFAULT_HEADERS["Referer"]),
         },
     )
-    with urllib.request.urlopen(request, timeout=8) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         body = response.read().decode("utf-8", errors="replace")
-    payload = json.loads(body)
+    return json.loads(body)
+
+
+def _request_json(
+    client: httpx.Client,
+    url: str,
+    params: dict[str, Any],
+    headers: dict[str, str] | None = None,
+    timeout: float = 8,
+) -> dict[str, Any]:
+    payload = _request_any_json(client, url, params, headers, timeout)
     if not isinstance(payload, dict):
         raise ValueError("JSON 根节点不是对象")
     return payload
+
+
+def _request_text(
+    client: httpx.Client,
+    url: str,
+    headers: dict[str, str] | None = None,
+    encoding: str = "utf-8",
+    timeout: float = 8,
+) -> str:
+    request_headers = headers or DEFAULT_HEADERS
+    try:
+        response = client.get(url, headers=request_headers, timeout=timeout)
+        response.raise_for_status()
+        return response.content.decode(encoding, errors="replace")
+    except Exception:
+        pass
+
+    request = urllib.request.Request(url, headers=request_headers)
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read().decode(encoding, errors="replace")
 
 
 def _sample_chart_points(points: list[list[Any]], max_points: int = MAX_CHART_POINTS) -> list[list[Any]]:
@@ -389,6 +427,86 @@ def _parse_kline_item(value: Any) -> dict[str, Any] | None:
     }
 
 
+def _parse_sina_kline_item(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+
+    time_text = str(value.get("day") or "").strip()
+    close = _plain_number(value.get("close"))
+    if not time_text or close is None:
+        return None
+
+    return {
+        "time": time_text,
+        "date": time_text[:10],
+        "open": _plain_number(value.get("open")),
+        "close": close,
+        "high": _plain_number(value.get("high")),
+        "low": _plain_number(value.get("low")),
+        "volume": _plain_number(value.get("volume")) or 0,
+        "amount": _plain_number(value.get("amount")),
+    }
+
+
+def _sina_cn_symbol(secid: str) -> str | None:
+    market_prefix, _, code = secid.partition(".")
+    code = code.strip().upper()
+    if not re.fullmatch(r"\d{6}", code):
+        return None
+    if market_prefix in {"105", "106", "116", "150"}:
+        return None
+    if market_prefix == "1" or code.startswith(("5", "6", "9")):
+        return f"sh{code}"
+    return f"sz{code}"
+
+
+def _parse_sina_quote_text(text: str, code: str) -> dict[str, Any] | None:
+    match = re.search(r'var hq_str_[^=]+="(.*?)";', text.strip(), re.S)
+    if not match:
+        return None
+
+    parts = match.group(1).split(",")
+    if len(parts) < 32 or not parts[0]:
+        return None
+
+    latest = _plain_number(parts[3])
+    previous_close = _plain_number(parts[2])
+    date_text = parts[30].strip()
+    time_text = parts[31].strip()
+    return {
+        "code": code,
+        "name": parts[0].strip() or code,
+        "open": _plain_number(parts[1]),
+        "previous_close": previous_close,
+        "latest": latest if latest not in {None, 0} else previous_close,
+        "high": _plain_number(parts[4]),
+        "low": _plain_number(parts[5]),
+        "volume": _plain_number(parts[8]),
+        "amount": _plain_number(parts[9]),
+        "updated_at": f"{date_text} {time_text}".strip(),
+    }
+
+
+def _query_sina_cn_quote_data(secid: str, client: httpx.Client) -> dict[str, Any] | None:
+    sina_symbol = _sina_cn_symbol(secid)
+    if not sina_symbol:
+        return None
+
+    try:
+        text = _request_text(
+            client,
+            f"{SINA_HQ_URL}{sina_symbol}",
+            headers=SINA_HEADERS,
+            encoding="gbk",
+            timeout=4,
+        )
+    except Exception:
+        return None
+
+    _market_prefix, _, code = secid.partition(".")
+    return _parse_sina_quote_text(text, code)
+
+
 def _query_intraday_chart(secid: str, client: httpx.Client) -> dict[str, Any] | None:
     try:
         payload = _request_json(
@@ -403,6 +521,7 @@ def _query_intraday_chart(secid: str, client: httpx.Client) -> dict[str, Any] | 
                 "iscr": 0,
                 "iscca": 0,
             },
+            timeout=4,
         )
     except Exception:
         return None
@@ -462,6 +581,7 @@ def _query_daily_kline_chart(secid: str, client: httpx.Client) -> dict[str, Any]
                 "beg": f"{datetime.now().year - 1}0101",
                 "end": "20500101",
             },
+            timeout=4,
         )
     except Exception:
         return None
@@ -514,15 +634,152 @@ def _query_daily_kline_chart(secid: str, client: httpx.Client) -> dict[str, Any]
     }
 
 
+def _query_sina_intraday_kline_chart(secid: str, client: httpx.Client) -> dict[str, Any] | None:
+    sina_symbol = _sina_cn_symbol(secid)
+    if not sina_symbol:
+        return None
+
+    try:
+        payload = _request_any_json(
+            client,
+            SINA_KLINE_URL,
+            params={"symbol": sina_symbol, "scale": 5, "ma": "no", "datalen": 96},
+            headers=SINA_HEADERS,
+            timeout=4,
+        )
+    except Exception:
+        return None
+
+    if not isinstance(payload, list):
+        return None
+
+    parsed_items = [item for item in (_parse_sina_kline_item(value) for value in payload) if item]
+    if len(parsed_items) < 2:
+        return None
+
+    latest_date = str(parsed_items[-1].get("date") or "")
+    visible_items = [item for item in parsed_items if item.get("date") == latest_date] if latest_date else []
+    if len(visible_items) < 2:
+        visible_items = parsed_items[-MAX_CHART_POINTS:]
+
+    points = []
+    for index, item in enumerate(visible_items):
+        window = visible_items[max(0, index - 4) : index + 1]
+        close_values = [_plain_number(row.get("close")) for row in window]
+        close_values = [value for value in close_values if value is not None]
+        ma5 = round(sum(close_values) / len(close_values), 4) if close_values else None
+        points.append([item["time"], item["close"], ma5, item["volume"]])
+
+    sampled_points = _sample_chart_points(points)
+    quote_data = _query_sina_cn_quote_data(secid, client) or {}
+    _market_prefix, _, code = secid.partition(".")
+    market_code = _int_number(_market_prefix)
+    latest_bar = visible_items[-1]
+    high_values = [_plain_number(item.get("high")) for item in visible_items]
+    low_values = [_plain_number(item.get("low")) for item in visible_items]
+    high_values = [value for value in high_values if value is not None]
+    low_values = [value for value in low_values if value is not None]
+
+    start_time = str(sampled_points[0][0])
+    end_time = str(sampled_points[-1][0])
+    pre_close = _plain_number(quote_data.get("previous_close"))
+
+    return {
+        "kind": "intraday_kline",
+        "point_format": ["time", "close", "ma5", "volume"],
+        "code": code,
+        "name": str(quote_data.get("name") or code),
+        "market_code": market_code,
+        "points": sampled_points,
+        "point_count": len(visible_items),
+        "sampled": len(visible_items) > MAX_CHART_POINTS,
+        "pre_close": pre_close,
+        "start_time": start_time,
+        "end_time": end_time,
+        "trade_date": latest_date,
+        "time_range": f"{start_time} - {end_time}",
+        "updated_at": quote_data.get("updated_at") or end_time,
+        "source": "新浪财经5分钟K线",
+        "source_url": f"{SINA_KLINE_URL}?symbol={sina_symbol}&scale=5&datalen=96",
+        "latest_bar": {
+            "date": latest_date,
+            "open": _plain_number(quote_data.get("open")) or visible_items[0].get("open"),
+            "close": _plain_number(quote_data.get("latest")) or latest_bar.get("close"),
+            "high": _plain_number(quote_data.get("high")) or (max(high_values) if high_values else None),
+            "low": _plain_number(quote_data.get("low")) or (min(low_values) if low_values else None),
+            "volume": _plain_number(quote_data.get("volume"))
+            or sum(_plain_number(item.get("volume")) or 0 for item in visible_items),
+            "amount": _plain_number(quote_data.get("amount")),
+        },
+    }
+
+
+def _build_quote_snapshot_chart(card: dict[str, Any], secid: str) -> dict[str, Any] | None:
+    latest = _plain_number(card.get("latest"))
+    if latest is None:
+        return None
+
+    updated_at = str(card.get("updated_at") or "")
+    matched = re.match(r"^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?", updated_at)
+    trade_date = matched.group(1) if matched else datetime.now().strftime("%Y-%m-%d")
+    end_clock = matched.group(2) if matched and matched.group(2) else "15:00"
+    start_time = f"{trade_date} 09:30"
+    end_time = f"{trade_date} {end_clock}"
+    if end_time <= start_time:
+        end_time = f"{trade_date} 15:00"
+
+    open_price = _plain_number(card.get("open")) or _plain_number(card.get("previous_close")) or latest
+    previous_close = _plain_number(card.get("previous_close"))
+    volume = _plain_number(card.get("volume")) or 0
+    _market_prefix, _, _code = secid.partition(".")
+
+    return {
+        "kind": "quote_snapshot",
+        "point_format": ["time", "price", "reference", "volume"],
+        "code": str(card.get("symbol") or ""),
+        "name": str(card.get("name") or card.get("symbol") or ""),
+        "market_code": _int_number(_market_prefix),
+        "points": [[start_time, open_price, None, 0], [end_time, latest, None, volume]],
+        "point_count": 2,
+        "sampled": False,
+        "pre_close": previous_close,
+        "start_time": start_time,
+        "end_time": end_time,
+        "trade_date": trade_date,
+        "time_range": f"{start_time} - {end_time}",
+        "updated_at": updated_at or end_time,
+        "source": "当前报价快照",
+        "source_url": str(card.get("source_url") or ""),
+        "latest_bar": {
+            "date": trade_date,
+            "open": open_price,
+            "close": latest,
+            "high": _plain_number(card.get("high")) or max(open_price, latest),
+            "low": _plain_number(card.get("low")) or min(open_price, latest),
+            "volume": volume,
+            "amount": _plain_number(card.get("amount")),
+        },
+    }
+
+
 def _attach_intraday_chart(card: dict[str, Any], secid: str, client: httpx.Client) -> dict[str, Any]:
-    chart = _query_intraday_chart(secid, client) or _query_daily_kline_chart(secid, client)
+    chart = (
+        _query_intraday_chart(secid, client)
+        or _query_daily_kline_chart(secid, client)
+        or _query_sina_intraday_kline_chart(secid, client)
+        or _build_quote_snapshot_chart(card, secid)
+    )
     if chart:
         card["chart"] = chart
     return card
 
 
 def _query_eastmoney_trends_quote(secid: str, client: httpx.Client) -> tuple[dict[str, Any] | None, str | None]:
-    chart = _query_intraday_chart(secid, client) or _query_daily_kline_chart(secid, client)
+    chart = (
+        _query_intraday_chart(secid, client)
+        or _query_daily_kline_chart(secid, client)
+        or _query_sina_intraday_kline_chart(secid, client)
+    )
     if not chart:
         return None, f"{secid} 图表端点暂无数据"
 
@@ -561,11 +818,12 @@ def _query_eastmoney_trends_quote(secid: str, client: httpx.Client) -> tuple[dic
         "high": _plain_number(latest_bar.get("high")) or max(prices),
         "low": _plain_number(latest_bar.get("low")) or min(prices),
         "previous_close": previous_close,
-        "volume": sum(_plain_number(point[3]) or 0 for point in points if isinstance(point, list) and len(point) > 3),
+        "volume": _plain_number(latest_bar.get("volume"))
+        or sum(_plain_number(point[3]) or 0 for point in points if isinstance(point, list) and len(point) > 3),
         "amount": _plain_number(latest_bar.get("amount")),
         "updated_at": chart.get("updated_at") or chart.get("end_time") or "",
         "source": chart.get("source") or "东方财富图表行情",
-        "provider": "eastmoney",
+        "provider": "sina" if str(chart.get("source") or "").startswith("新浪") else "eastmoney",
         "source_url": chart.get("source_url") or f"{EASTMONEY_KLINE_URL}?secid={secid}",
         "chart": chart,
     }

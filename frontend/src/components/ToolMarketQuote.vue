@@ -519,15 +519,25 @@ function buildChartModel(card) {
   });
 
   const lastPoint = visiblePoints[visiblePoints.length - 1];
+  const isDailyKline = chart?.kind === "daily_kline";
+  const isIntradayKline = chart?.kind === "intraday_kline";
+  const chartTitle = isDailyKline
+    ? "日 K 走势"
+    : isIntradayKline
+      ? "5 分钟 K 线"
+      : chart?.kind === "quote_snapshot"
+        ? "报价快照"
+        : "分时走势";
+  const avgPath = buildLinePath(drawPoints, "avgY");
 
   return {
     ...chartBox,
-    title: `${card.name} ${chart?.kind === "daily_kline" ? "日 K 走势" : "分时走势"}`,
+    title: `${card.name} ${chartTitle}`,
     subtitle: `${card.symbol} · ${chart?.source || "公开分时"}${chart?.sampled ? " · 已抽样" : ""}`,
     timeText: buildChartTimeText(chart, visiblePoints, axis),
     updatedAt: chart?.updated_at || card.updated_at || "",
     pricePath: buildLinePath(drawPoints, "priceY"),
-    avgPath: buildLinePath(drawPoints, "avgY"),
+    avgPath,
     preCloseY: preClose === null ? null : yForPrice(preClose),
     preCloseLabel: preClose === null ? "--" : withUnit(formatChartPrice(preClose), priceUnit),
     priceUnit,
@@ -540,7 +550,7 @@ function buildChartModel(card) {
     points: drawPoints,
     lastPrice: withUnit(formatChartPrice(lastPoint.price), priceUnit),
     lastTime: shortChartTime(lastPoint.fullTime || lastPoint.time),
-    avgLabel: chart?.kind === "daily_kline" ? "MA5" : "均线",
+    avgLabel: isDailyKline || isIntradayKline ? "MA5" : "均线",
   };
 }
 
@@ -765,7 +775,7 @@ function clearOutput() {
             </svg>
             <div class="market-chart-legend">
               <span><i class="price"></i>价格 {{ chart.lastPrice }}</span>
-              <span><i class="avg"></i>{{ chart.avgLabel }}</span>
+              <span v-if="chart.avgPath"><i class="avg"></i>{{ chart.avgLabel }}</span>
               <span><i class="preclose"></i>昨收 {{ chart.preCloseLabel }}</span>
               <span>{{ chart.lastTime }}</span>
             </div>

@@ -271,9 +271,11 @@ def test_market_quote_helpers() -> None:
     assert "东方财富公开行情" in robot_text
 
     class FakeResponse:
-        def __init__(self, status_code: int, payload: dict) -> None:
+        def __init__(self, status_code: int, payload: object, text: str | None = None) -> None:
             self.status_code = status_code
             self._payload = payload
+            self._text = text if text is not None else json.dumps(payload, ensure_ascii=False)
+            self.content = self._text.encode("gbk")
 
         def raise_for_status(self) -> None:
             if self.status_code < 400:
@@ -282,7 +284,11 @@ def test_market_quote_helpers() -> None:
             response = httpx.Response(self.status_code, request=request)
             raise httpx.HTTPStatusError("mock error", request=request, response=response)
 
-        def json(self) -> dict:
+        @property
+        def text(self) -> str:
+            return self._text
+
+        def json(self) -> object:
             return self._payload
 
     class FakeClient:
@@ -424,6 +430,7 @@ def test_market_quote_helpers() -> None:
         (market_quote.EASTMONEY_ULIST_URL, "1.931787"),
         (market_quote.EASTMONEY_TRENDS_URL, "1.931787"),
         (market_quote.EASTMONEY_KLINE_URL, "1.931787"),
+        (market_quote.SINA_KLINE_URL, ""),
         (market_quote.EASTMONEY_URL, "2.931787"),
         (market_quote.EASTMONEY_ULIST_URL, "2.931787"),
         (market_quote.EASTMONEY_TRENDS_URL, "2.931787"),
@@ -512,6 +519,70 @@ def test_market_quote_helpers() -> None:
         (market_quote.EASTMONEY_ULIST_URL, "0.399997"),
         (market_quote.EASTMONEY_TRENDS_URL, "0.399997"),
         (market_quote.EASTMONEY_KLINE_URL, "0.399997"),
+    ]
+
+    class SinaOnlyClient:
+        def __init__(self) -> None:
+            self.requests: list[tuple[str, str]] = []
+
+        def get(self, url: str, **kwargs: object) -> FakeResponse:
+            params = kwargs.get("params")
+            params = params if isinstance(params, dict) else {}
+            query_id = str(params.get("secid") or params.get("secids") or params.get("symbol") or "")
+            self.requests.append((url, query_id))
+            if url in {
+                market_quote.EASTMONEY_URL,
+                market_quote.EASTMONEY_ULIST_URL,
+                market_quote.EASTMONEY_TRENDS_URL,
+                market_quote.EASTMONEY_KLINE_URL,
+            }:
+                return FakeResponse(200, {"data": {}})
+            if url == market_quote.SINA_KLINE_URL:
+                return FakeResponse(
+                    200,
+                    [
+                        {
+                            "day": "2026-06-04 09:30:00",
+                            "open": "6889.511",
+                            "high": "6891.000",
+                            "low": "6880.000",
+                            "close": "6889.511",
+                            "volume": "1000",
+                            "amount": "1000000.00",
+                        },
+                        {
+                            "day": "2026-06-04 09:35:00",
+                            "open": "6889.511",
+                            "high": "6901.000",
+                            "low": "6881.000",
+                            "close": "6899.511",
+                            "volume": "1200",
+                            "amount": "1200000.00",
+                        },
+                    ],
+                )
+            return FakeResponse(
+                200,
+                {},
+                'var hq_str_sz399997="中证白酒,6889.511,6937.715,6899.511,6901.000,6880.000,0.000,0.000,2200,2200000.00,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,0,0.000,2026-06-04,09:35:00,00";',
+            )
+
+    sina_client = SinaOnlyClient()
+    sina_card, sina_error = market_quote._query_eastmoney("399997", "auto", sina_client)  # type: ignore[arg-type]
+    assert sina_error is None
+    assert sina_card["name"] == "中证白酒"
+    assert sina_card["latest"] == 6899.511
+    assert sina_card["previous_close"] == 6937.715
+    assert sina_card["provider"] == "sina"
+    assert sina_card["chart"]["kind"] == "intraday_kline"
+    assert sina_card["chart"]["points"][-1] == ["2026-06-04 09:35:00", 6899.511, 6894.511, 1200.0]
+    assert sina_client.requests == [
+        (market_quote.EASTMONEY_URL, "0.399997"),
+        (market_quote.EASTMONEY_ULIST_URL, "0.399997"),
+        (market_quote.EASTMONEY_TRENDS_URL, "0.399997"),
+        (market_quote.EASTMONEY_KLINE_URL, "0.399997"),
+        (market_quote.SINA_KLINE_URL, "sz399997"),
+        (f"{market_quote.SINA_HQ_URL}sz399997", ""),
     ]
 
 
