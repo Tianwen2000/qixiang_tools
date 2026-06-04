@@ -70,6 +70,9 @@ let videoLoadTimer = 0;
 let videoIdleId = 0;
 let videoLoadWaitingForWindow = false;
 let removeVideoLoadListener = () => {};
+let videoWarmupTimer = 0;
+let lastVideoTime = 0;
+let videoWarmupReachedEnd = false;
 
 function refreshSeason() {
   liveSeason.value = getSeasonalWallpaperKey();
@@ -223,20 +226,76 @@ function cancelQueuedVideoLoad() {
   }
 }
 
-function onVideoCanPlay() {
+function resetVideoWarmup() {
+  if (videoWarmupTimer) {
+    window.clearTimeout(videoWarmupTimer);
+    videoWarmupTimer = 0;
+  }
+  videoReady.value = false;
+  lastVideoTime = 0;
+  videoWarmupReachedEnd = false;
+}
+
+function revealVideoAfterWarmup() {
+  if (!useVideo.value || videoReady.value) {
+    return;
+  }
+  if (videoWarmupTimer) {
+    window.clearTimeout(videoWarmupTimer);
+    videoWarmupTimer = 0;
+  }
   videoReady.value = true;
+}
+
+function scheduleVideoWarmupFallback() {
+  if (typeof window === "undefined" || videoWarmupTimer || videoReady.value) {
+    return;
+  }
+  const el = videoEl.value;
+  const duration = Number.isFinite(el?.duration) ? el.duration : 0;
+  const delay = duration > 0 ? Math.min(Math.max(duration * 1000 + 1600, 5200), 15000) : 10000;
+  videoWarmupTimer = window.setTimeout(revealVideoAfterWarmup, delay);
+}
+
+function onVideoCanPlay() {
   primeVideo();
+  scheduleVideoWarmupFallback();
+}
+
+function onVideoTimeUpdate() {
+  if (videoReady.value) {
+    return;
+  }
+
+  const el = videoEl.value;
+  if (!el) {
+    return;
+  }
+
+  const current = el.currentTime || 0;
+  const duration = Number.isFinite(el.duration) ? el.duration : 0;
+  if (duration > 1 && current >= duration - 0.45) {
+    videoWarmupReachedEnd = true;
+  }
+
+  if (videoWarmupReachedEnd && current < lastVideoTime) {
+    revealVideoAfterWarmup();
+  } else if (!duration && current >= 8) {
+    revealVideoAfterWarmup();
+  }
+
+  lastVideoTime = current;
 }
 
 function onVideoError() {
   // 视频缺失 / 格式不支持：保留静态季节图，不影响首屏可读性
-  videoReady.value = false;
+  resetVideoWarmup();
   videoFailed.value = true;
 }
 
 // 切到视频模式或换季节时，换源并重试播放
 watch(videoSrc, () => {
-  videoReady.value = false;
+  resetVideoWarmup();
   videoFailed.value = false;
   shouldLoadVideo.value = false;
   cancelQueuedVideoLoad();
@@ -250,7 +309,7 @@ watch(canUseVideo, (nextCanUseVideo) => {
   }
   cancelQueuedVideoLoad();
   shouldLoadVideo.value = false;
-  videoReady.value = false;
+  resetVideoWarmup();
 });
 
 watch([videoSrc, useVideo], async ([, nextUseVideo]) => {
@@ -260,6 +319,7 @@ watch([videoSrc, useVideo], async ([, nextUseVideo]) => {
   await nextTick();
   const el = videoEl.value;
   if (el) {
+    resetVideoWarmup();
     el.load();
     primeVideo();
   }
@@ -318,6 +378,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.clearTimeout(refreshTimer);
   cancelQueuedVideoLoad();
+  resetVideoWarmup();
   window.cancelAnimationFrame(rafId);
   removePreviewListener();
   removeMotionListener();
@@ -369,6 +430,8 @@ onBeforeUnmount(() => {
         :poster="posterSrc"
         @canplay="onVideoCanPlay"
         @loadeddata="onVideoCanPlay"
+        @loadedmetadata="scheduleVideoWarmupFallback"
+        @timeupdate="onVideoTimeUpdate"
         @error="onVideoError"
       >
         <source :src="videoSrc" type="video/mp4" />
