@@ -5256,102 +5256,63 @@
     "module": "image_compressor",
     "name": "图片压缩",
     "category": "image",
-    "summary": "压缩图片体积，并可顺手限制最大宽高。",
-    "description": "适合网页上传前压缩、缩小图片体积和统一尺寸。",
+    "summary": "支持按目标 KB 压缩体积，或按倍数缩小宽高尺寸。",
+    "description": "和图片增大反向对应：可选择压缩图片文件体积，或保持宽高比缩小图片尺寸。",
     "input_mode": "file",
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
     "params": [
       {
-        "key": "quality",
-        "label": "压缩质量",
-        "type": "select",
-        "default": 75,
+        "key": "mode",
+        "label": "压缩方式",
+        "type": "radio",
+        "default": "byte_size",
         "options": [
           {
-            "label": "高质量 90",
-            "value": 90
+            "label": "体积 KB 压缩",
+            "value": "byte_size"
           },
           {
-            "label": "标准 75",
-            "value": 75
-          },
-          {
-            "label": "更小 60",
-            "value": 60
+            "label": "宽高尺寸缩小",
+            "value": "dimensions"
           }
         ]
       },
       {
-        "key": "output_format",
-        "label": "输出格式",
-        "type": "select",
-        "default": "original",
-        "options": [
-          {
-            "label": "保持原格式",
-            "value": "original"
-          },
-          {
-            "label": "JPEG",
-            "value": "jpg"
-          },
-          {
-            "label": "PNG",
-            "value": "png"
-          },
-          {
-            "label": "WEBP",
-            "value": "webp"
-          }
-        ]
+        "key": "target_kb",
+        "label": "目标大小 KB",
+        "type": "text",
+        "default": "50%",
+        "showWhen": {
+          "mode": "byte_size"
+        },
+        "placeholder": "例如：512，或 50%"
       },
       {
-        "key": "max_width",
-        "label": "最大宽度",
-        "type": "select",
-        "default": 0,
+        "key": "scale",
+        "label": "宽高缩小倍数",
+        "type": "radio",
+        "default": 2,
+        "showWhen": {
+          "mode": "dimensions"
+        },
         "options": [
           {
-            "label": "不限制",
-            "value": 0
+            "label": "缩小 2 倍",
+            "value": 2
           },
           {
-            "label": "1920",
-            "value": 1920
+            "label": "缩小 3 倍",
+            "value": 3
           },
           {
-            "label": "1080",
-            "value": 1080
+            "label": "缩小 4 倍",
+            "value": 4
           },
           {
-            "label": "800",
-            "value": 800
-          }
-        ]
-      },
-      {
-        "key": "max_height",
-        "label": "最大高度",
-        "type": "select",
-        "default": 0,
-        "options": [
-          {
-            "label": "不限制",
-            "value": 0
-          },
-          {
-            "label": "1920",
-            "value": 1920
-          },
-          {
-            "label": "1080",
-            "value": 1080
-          },
-          {
-            "label": "800",
-            "value": 800
+            "label": "缩小 10 倍",
+            "value": 10
           }
         ]
       }

@@ -35,6 +35,12 @@ def make_png_bytes(color: tuple[int, int, int] = (255, 0, 0), size: tuple[int, i
     return stream.getvalue()
 
 
+def make_noise_png_bytes(size: tuple[int, int] = (480, 480)) -> bytes:
+    stream = io.BytesIO()
+    Image.effect_noise(size, 100).convert("L").convert("RGB").save(stream, format="PNG")
+    return stream.getvalue()
+
+
 def make_jpg_bytes(color: tuple[int, int, int] = (255, 0, 0), size: tuple[int, int] = (120, 80)) -> bytes:
     stream = io.BytesIO()
     Image.new("RGB", size, color).save(stream, format="JPEG", quality=90)
@@ -207,6 +213,11 @@ def test_meta_endpoints() -> None:
     image_tool_slugs = [item["slug"] for item in image_tool_items]
     compressor_index = image_tool_slugs.index("image-compressor")
     assert image_tool_slugs[compressor_index + 1] == "image-upscaler"
+    compressor_params = image_tool_items[compressor_index]["params"]
+    assert compressor_params[0]["key"] == "mode"
+    assert [item["value"] for item in compressor_params[0]["options"]] == ["byte_size", "dimensions"]
+    assert compressor_params[1]["key"] == "target_kb"
+    assert compressor_params[2]["key"] == "scale"
     assert image_tool_items[compressor_index + 1]["name"] == "图片增大"
     upscaler_params = image_tool_items[compressor_index + 1]["params"]
     assert upscaler_params[0]["key"] == "mode"
@@ -603,6 +614,7 @@ def test_image_to_base64_upload() -> None:
 
 def test_image_tools_upload_and_execute() -> None:
     png_bytes = make_png_bytes()
+    noise_png_bytes = make_noise_png_bytes()
 
     compress_response = client.post(
         "/api/tools/image-compressor/upload",
@@ -613,6 +625,26 @@ def test_image_tools_upload_and_execute() -> None:
     assert "attachment" in compress_response.headers.get("content-disposition", "")
     assert compress_response.headers["content-type"].startswith("image/jpeg")
     assert compress_response.headers["access-control-expose-headers"] == "Content-Disposition"
+
+    target_kb = 20
+    byte_compress_response = client.post(
+        "/api/tools/image-compressor/upload",
+        data={"params": json.dumps({"mode": "byte_size", "target_kb": target_kb})},
+        files={"file": ("noise.png", noise_png_bytes, "image/png")},
+    )
+    assert byte_compress_response.status_code == 200
+    assert byte_compress_response.headers["content-type"].startswith("image/jpeg")
+    assert len(byte_compress_response.content) <= target_kb * 1024
+
+    dimension_compress_response = client.post(
+        "/api/tools/image-compressor/upload",
+        data={"params": json.dumps({"mode": "dimensions", "scale": 4})},
+        files={"file": ("noise.png", noise_png_bytes, "image/png")},
+    )
+    assert dimension_compress_response.status_code == 200
+    assert dimension_compress_response.headers["content-type"].startswith("image/png")
+    compressed_image = Image.open(io.BytesIO(dimension_compress_response.content))
+    assert compressed_image.size == (120, 120)
 
     analyze_response = client.post(
         "/api/tools/image-color-analyzer/upload",
@@ -656,7 +688,7 @@ def test_file_result_execute_exposes_filename_header() -> None:
 def test_image_compressor_accepts_heic_upload() -> None:
     response = client.post(
         "/api/tools/image-compressor/upload",
-        data={"params": json.dumps({"quality": 60, "output_format": "original"})},
+        data={"params": json.dumps({"mode": "dimensions", "scale": 2})},
         files={"file": ("sample.heic", make_heic_bytes(), "application/octet-stream")},
     )
     assert response.status_code == 200
