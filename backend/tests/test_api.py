@@ -320,6 +320,65 @@ def test_market_quote_helpers() -> None:
     assert fallback_card["latest"] == 6937.71
     assert fake_client.urls == [market_quote.EASTMONEY_URL, market_quote.EASTMONEY_ULIST_URL]
 
+    class IndexFallbackClient:
+        def __init__(self) -> None:
+            self.requests: list[tuple[str, str]] = []
+
+        def get(self, url: str, **kwargs: object) -> FakeResponse:
+            params = kwargs.get("params")
+            params = params if isinstance(params, dict) else {}
+            secid = str(params.get("secid") or params.get("secids") or "")
+            self.requests.append((url, secid))
+            if url == market_quote.EASTMONEY_URL and secid == "1.931787":
+                return FakeResponse(200, {"data": None})
+            if url == market_quote.EASTMONEY_ULIST_URL and secid == "1.931787":
+                return FakeResponse(200, {"data": None})
+            if url == market_quote.EASTMONEY_URL and secid == "2.931787":
+                return FakeResponse(502, {})
+            return FakeResponse(
+                200,
+                {
+                    "data": {
+                        "diff": [
+                            {
+                                "f1": 2,
+                                "f2": 113631,
+                                "f3": -38,
+                                "f4": -430,
+                                "f5": 964138,
+                                "f6": 1370808067.7,
+                                "f7": 188,
+                                "f8": 11,
+                                "f12": "931787",
+                                "f13": 2,
+                                "f14": "港股创新药",
+                                "f15": 115540,
+                                "f16": 113395,
+                                "f17": 114448,
+                                "f18": 114061,
+                                "f20": 1302757542438,
+                                "f21": 1302757542438,
+                                "f124": 1780537535,
+                                "f152": 2,
+                            }
+                        ]
+                    }
+                },
+            )
+
+    index_client = IndexFallbackClient()
+    index_card, index_error = market_quote._query_eastmoney("931787", "auto", index_client)  # type: ignore[arg-type]
+    assert index_error is None
+    assert index_card["name"] == "港股创新药"
+    assert index_card["asset_type"] == "指数"
+    assert index_card["latest"] == 1136.31
+    assert index_client.requests == [
+        (market_quote.EASTMONEY_URL, "1.931787"),
+        (market_quote.EASTMONEY_ULIST_URL, "1.931787"),
+        (market_quote.EASTMONEY_URL, "2.931787"),
+        (market_quote.EASTMONEY_ULIST_URL, "2.931787"),
+    ]
+
 
 def test_douyin_id_extractor_execute_offline() -> None:
     sec_uid = "MS4wLjABAAAAabcdef1234567890"

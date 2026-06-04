@@ -107,7 +107,7 @@ def _market_allows(quote_id: str, classify: str, market: str) -> bool:
     if market == "fund":
         return quote_id.startswith("150.") or "FUND" in classify.upper() or "基金" in classify
     if market in {"cn", "hk", "us"}:
-        market_prefix = {"cn": ("0.", "1."), "hk": ("116.",), "us": ("105.", "106.")}[market]
+        market_prefix = {"cn": ("0.", "1.", "2."), "hk": ("116.",), "us": ("105.", "106.")}[market]
         return quote_id.startswith(market_prefix)
     return True
 
@@ -141,7 +141,10 @@ def _search_full_name(symbol: str, market: str, client: httpx.Client) -> tuple[d
     except Exception as exc:
         return None, f"名称搜索失败：{exc}"
 
-    rows = payload.get("QuotationCodeTable", {}).get("Data", []) if isinstance(payload, dict) else []
+    table = payload.get("QuotationCodeTable") if isinstance(payload, dict) else None
+    rows = table.get("Data") if isinstance(table, dict) else []
+    if not isinstance(rows, list):
+        rows = []
     if not rows:
         return None, "请输入完整的股票基金名称"
 
@@ -150,6 +153,8 @@ def _search_full_name(symbol: str, market: str, client: httpx.Client) -> tuple[d
 
     best: tuple[tuple[int, int], dict, str, str, str, str] | None = None
     for item in rows:
+        if not isinstance(item, dict):
+            continue
         quote_id = str(item.get("QuoteID") or "")
         code = str(item.get("Code") or item.get("UnifiedCode") or "")
         classify = str(item.get("Classify") or item.get("SecurityTypeName") or "")
@@ -222,6 +227,8 @@ def _eastmoney_candidates(symbol: str, market: str = "auto") -> list[tuple[str, 
     if re.fullmatch(r"\d{6}", normalized):
         if normalized.startswith(("6", "5", "9")):
             candidates.append((f"1.{normalized}", "沪市"))
+        if normalized.startswith("9"):
+            candidates.append((f"2.{normalized}", "指数"))
         if normalized.startswith(("0", "2", "3", "4", "8", "15", "16", "18")):
             candidates.append((f"0.{normalized}", "深北"))
 
@@ -281,6 +288,8 @@ def _market_label(market_code: int | None, code: str) -> tuple[str, str, str]:
         return "纽交所/美股", "US", "USD"
     if market_code == 1:
         return "沪市", "CN", "CNY"
+    if market_code == 2:
+        return "指数", "CN", "CNY"
     if market_code == 0 and code.startswith(("4", "8")):
         return "北交所", "CN", "CNY"
     if market_code == 0:
@@ -293,7 +302,7 @@ def _asset_type(code: str, market_code: int | None, name: str) -> str:
         return "港股"
     if market_code in {105, 106}:
         return "美股"
-    if code.startswith(("000", "399")) and "ETF" not in name.upper():
+    if market_code == 2 or (code.startswith(("000", "399", "93")) and "ETF" not in name.upper()):
         return "指数"
     if code.startswith(("5", "15", "16", "18")) or "ETF" in name.upper() or "LOF" in name.upper():
         return "场内基金"
@@ -313,7 +322,10 @@ def _query_eastmoney_ulist(secid: str, client: httpx.Client) -> tuple[dict[str, 
     except Exception:
         return None, "备用行情端点请求失败"
 
-    rows = payload.get("data", {}).get("diff", []) if isinstance(payload, dict) else []
+    payload_data = payload.get("data") if isinstance(payload, dict) else None
+    rows = payload_data.get("diff") if isinstance(payload_data, dict) else []
+    if not isinstance(rows, list):
+        rows = []
     if not rows:
         return None, f"{secid} 备用行情端点暂无数据"
 
@@ -322,11 +334,13 @@ def _query_eastmoney_ulist(secid: str, client: httpx.Client) -> tuple[dict[str, 
         (
             item
             for item in rows
-            if str(item.get("f13") or "") == expected_market and str(item.get("f12") or "").upper() == expected_code.upper()
+            if isinstance(item, dict)
+            and str(item.get("f13") or "") == expected_market
+            and str(item.get("f12") or "").upper() == expected_code.upper()
         ),
         rows[0],
     )
-    if not data or not data.get("f12"):
+    if not isinstance(data, dict) or not data.get("f12"):
         return None, f"{secid} 备用行情端点暂无数据"
 
     decimals = _int_number(data.get("f152")) or _int_number(data.get("f1")) or 2
@@ -393,7 +407,7 @@ def _query_eastmoney(symbol: str, market: str, client: httpx.Client) -> tuple[di
             continue
 
         data = payload.get("data") if isinstance(payload, dict) else None
-        if not data or not data.get("f57"):
+        if not isinstance(data, dict) or not data.get("f57"):
             fallback_card, fallback_error = _query_eastmoney_ulist(secid, client)
             if fallback_card:
                 return fallback_card, None
