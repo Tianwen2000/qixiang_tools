@@ -26,6 +26,8 @@ const isMobile = ref(typeof window !== "undefined" && window.matchMedia(MOBILE_Q
 // 桌面视频：加载失败 / 不支持时回退 CSS 动态背景
 const videoEl = ref(null);
 const videoFailed = ref(false);
+const shouldLoadVideo = ref(false);
+const videoReady = ref(false);
 
 const season = computed(() => {
   if (props.mode !== "seasonal") {
@@ -36,9 +38,10 @@ const season = computed(() => {
 
 const activeScene = computed(() => WALLPAPER_SCENES[season.value] || WALLPAPER_SCENES.spring);
 
-// 三选一：手机静态图 / 桌面视频 / CSS 动态（视频兜底）
-const useStaticImage = computed(() => props.mode !== "exception" && isMobile.value);
-const useVideo = computed(() => props.mode !== "exception" && !isMobile.value && !videoFailed.value);
+// 首屏统一先显示静态图；桌面视频等浏览器空闲后再加载，避免首屏抢带宽和解码资源。
+const useStaticImage = computed(() => props.mode !== "exception");
+const canUseVideo = computed(() => props.mode !== "exception" && !isMobile.value && !prefersReducedMotion.value && !videoFailed.value);
+const useVideo = computed(() => canUseVideo.value && shouldLoadVideo.value);
 const useCssScene = computed(() => props.mode !== "exception" && !useStaticImage.value && !useVideo.value);
 
 const videoSrc = computed(() => `/wallpaper/${season.value}.mp4`);
@@ -63,6 +66,10 @@ let removePreviewListener = () => {};
 let removeMotionListener = () => {};
 let removeMobileListener = () => {};
 let rafId = 0;
+let videoLoadTimer = 0;
+let videoIdleId = 0;
+let videoLoadWaitingForWindow = false;
+let removeVideoLoadListener = () => {};
 
 function refreshSeason() {
   liveSeason.value = getSeasonalWallpaperKey();
@@ -109,6 +116,9 @@ function bindPointerInteraction() {
   }
 
   const handlePointerMove = (event) => {
+    if (!useCssScene.value || prefersReducedMotion.value) {
+      return;
+    }
     const width = Math.max(1, window.innerWidth);
     const height = Math.max(1, window.innerHeight);
     pointerTarget.value = {
@@ -119,6 +129,9 @@ function bindPointerInteraction() {
   };
 
   const handlePointerLeave = () => {
+    if (!useCssScene.value || prefersReducedMotion.value) {
+      return;
+    }
     pointerTarget.value = { x: 0.5, y: 0.34 };
     ensurePointerAnimation();
   };
@@ -145,12 +158,101 @@ function primeVideo() {
   }
 }
 
+function queueVideoLoad() {
+  if (
+    typeof window === "undefined" ||
+    shouldLoadVideo.value ||
+    videoLoadTimer ||
+    videoIdleId ||
+    videoLoadWaitingForWindow ||
+    !canUseVideo.value
+  ) {
+    return;
+  }
+
+  const startLoading = () => {
+    videoLoadTimer = 0;
+    videoIdleId = 0;
+    if (canUseVideo.value) {
+      shouldLoadVideo.value = true;
+      nextTick(primeVideo);
+    }
+  };
+
+  const requestIdleStart = () => {
+    videoLoadTimer = 0;
+    if (!canUseVideo.value) {
+      return;
+    }
+    if ("requestIdleCallback" in window) {
+      videoIdleId = window.requestIdleCallback(startLoading, { timeout: 2200 });
+      return;
+    }
+    startLoading();
+  };
+
+  const scheduleAfterLoad = () => {
+    videoLoadWaitingForWindow = false;
+    removeVideoLoadListener();
+    videoLoadTimer = window.setTimeout(requestIdleStart, 900);
+  };
+
+  if (document.readyState === "complete") {
+    scheduleAfterLoad();
+    return;
+  }
+
+  videoLoadWaitingForWindow = true;
+  window.addEventListener("load", scheduleAfterLoad, { once: true });
+  removeVideoLoadListener = () => {
+    window.removeEventListener("load", scheduleAfterLoad);
+    removeVideoLoadListener = () => {};
+  };
+}
+
+function cancelQueuedVideoLoad() {
+  removeVideoLoadListener();
+  videoLoadWaitingForWindow = false;
+  if (videoLoadTimer) {
+    window.clearTimeout(videoLoadTimer);
+    videoLoadTimer = 0;
+  }
+  if (videoIdleId && "cancelIdleCallback" in window) {
+    window.cancelIdleCallback(videoIdleId);
+    videoIdleId = 0;
+  }
+}
+
+function onVideoCanPlay() {
+  videoReady.value = true;
+  primeVideo();
+}
+
 function onVideoError() {
-  // 视频缺失 / 格式不支持：回退到 CSS 动态背景
+  // 视频缺失 / 格式不支持：保留静态季节图，不影响首屏可读性
+  videoReady.value = false;
   videoFailed.value = true;
 }
 
 // 切到视频模式或换季节时，换源并重试播放
+watch(videoSrc, () => {
+  videoReady.value = false;
+  videoFailed.value = false;
+  shouldLoadVideo.value = false;
+  cancelQueuedVideoLoad();
+  queueVideoLoad();
+});
+
+watch(canUseVideo, (nextCanUseVideo) => {
+  if (nextCanUseVideo) {
+    queueVideoLoad();
+    return;
+  }
+  cancelQueuedVideoLoad();
+  shouldLoadVideo.value = false;
+  videoReady.value = false;
+});
+
 watch([videoSrc, useVideo], async ([, nextUseVideo]) => {
   if (!nextUseVideo) {
     return;
@@ -203,7 +305,7 @@ onMounted(() => {
 
   const cleanupPointer = bindPointerInteraction();
   ensurePointerAnimation();
-  nextTick(primeVideo);
+  queueVideoLoad();
   removeMotionListener = () => {
     motionQuery.removeEventListener("change", handleMotionChange);
     cleanupPointer();
@@ -215,6 +317,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.clearTimeout(refreshTimer);
+  cancelQueuedVideoLoad();
   window.cancelAnimationFrame(rafId);
   removePreviewListener();
   removeMotionListener();
@@ -249,24 +352,27 @@ onBeforeUnmount(() => {
     <template v-else>
       <div class="wallpaper-base"></div>
 
-      <!-- 桌面：视频背景 -->
+      <!-- 静态季节图：桌面首屏兜底、手机常驻，避免视频首载卡顿 -->
+      <div v-if="useStaticImage" class="wallpaper-photo" :style="photoStyle"></div>
+
+      <!-- 桌面：空闲后加载视频，能播放后淡入 -->
       <video
         v-if="useVideo"
         ref="videoEl"
         class="wallpaper-video"
+        :class="{ 'is-ready': videoReady }"
         autoplay
         muted
         loop
         playsinline
-        preload="auto"
+        preload="metadata"
         :poster="posterSrc"
+        @canplay="onVideoCanPlay"
+        @loadeddata="onVideoCanPlay"
         @error="onVideoError"
       >
         <source :src="videoSrc" type="video/mp4" />
       </video>
-
-      <!-- 手机：静态季节图背景（清晰、省流量、不卡） -->
-      <div v-else-if="useStaticImage" class="wallpaper-photo" :style="photoStyle"></div>
 
       <div class="wallpaper-reading-veil"></div>
       <div v-if="useVideo || useStaticImage" class="wallpaper-video-shade"></div>

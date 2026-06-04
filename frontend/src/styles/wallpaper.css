@@ -46,6 +46,14 @@
   object-fit: cover;
   border: 0;
   pointer-events: none;
+  opacity: 0;
+  transform: translateZ(0);
+  transition: opacity 0.9s ease;
+  will-change: opacity;
+}
+
+.wallpaper-video.is-ready {
+  opacity: 1;
 }
 
 .wallpaper-video-shade {
