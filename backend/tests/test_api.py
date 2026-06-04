@@ -282,6 +282,20 @@ def test_market_quote_helpers() -> None:
             self.urls.append(url)
             if url == market_quote.EASTMONEY_URL:
                 return FakeResponse(502, {})
+            if url == market_quote.EASTMONEY_TRENDS_URL:
+                return FakeResponse(
+                    200,
+                    {
+                        "data": {
+                            "preClose": 7019.03,
+                            "time": 1780474296,
+                            "trends": [
+                                "2026-06-03 09:30,6987.87,6987.87,6987.87,6987.87,100,1000.00,6987.870",
+                                "2026-06-03 09:31,6987.87,6937.71,6990.00,6937.71,200,2000.00,6960.120",
+                            ],
+                        }
+                    },
+                )
             return FakeResponse(
                 200,
                 {
@@ -318,7 +332,12 @@ def test_market_quote_helpers() -> None:
     assert fallback_error is None
     assert fallback_card["name"] == "中证白酒"
     assert fallback_card["latest"] == 6937.71
-    assert fake_client.urls == [market_quote.EASTMONEY_URL, market_quote.EASTMONEY_ULIST_URL]
+    assert fallback_card["chart"]["time_range"] == "2026-06-03 09:30 - 2026-06-03 09:31"
+    assert fallback_card["chart"]["points"] == [
+        ["2026-06-03 09:30", 6987.87, 6987.87, 100.0],
+        ["2026-06-03 09:31", 6937.71, 6960.12, 200.0],
+    ]
+    assert fake_client.urls == [market_quote.EASTMONEY_URL, market_quote.EASTMONEY_ULIST_URL, market_quote.EASTMONEY_TRENDS_URL]
 
     class IndexFallbackClient:
         def __init__(self) -> None:
@@ -335,6 +354,20 @@ def test_market_quote_helpers() -> None:
                 return FakeResponse(200, {"data": None})
             if url == market_quote.EASTMONEY_URL and secid == "2.931787":
                 return FakeResponse(502, {})
+            if url == market_quote.EASTMONEY_TRENDS_URL and secid == "2.931787":
+                return FakeResponse(
+                    200,
+                    {
+                        "data": {
+                            "preClose": 1140.61,
+                            "time": 1780537535,
+                            "trends": [
+                                "2026-06-04 09:30,1144.48,1144.48,1144.48,1143.04,32088,42811410.00,1143.023",
+                                "2026-06-04 09:31,1144.31,1153.13,1153.36,1144.31,91280,156748134.00,1145.059",
+                            ],
+                        }
+                    },
+                )
             return FakeResponse(
                 200,
                 {
@@ -372,11 +405,57 @@ def test_market_quote_helpers() -> None:
     assert index_card["name"] == "港股创新药"
     assert index_card["asset_type"] == "指数"
     assert index_card["latest"] == 1136.31
+    assert index_card["chart"]["pre_close"] == 1140.61
+    assert index_card["chart"]["trade_date"] == "2026-06-04"
+    assert index_card["chart"]["points"][1] == ["2026-06-04 09:31", 1153.13, 1145.059, 91280.0]
     assert index_client.requests == [
         (market_quote.EASTMONEY_URL, "1.931787"),
         (market_quote.EASTMONEY_ULIST_URL, "1.931787"),
+        (market_quote.EASTMONEY_TRENDS_URL, "1.931787"),
         (market_quote.EASTMONEY_URL, "2.931787"),
         (market_quote.EASTMONEY_ULIST_URL, "2.931787"),
+        (market_quote.EASTMONEY_TRENDS_URL, "2.931787"),
+    ]
+
+    class TrendsOnlyClient:
+        def __init__(self) -> None:
+            self.requests: list[tuple[str, str]] = []
+
+        def get(self, url: str, **kwargs: object) -> FakeResponse:
+            params = kwargs.get("params")
+            params = params if isinstance(params, dict) else {}
+            secid = str(params.get("secid") or params.get("secids") or "")
+            self.requests.append((url, secid))
+            if url in {market_quote.EASTMONEY_URL, market_quote.EASTMONEY_ULIST_URL}:
+                return FakeResponse(502, {})
+            return FakeResponse(
+                200,
+                {
+                    "data": {
+                        "code": "399997",
+                        "name": "中证白酒",
+                        "market": 0,
+                        "preClose": 6937.71,
+                        "time": 1780537535,
+                        "trends": [
+                            "2026-06-04 09:30,6889.51,6889.51,6889.51,6889.51,100,1000.00,6889.510",
+                            "2026-06-04 09:31,6889.51,6899.51,6899.51,6889.51,120,1200.00,6894.510",
+                        ],
+                    }
+                },
+            )
+
+    trends_client = TrendsOnlyClient()
+    trends_card, trends_error = market_quote._query_eastmoney("399997", "auto", trends_client)  # type: ignore[arg-type]
+    assert trends_error is None
+    assert trends_card["name"] == "中证白酒"
+    assert trends_card["latest"] == 6899.51
+    assert trends_card["change"] == -38.2
+    assert trends_card["chart"]["kind"] == "intraday"
+    assert trends_client.requests == [
+        (market_quote.EASTMONEY_URL, "0.399997"),
+        (market_quote.EASTMONEY_ULIST_URL, "0.399997"),
+        (market_quote.EASTMONEY_TRENDS_URL, "0.399997"),
     ]
 
 

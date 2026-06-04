@@ -42,6 +42,7 @@ EASTMONEY_FIELDS = ",".join(
 EASTMONEY_URL = "https://push2.eastmoney.com/api/qt/stock/get"
 EASTMONEY_ULIST_URL = "https://push2.eastmoney.com/api/qt/ulist.np/get"
 EASTMONEY_SUGGEST_URL = "https://searchapi.eastmoney.com/api/suggest/get"
+EASTMONEY_TRENDS_URL = "https://push2his.eastmoney.com/api/qt/stock/trends2/get"
 FUND_URL_TEMPLATE = "https://fundgz.1234567.com.cn/js/{code}.js"
 EASTMONEY_UT_TOKEN = "fa5fd1943c7b386f172d6893dbfba10b"
 EASTMONEY_SEARCH_TOKEN = "D43BF722C8E33C743DEC4FA52FCA5277"
@@ -55,6 +56,7 @@ DEFAULT_HEADERS = {
     "Referer": "https://quote.eastmoney.com/",
 }
 MAX_SYMBOLS = 8
+MAX_CHART_POINTS = 150
 # 非精确匹配（前缀/包含）时要求的最少中文字数，避免“中证”“白酒”这类过短输入被误判
 MIN_FUZZY_NAME_LEN = 4
 EASTMONEY_ULIST_FIELDS = ",".join(
@@ -80,6 +82,8 @@ EASTMONEY_ULIST_FIELDS = ",".join(
         "f152",
     ]
 )
+EASTMONEY_TRENDS_FIELDS1 = "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13"
+EASTMONEY_TRENDS_FIELDS2 = "f51,f52,f53,f54,f55,f56,f57,f58"
 
 
 def _split_symbols(text: str) -> list[str]:
@@ -279,6 +283,166 @@ def _format_timestamp(value: Any) -> str:
     return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _sample_chart_points(points: list[list[Any]], max_points: int = MAX_CHART_POINTS) -> list[list[Any]]:
+    if len(points) <= max_points:
+        return points
+    if max_points <= 2:
+        return [points[0], points[-1]]
+
+    sampled: list[list[Any]] = []
+    last_index = -1
+    step = (len(points) - 1) / (max_points - 1)
+    for position in range(max_points):
+        index = round(position * step)
+        if index == last_index:
+            continue
+        sampled.append(points[index])
+        last_index = index
+    if sampled[-1] is not points[-1]:
+        sampled[-1] = points[-1]
+    return sampled
+
+
+def _parse_trend_item(value: Any) -> list[Any] | None:
+    if not isinstance(value, str):
+        return None
+
+    parts = value.split(",")
+    if len(parts) < 8:
+        return None
+
+    time_text = parts[0].strip()
+    price = _plain_number(parts[2])
+    avg_price = _plain_number(parts[7])
+    volume = _plain_number(parts[5])
+    if price is None:
+        return None
+
+    chart_time = time_text[:16] if len(time_text) >= 16 else time_text
+    return [
+        chart_time,
+        price,
+        avg_price,
+        volume or 0,
+    ]
+
+
+def _query_intraday_chart(secid: str, client: httpx.Client) -> dict[str, Any] | None:
+    try:
+        response = client.get(
+            EASTMONEY_TRENDS_URL,
+            params={
+                "secid": secid,
+                "fields1": EASTMONEY_TRENDS_FIELDS1,
+                "fields2": EASTMONEY_TRENDS_FIELDS2,
+                "ut": EASTMONEY_UT_TOKEN,
+                "ndays": 1,
+                "iscr": 0,
+                "iscca": 0,
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception:
+        return None
+
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, dict):
+        return None
+
+    raw_trends = data.get("trends")
+    if not isinstance(raw_trends, list):
+        return None
+
+    points = [point for point in (_parse_trend_item(item) for item in raw_trends) if point]
+    if len(points) < 2:
+        return None
+
+    pre_close = _plain_number(data.get("preClose"))
+    if pre_close is None:
+        pre_close = _plain_number(data.get("prePrice"))
+
+    start_time = str(points[0][0])
+    end_time = str(points[-1][0])
+    trade_date = start_time[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", start_time) else ""
+
+    return {
+        "kind": "intraday",
+        "point_format": ["time", "price", "avg_price", "volume"],
+        "code": str(data.get("code") or ""),
+        "name": str(data.get("name") or ""),
+        "market_code": _int_number(data.get("market")),
+        "points": _sample_chart_points(points),
+        "point_count": len(points),
+        "sampled": len(points) > MAX_CHART_POINTS,
+        "pre_close": pre_close,
+        "start_time": start_time,
+        "end_time": end_time,
+        "trade_date": trade_date,
+        "time_range": f"{start_time} - {end_time}" if start_time and end_time else "",
+        "updated_at": _format_timestamp(data.get("time")),
+        "source": "东方财富分时行情",
+        "source_url": f"{EASTMONEY_TRENDS_URL}?secid={secid}",
+    }
+
+
+def _attach_intraday_chart(card: dict[str, Any], secid: str, client: httpx.Client) -> dict[str, Any]:
+    chart = _query_intraday_chart(secid, client)
+    if chart:
+        card["chart"] = chart
+    return card
+
+
+def _query_eastmoney_trends_quote(secid: str, client: httpx.Client) -> tuple[dict[str, Any] | None, str | None]:
+    chart = _query_intraday_chart(secid, client)
+    if not chart:
+        return None, f"{secid} 分时端点暂无数据"
+
+    _market_prefix, _, secid_code = secid.partition(".")
+    code = str(chart.get("code") or secid_code)
+    name = str(chart.get("name") or code)
+    market_code = _int_number(chart.get("market_code"))
+    if market_code is None:
+        market_code = _int_number(_market_prefix)
+    market_label, market_region, currency = _market_label(market_code, code)
+
+    points = chart.get("points") if isinstance(chart.get("points"), list) else []
+    prices = [_plain_number(point[1]) for point in points if isinstance(point, list) and len(point) > 1]
+    prices = [price for price in prices if price is not None]
+    if len(prices) < 2:
+        return None, f"{secid} 分时端点暂无有效价格"
+
+    latest = prices[-1]
+    previous_close = _plain_number(chart.get("pre_close"))
+    change = round(latest - previous_close, 4) if previous_close else None
+    change_percent = round(change / previous_close * 100, 2) if change is not None and previous_close else None
+
+    card = {
+        "kind": "quote",
+        "asset_type": _asset_type(code, market_code, name),
+        "symbol": code,
+        "name": name,
+        "market": market_label,
+        "market_region": market_region,
+        "currency": currency,
+        "latest": latest,
+        "change": change,
+        "change_percent": change_percent,
+        "open": prices[0],
+        "high": max(prices),
+        "low": min(prices),
+        "previous_close": previous_close,
+        "volume": sum(_plain_number(point[3]) or 0 for point in points if isinstance(point, list) and len(point) > 3),
+        "amount": None,
+        "updated_at": chart.get("updated_at") or chart.get("end_time") or "",
+        "source": "东方财富分时行情",
+        "provider": "eastmoney",
+        "source_url": f"{EASTMONEY_TRENDS_URL}?secid={secid}",
+        "chart": chart,
+    }
+    return card, None
+
+
 def _market_label(market_code: int | None, code: str) -> tuple[str, str, str]:
     if market_code == 116:
         return "港股", "HK", "HKD"
@@ -379,7 +543,7 @@ def _query_eastmoney_ulist(secid: str, client: httpx.Client) -> tuple[dict[str, 
     }
     if latest is None and previous_close is not None:
         card["status"] = "可能停牌或未开盘"
-    return card, None
+    return _attach_intraday_chart(card, secid, client), None
 
 
 def _query_eastmoney(symbol: str, market: str, client: httpx.Client) -> tuple[dict[str, Any] | None, str | None]:
@@ -403,7 +567,10 @@ def _query_eastmoney(symbol: str, market: str, client: httpx.Client) -> tuple[di
             fallback_card, fallback_error = _query_eastmoney_ulist(secid, client)
             if fallback_card:
                 return fallback_card, None
-            last_error = "；".join(item for item in [stock_error, fallback_error] if item)
+            trends_card, trends_error = _query_eastmoney_trends_quote(secid, client)
+            if trends_card:
+                return trends_card, None
+            last_error = "；".join(item for item in [stock_error, fallback_error, trends_error] if item)
             continue
 
         data = payload.get("data") if isinstance(payload, dict) else None
@@ -411,7 +578,10 @@ def _query_eastmoney(symbol: str, market: str, client: httpx.Client) -> tuple[di
             fallback_card, fallback_error = _query_eastmoney_ulist(secid, client)
             if fallback_card:
                 return fallback_card, None
-            last_error = fallback_error or f"{secid} 暂无数据"
+            trends_card, trends_error = _query_eastmoney_trends_quote(secid, client)
+            if trends_card:
+                return trends_card, None
+            last_error = fallback_error or trends_error or f"{secid} 暂无数据"
             continue
 
         decimals = int(data.get("f59") or 2)
@@ -452,7 +622,7 @@ def _query_eastmoney(symbol: str, market: str, client: httpx.Client) -> tuple[di
         }
         if latest is None and previous_close is not None:
             card["status"] = "可能停牌或未开盘"
-        return card, None
+        return _attach_intraday_chart(card, secid, client), None
 
     return None, last_error
 

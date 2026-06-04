@@ -40,6 +40,20 @@ const cards = computed(() => payload.value?.cards || []);
 const failures = computed(() => payload.value?.failures || []);
 const robotText = computed(() => payload.value?.robot_text || "");
 const jsonText = computed(() => (payload.value ? JSON.stringify(payload.value.json || payload.value.cards || [], null, 2) : ""));
+const cardItems = computed(() => cards.value.map((card) => ({ card, chart: buildChartModel(card) })));
+
+const chartBox = {
+  width: 560,
+  height: 238,
+  left: 52,
+  right: 14,
+  priceTop: 26,
+  priceHeight: 124,
+  volumeTop: 174,
+  volumeHeight: 44,
+};
+
+const chartInnerWidth = chartBox.width - chartBox.left - chartBox.right;
 
 function setExample(value) {
   form.text = value;
@@ -73,6 +87,9 @@ function formatPercent(value) {
 }
 
 function formatAmount(value) {
+  if (value === null || value === undefined || value === "" || value === "-") {
+    return "--";
+  }
   const number = Number(value);
   if (!Number.isFinite(number)) {
     return "--";
@@ -84,6 +101,339 @@ function formatAmount(value) {
     return `${(number / 10000).toFixed(2)} 万`;
   }
   return number.toFixed(0);
+}
+
+function finiteNumber(value) {
+  if (value === null || value === undefined || value === "" || value === "-") {
+    return null;
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function trimNumber(value, digits = 2) {
+  const number = finiteNumber(value);
+  if (number === null) {
+    return "--";
+  }
+  return number.toFixed(digits).replace(/\.?0+$/, "");
+}
+
+function formatChartPrice(value) {
+  const number = finiteNumber(value);
+  if (number === null) {
+    return "--";
+  }
+  const abs = Math.abs(number);
+  if (abs >= 100) {
+    return trimNumber(number, 2);
+  }
+  if (abs >= 1) {
+    return trimNumber(number, 3);
+  }
+  return trimNumber(number, 4);
+}
+
+function formatChartVolume(value) {
+  const number = finiteNumber(value);
+  if (number === null) {
+    return "--";
+  }
+  if (Math.abs(number) >= 100000000) {
+    return `${trimNumber(number / 100000000, 1)}亿`;
+  }
+  if (Math.abs(number) >= 10000) {
+    return `${trimNumber(number / 10000, 1)}万`;
+  }
+  return trimNumber(number, 0);
+}
+
+function chartCurrencyUnit(card) {
+  const currency = String(card?.currency || "").toUpperCase();
+  if (currency === "CNY") {
+    return "元";
+  }
+  if (currency === "HKD") {
+    return "港元";
+  }
+  if (currency === "USD") {
+    return "美元";
+  }
+  return "";
+}
+
+function padTime(value) {
+  return String(value).padStart(2, "0");
+}
+
+function dateToDayNumber(dateText) {
+  const matched = String(dateText || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!matched) {
+    return null;
+  }
+  const [, year, month, day] = matched;
+  return Math.floor(Date.UTC(Number(year), Number(month) - 1, Number(day)) / 86400000);
+}
+
+function clockToMinute(value) {
+  const matched = String(value || "").match(/^(\d{1,2}):(\d{2})$/);
+  if (!matched) {
+    return null;
+  }
+  const hour = Number(matched[1]);
+  const minute = Number(matched[2]);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute) || hour > 23 || minute > 59) {
+    return null;
+  }
+  return hour * 60 + minute;
+}
+
+function absoluteMinute(dateText, timeText) {
+  const day = dateToDayNumber(dateText);
+  const minute = clockToMinute(timeText);
+  if (day === null || minute === null) {
+    return null;
+  }
+  return day * 1440 + minute;
+}
+
+function formatAbsoluteMinute(value) {
+  const minute = ((Math.round(value) % 1440) + 1440) % 1440;
+  return `${padTime(Math.floor(minute / 60))}:${padTime(minute % 60)}`;
+}
+
+function normalizeChartTime(value) {
+  const raw = String(value || "");
+  const matched = raw.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
+  if (!matched) {
+    return {
+      raw,
+      date: "",
+      axis: raw.slice(0, 5) || "--:--",
+      compact: raw || "--",
+      absolute: null,
+    };
+  }
+  const absolute = absoluteMinute(matched[1], matched[2]);
+  return {
+    raw: `${matched[1]} ${matched[2]}`,
+    date: matched[1],
+    axis: matched[2],
+    compact: `${matched[1]} ${matched[2]}`,
+    absolute,
+  };
+}
+
+function shortChartTime(value) {
+  return normalizeChartTime(value).axis;
+}
+
+function compactChartTime(value) {
+  return normalizeChartTime(value).compact;
+}
+
+function buildLinePath(points, key) {
+  const usable = points.filter((point) => finiteNumber(point[key]) !== null);
+  if (usable.length < 2) {
+    return "";
+  }
+  return usable
+    .map((point, index) => {
+      const previous = usable[index - 1];
+      const isLargeGap = previous && point.absolute - previous.absolute > 30;
+      const command = index === 0 || isLargeGap ? "M" : "L";
+      return `${command}${point.x.toFixed(1)},${point[key].toFixed(1)}`;
+    })
+    .join(" ");
+}
+
+function makeMarketAxis(card, points, chart) {
+  const firstPoint = points[0];
+  const lastPoint = points[points.length - 1];
+  const baseDate = chart?.trade_date || firstPoint.date || lastPoint.date;
+  const region = String(card?.market_region || "").toUpperCase();
+  const marketText = `${card?.market || ""}${card?.asset_type || ""}`;
+  const makeTick = (absolute, label = formatAbsoluteMinute(absolute)) => ({ absolute, label });
+  const makeWindow = (startClock, endClock, tickClocks) => {
+    const start = absoluteMinute(baseDate, startClock);
+    const end = absoluteMinute(baseDate, endClock);
+    if (start === null || end === null) {
+      return null;
+    }
+    const ticks = tickClocks
+      .map((clock) => {
+        const absolute = absoluteMinute(baseDate, clock);
+        return absolute === null ? null : makeTick(absolute, clock);
+      })
+      .filter(Boolean);
+    return { start, end, ticks };
+  };
+
+  let axis = null;
+  if (region === "HK" || marketText.includes("港股")) {
+    axis = makeWindow("09:30", "16:00", ["09:30", "10:30", "12:00", "13:00", "14:30", "16:00"]);
+  } else if (region === "US" || marketText.includes("美股") || marketText.includes("纳斯达克") || marketText.includes("纽交所")) {
+    const start = firstPoint.absolute;
+    const end = start + 390;
+    axis = {
+      start,
+      end,
+      ticks: [0, 90, 195, 300, 390].map((offset) => makeTick(start + offset)),
+    };
+  } else if (region === "CN" || marketText.includes("沪市") || marketText.includes("深市") || marketText.includes("指数")) {
+    axis = makeWindow("09:30", "15:00", ["09:30", "10:30", "11:30", "13:00", "14:00", "15:00"]);
+  }
+
+  const fallback = {
+    start: firstPoint.absolute,
+    end: lastPoint.absolute,
+    ticks: [0, 0.25, 0.5, 0.75, 1].map((position) => {
+      const absolute = firstPoint.absolute + (lastPoint.absolute - firstPoint.absolute) * position;
+      return makeTick(absolute);
+    }),
+  };
+  const resolved = axis || fallback;
+  resolved.start = Math.min(resolved.start, firstPoint.absolute);
+  resolved.end = Math.max(resolved.end, lastPoint.absolute, resolved.start + 1);
+  resolved.ticks = resolved.ticks
+    .filter((tick) => tick.absolute >= resolved.start && tick.absolute <= resolved.end)
+    .map((tick) => ({
+      ...tick,
+      x: chartBox.left + ((tick.absolute - resolved.start) / (resolved.end - resolved.start)) * chartInnerWidth,
+    }));
+  return resolved;
+}
+
+function buildChartTimeText(chart, points, axis) {
+  const start = chart?.start_time || points[0]?.fullTime || "";
+  const end = chart?.end_time || points[points.length - 1]?.fullTime || "";
+  const axisRange = `${formatAbsoluteMinute(axis.start)}-${formatAbsoluteMinute(axis.end)}`;
+  if (start && end) {
+    const startInfo = normalizeChartTime(start);
+    const endInfo = normalizeChartTime(end);
+    if (startInfo.date && startInfo.date === endInfo.date) {
+      return `${startInfo.date} ${startInfo.axis}-${endInfo.axis} / 全时段 ${axisRange}`;
+    }
+    return `${compactChartTime(start)} - ${compactChartTime(end)} / 全时段 ${axisRange}`;
+  }
+  return chart?.updated_at ? `更新 ${chart.updated_at} / 全时段 ${axisRange}` : `全时段 ${axisRange}`;
+}
+
+function withUnit(value, unit) {
+  if (!unit || value === "--") {
+    return value;
+  }
+  return `${value} ${unit}`;
+}
+
+function volumeBarWidth(axis, pointCount) {
+  const duration = Math.max(axis.end - axis.start, pointCount, 1);
+  return Math.max(1, Math.min(4, (chartInnerWidth / duration) * 0.7));
+}
+
+function visiblePoint(point, axis) {
+  return point.absolute >= axis.start && point.absolute <= axis.end;
+}
+
+function buildChartPoints(rawPoints) {
+  return rawPoints
+    .map((item) => {
+      const timeInfo = normalizeChartTime(item?.[0]);
+      return {
+        time: timeInfo.axis,
+        date: timeInfo.date,
+        fullTime: timeInfo.raw,
+        absolute: timeInfo.absolute,
+        price: finiteNumber(item?.[1]),
+        avg: finiteNumber(item?.[2]),
+        volume: finiteNumber(item?.[3]) || 0,
+      };
+    })
+    .filter((point) => point.time && point.absolute !== null && point.price !== null)
+    .sort((a, b) => a.absolute - b.absolute);
+}
+
+function buildChartModel(card) {
+  const chart = card?.chart;
+  const rawPoints = Array.isArray(chart?.points) ? chart.points : [];
+  const points = buildChartPoints(rawPoints);
+
+  if (points.length < 2) {
+    return null;
+  }
+
+  const axis = makeMarketAxis(card, points, chart);
+  const visiblePoints = points.filter((point) => visiblePoint(point, axis));
+  if (visiblePoints.length < 2) {
+    return null;
+  }
+
+  const priceUnit = chartCurrencyUnit(card);
+  const preClose = finiteNumber(chart?.pre_close ?? card?.previous_close);
+  const priceValues = visiblePoints.flatMap((point) => [point.price, point.avg]).filter((value) => value !== null);
+  if (preClose !== null) {
+    priceValues.push(preClose);
+  }
+
+  let minPrice = Math.min(...priceValues);
+  let maxPrice = Math.max(...priceValues);
+  if (minPrice === maxPrice) {
+    const padding = Math.max(Math.abs(minPrice) * 0.01, 0.01);
+    minPrice -= padding;
+    maxPrice += padding;
+  } else {
+    const padding = (maxPrice - minPrice) * 0.08;
+    minPrice -= padding;
+    maxPrice += padding;
+  }
+
+  const maxVolume = Math.max(...visiblePoints.map((point) => point.volume), 1);
+  const xFor = (absolute) => chartBox.left + ((absolute - axis.start) / (axis.end - axis.start)) * chartInnerWidth;
+  const yForPrice = (value) => chartBox.priceTop + ((maxPrice - value) / (maxPrice - minPrice)) * chartBox.priceHeight;
+  const yForVolume = (value) => chartBox.volumeTop + (1 - value / maxVolume) * chartBox.volumeHeight;
+  const barWidth = volumeBarWidth(axis, visiblePoints.length);
+
+  const drawPoints = visiblePoints.map((point) => ({
+    ...point,
+    x: xFor(point.absolute),
+    priceY: yForPrice(point.price),
+    avgY: point.avg === null ? null : yForPrice(point.avg),
+    volumeY: yForVolume(point.volume),
+    volumeHeight: Math.max(1, chartBox.volumeTop + chartBox.volumeHeight - yForVolume(point.volume)),
+    barWidth,
+  }));
+
+  const priceTicks = Array.from({ length: 5 }, (_, index) => {
+    const value = maxPrice - ((maxPrice - minPrice) / 4) * index;
+    return {
+      y: yForPrice(value),
+      label: formatChartPrice(value),
+    };
+  });
+
+  const lastPoint = visiblePoints[visiblePoints.length - 1];
+
+  return {
+    ...chartBox,
+    title: `${card.name} 分时走势`,
+    subtitle: `${card.symbol} · ${chart?.source || "公开分时"}${chart?.sampled ? " · 已抽样" : ""}`,
+    timeText: buildChartTimeText(chart, visiblePoints, axis),
+    updatedAt: chart?.updated_at || card.updated_at || "",
+    pricePath: buildLinePath(drawPoints, "priceY"),
+    avgPath: buildLinePath(drawPoints, "avgY"),
+    preCloseY: preClose === null ? null : yForPrice(preClose),
+    preCloseLabel: preClose === null ? "--" : withUnit(formatChartPrice(preClose), priceUnit),
+    priceUnit,
+    priceTicks,
+    volumeTicks: [
+      { y: chartBox.volumeTop, label: formatChartVolume(maxVolume) },
+      { y: chartBox.volumeTop + chartBox.volumeHeight, label: "0" },
+    ],
+    gridX: axis.ticks,
+    points: drawPoints,
+    lastPrice: withUnit(formatChartPrice(lastPoint.price), priceUnit),
+    lastTime: shortChartTime(lastPoint.fullTime || lastPoint.time),
+  };
 }
 
 async function submit() {
@@ -166,7 +516,7 @@ function clearOutput() {
     </div>
 
     <div class="tool-actions">
-      <button type="button" :disabled="loading" @click="submit">{{ loading ? "查询中..." : "查询行情" }}</button>
+      <button type="button" :disabled="loading" @click="submit">{{ loading ? "查询中..." : "查询实时行情" }}</button>
       <button type="button" class="secondary-button" @click="form.text = ''">清空输入</button>
       <button v-if="payload" type="button" class="secondary-button" @click="clearOutput">清空输出</button>
     </div>
@@ -179,7 +529,7 @@ function clearOutput() {
       </div>
 
       <section v-if="outputMode === 'card'" class="market-card-grid">
-        <article v-for="card in cards" :key="`${card.provider}-${card.symbol}`" class="market-card" :class="toneClass(card)">
+        <article v-for="{ card, chart } in cardItems" :key="`${card.provider}-${card.symbol}`" class="market-card" :class="toneClass(card)">
           <div class="market-card-head">
             <div>
               <span>{{ card.asset_type }}</span>
@@ -202,6 +552,117 @@ function clearOutput() {
             <span>昨收/净值 <strong>{{ formatPrice(card.previous_close) }}</strong></span>
             <span>成交额 <strong>{{ formatAmount(card.amount) }}</strong></span>
           </div>
+
+          <section
+            v-if="chart"
+            class="market-mini-chart"
+            :aria-label="`${chart.title}，${chart.timeText || chart.updatedAt}`"
+          >
+            <div class="market-chart-head">
+              <div>
+                <strong>{{ chart.title }}</strong>
+                <span>{{ chart.subtitle }}</span>
+              </div>
+              <span>{{ chart.timeText || chart.updatedAt || "时间未知" }}</span>
+            </div>
+            <svg
+              class="market-chart-canvas"
+              :viewBox="`0 0 ${chart.width} ${chart.height}`"
+              preserveAspectRatio="xMidYMid meet"
+              role="img"
+            >
+              <rect class="market-chart-bg" x="0" y="0" :width="chart.width" :height="chart.height" rx="8" />
+              <g class="market-chart-grid">
+                <line
+                  v-for="(tick, index) in chart.priceTicks"
+                  :key="`py-${index}`"
+                  :x1="chart.left"
+                  :x2="chart.width - chart.right"
+                  :y1="tick.y"
+                  :y2="tick.y"
+                />
+                <line
+                  v-for="(tick, index) in chart.gridX"
+                  :key="`gx-${index}`"
+                  :x1="tick.x"
+                  :x2="tick.x"
+                  :y1="chart.priceTop"
+                  :y2="chart.volumeTop + chart.volumeHeight"
+                />
+                <line
+                  :x1="chart.left"
+                  :x2="chart.width - chart.right"
+                  :y1="chart.volumeTop"
+                  :y2="chart.volumeTop"
+                />
+              </g>
+              <g class="market-chart-axis">
+                <text
+                  v-if="chart.priceUnit"
+                  class="market-chart-unit"
+                  :x="chart.left"
+                  y="15"
+                >
+                  价格({{ chart.priceUnit }})
+                </text>
+                <text
+                  v-for="(tick, index) in chart.priceTicks"
+                  :key="`price-label-${index}`"
+                  :x="chart.left - 7"
+                  :y="tick.y + 4"
+                  text-anchor="end"
+                >
+                  {{ tick.label }}
+                </text>
+                <text
+                  v-for="(tick, index) in chart.volumeTicks"
+                  :key="`volume-label-${index}`"
+                  :x="chart.left - 7"
+                  :y="tick.y + 4"
+                  text-anchor="end"
+                >
+                  {{ tick.label }}
+                </text>
+                <text
+                  v-for="(tick, index) in chart.gridX"
+                  :key="`time-label-${index}`"
+                  :x="tick.x"
+                  :y="chart.priceTop + chart.priceHeight + 17"
+                  text-anchor="middle"
+                >
+                  {{ tick.label }}
+                </text>
+              </g>
+              <line
+                v-if="chart.preCloseY !== null"
+                class="market-chart-preclose"
+                :x1="chart.left"
+                :x2="chart.width - chart.right"
+                :y1="chart.preCloseY"
+                :y2="chart.preCloseY"
+              />
+              <g>
+                <rect
+                  v-for="(point, index) in chart.points"
+                  :key="`volume-${index}`"
+                  class="market-chart-volume"
+                  :x="point.x - point.barWidth / 2"
+                  :y="point.volumeY"
+                  :width="point.barWidth"
+                  :height="point.volumeHeight"
+                />
+              </g>
+              <path v-if="chart.avgPath" class="market-chart-avg" :d="chart.avgPath" />
+              <path class="market-chart-price" :d="chart.pricePath" />
+            </svg>
+            <div class="market-chart-legend">
+              <span><i class="price"></i>价格 {{ chart.lastPrice }}</span>
+              <span><i class="avg"></i>均线</span>
+              <span><i class="preclose"></i>昨收 {{ chart.preCloseLabel }}</span>
+              <span>{{ chart.lastTime }}</span>
+            </div>
+          </section>
+          <p v-else class="market-chart-empty">图表：当前公开端点暂无可绘制分时数据。</p>
 
           <footer>
             <span>{{ card.source }}</span>
@@ -409,6 +870,151 @@ function clearOutput() {
   overflow-wrap: anywhere;
 }
 
+.market-mini-chart {
+  display: grid;
+  gap: 8px;
+  overflow: hidden;
+  border-radius: 8px;
+  padding: 10px;
+  background: #12171d;
+  color: #d7e5f2;
+}
+
+.market-chart-head,
+.market-chart-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.market-chart-head {
+  align-items: flex-start;
+}
+
+.market-chart-head > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.market-chart-head strong {
+  color: #eff7ff;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.market-chart-head span,
+.market-chart-legend,
+.market-chart-empty {
+  color: #8da0b2;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.market-chart-head > span {
+  flex: 0 0 auto;
+  max-width: 45%;
+  text-align: right;
+}
+
+.market-chart-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 560 / 238;
+}
+
+.market-chart-bg {
+  fill: #11161c;
+}
+
+.market-chart-grid line {
+  stroke: rgba(204, 220, 234, 0.24);
+  stroke-dasharray: 2 3;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.market-chart-axis text {
+  fill: #92a7b7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+}
+
+.market-chart-axis .market-chart-unit {
+  fill: #b8c8d8;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.market-chart-price,
+.market-chart-avg,
+.market-chart-preclose {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.market-chart-price {
+  stroke: #17a9ff;
+  stroke-width: 1.8;
+}
+
+.market-chart-avg {
+  stroke: rgba(231, 237, 243, 0.62);
+  stroke-width: 1.1;
+}
+
+.market-chart-preclose {
+  stroke: rgba(255, 255, 255, 0.38);
+  stroke-dasharray: 5 5;
+  stroke-width: 1;
+}
+
+.market-chart-volume {
+  fill: rgba(156, 166, 181, 0.68);
+}
+
+.market-chart-legend {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.market-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.market-chart-legend i {
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+}
+
+.market-chart-legend .price {
+  background: #17a9ff;
+}
+
+.market-chart-legend .avg {
+  background: rgba(231, 237, 243, 0.7);
+}
+
+.market-chart-legend .preclose {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.5) 0 4px,
+    transparent 4px 7px
+  );
+}
+
+.market-chart-empty {
+  margin: -2px 0 0;
+}
+
 .market-failure-list {
   display: grid;
   gap: 8px;
@@ -423,6 +1029,19 @@ function clearOutput() {
 
   .market-price-row strong {
     font-size: 24px;
+  }
+
+  .market-chart-head {
+    display: grid;
+  }
+
+  .market-chart-head > span {
+    max-width: none;
+    text-align: left;
+  }
+
+  .market-mini-chart {
+    padding: 8px;
   }
 }
 </style>
