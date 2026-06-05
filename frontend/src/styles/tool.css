@@ -1495,6 +1495,21 @@
   min-height: 300px;
 }
 
+.tool-form--compact-input {
+  gap: 12px;
+}
+
+.tool-form--compact-input input[type="text"] {
+  width: 100%;
+  min-height: 46px;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.tool-form--compact-input .tool-actions {
+  margin-top: 2px;
+}
+
 .tool-actions button,
 .time-tool-actions button,
 .result-actions button,

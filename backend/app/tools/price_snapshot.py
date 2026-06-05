@@ -27,7 +27,62 @@ SINA_HQ_URL = "https://hq.sinajs.cn/list="
 FRANKFURTER_URL = "https://api.frankfurter.app/latest"
 MOA_LIST_URL = "https://scs.moa.gov.cn/jcyj/"
 MYSTEEL_MOBILE_URL = "https://gc.m.mysteel.com/"
+MYSTEEL_SAND_STONE_URLS = [
+    "https://www.mysteel.com/hot/1163703.html",
+    "https://www.mysteel.com/hot/1001046.html",
+]
+AWHOUSE_MATERIAL_COST_URL = "https://www.awhouse.art/unit-material-cost"
 STOOQ_URL = "https://stooq.com/q/l/"
+
+COMMON_RATE_TARGETS = ["CNY", "USD", "EUR", "JPY", "GBP", "HKD"]
+CURRENCY_ALIASES = {
+    "人民币": "CNY",
+    "中国元": "CNY",
+    "cny": "CNY",
+    "rmb": "CNY",
+    "yuan": "CNY",
+    "美元": "USD",
+    "美金": "USD",
+    "usd": "USD",
+    "dollar": "USD",
+    "dollars": "USD",
+    "us dollar": "USD",
+    "欧元": "EUR",
+    "eur": "EUR",
+    "euro": "EUR",
+    "euros": "EUR",
+    "日元": "JPY",
+    "日币": "JPY",
+    "jpy": "JPY",
+    "yen": "JPY",
+    "英镑": "GBP",
+    "gbp": "GBP",
+    "pound": "GBP",
+    "pounds": "GBP",
+    "pound sterling": "GBP",
+    "港币": "HKD",
+    "港元": "HKD",
+    "hkd": "HKD",
+    "hong kong dollar": "HKD",
+    "澳元": "AUD",
+    "澳币": "AUD",
+    "aud": "AUD",
+    "australian dollar": "AUD",
+    "加元": "CAD",
+    "加币": "CAD",
+    "cad": "CAD",
+    "canadian dollar": "CAD",
+    "瑞士法郎": "CHF",
+    "chf": "CHF",
+    "swiss franc": "CHF",
+    "新加坡元": "SGD",
+    "新币": "SGD",
+    "sgd": "SGD",
+    "singapore dollar": "SGD",
+    "韩元": "KRW",
+    "krw": "KRW",
+    "won": "KRW",
+}
 
 
 def _request_text(url: str, params: dict[str, Any] | None = None, headers: dict[str, str] | None = None, encoding: str = "utf-8") -> str:
@@ -57,6 +112,10 @@ def _fmt_number(value: Any, digits: int = 4) -> str:
     if number is None:
         return "--"
     return f"{number:.{digits}f}".rstrip("0").rstrip(".")
+
+
+def _fmt_amount(value: float) -> str:
+    return f"{value:.4f}".rstrip("0").rstrip(".")
 
 
 def _clean_text(value: str) -> str:
@@ -106,6 +165,40 @@ def _fetch_stooq(symbol: str) -> dict[str, str] | None:
     if row.get("Close") in {"N/D", None, ""}:
         return None
     return row
+
+
+def _extract_amount(text: str) -> float:
+    match = re.search(r"[-+]?\d+(?:\.\d+)?", text.replace(",", ""))
+    if not match:
+        return 1.0
+    amount = _plain_number(match.group(0))
+    return amount if amount and amount > 0 else 1.0
+
+
+def _extract_currency_codes(text: str) -> list[str]:
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return []
+    found: list[tuple[int, int, str]] = []
+    lower_text = cleaned.lower()
+    for alias, code in sorted(CURRENCY_ALIASES.items(), key=lambda item: len(item[0]), reverse=True):
+        alias_lower = alias.lower()
+        pattern = re.escape(alias_lower)
+        if alias_lower.isascii() and alias_lower.replace(" ", "").isalpha():
+            pattern = rf"(?<![a-z]){pattern}(?![a-z])"
+        for match in re.finditer(pattern, lower_text):
+            found.append((match.start(), match.end(), code))
+    for match in re.finditer(r"(?<![A-Za-z])([A-Za-z]{3})(?![A-Za-z])", cleaned):
+        found.append((match.start(), match.end(), match.group(1).upper()))
+    codes: list[str] = []
+    occupied: list[tuple[int, int]] = []
+    for start, end, code in sorted(found, key=lambda item: (item[0], -(item[1] - item[0]))):
+        if any(start < used_end and end > used_start for used_start, used_end in occupied):
+            continue
+        occupied.append((start, end))
+        if code not in codes:
+            codes.append(code)
+    return codes
 
 
 def run_domestic_oil(text: str = "", **_: dict) -> str:
@@ -214,17 +307,30 @@ def run_silver(text: str = "", **_: dict) -> str:
 
 
 def run_exchange_rate(text: str = "", **_: dict) -> str:
-    base = (text or "USD").strip().upper()
-    if not re.fullmatch(r"[A-Z]{3}", base):
-        raise AppException(message="请输入 3 位货币代码，例如 USD、CNY、EUR", code=4001, status_code=400)
-    targets = ["CNY", "USD", "EUR", "JPY", "GBP", "HKD"]
+    raw_text = (text or "").strip()
+    codes = _extract_currency_codes(raw_text)
+    if raw_text and not codes:
+        raise AppException(message="请输入货币代码或中文币种，例如 USD、美元、100美元兑人民币", code=4001, status_code=400)
+
+    amount = _extract_amount(raw_text)
+    base = codes[0] if codes else "USD"
+    targets = [codes[1]] if len(codes) >= 2 else COMMON_RATE_TARGETS
     targets = [item for item in targets if item != base]
+    if not targets:
+        raise AppException(message="换算币种不能和基准币种相同", code=4001, status_code=400)
+
     payload = _request_json(FRANKFURTER_URL, params={"from": base, "to": ",".join(targets)})
     rates = payload.get("rates") if isinstance(payload, dict) else None
     if not isinstance(rates, dict):
         raise AppException(message="汇率接口未返回有效数据", code=5001, status_code=502)
-    rows = [(f"{base}/{code}", value, "") for code, value in rates.items()]
-    return _format_snapshot(f"今日汇率 - 1 {base}", rows, "Frankfurter 汇率公开接口", str(payload.get("date") or ""))
+
+    if amount != 1 or len(rates) == 1:
+        rows = [(f"{_fmt_amount(amount)} {base} -> {code}", amount * value, f" {code}") for code, value in rates.items()]
+        title = f"今日汇率换算 - {_fmt_amount(amount)} {base}"
+    else:
+        rows = [(f"{base}/{code}", value, "") for code, value in rates.items()]
+        title = f"今日汇率 - 1 {base}"
+    return _format_snapshot(title, rows, "Frankfurter 汇率公开接口", str(payload.get("date") or ""))
 
 
 def _latest_moa_article() -> tuple[str, str]:
@@ -300,14 +406,50 @@ def run_building_materials(text: str = "", **_: dict) -> str:
             break
     if not unique_titles:
         unique_titles = ["当前公开页面未解析到具体价格条目，可稍后重试。"]
+    sand_stone_titles: list[str] = []
+    for url in MYSTEEL_SAND_STONE_URLS:
+        try:
+            sand_html = _request_text(url, headers=DEFAULT_HEADERS)
+        except Exception:
+            continue
+        candidates = re.findall(r"<li[^>]*>(.*?)</li>", sand_html, flags=re.S)
+        candidates.extend(re.findall(r'<a[^>]+href="[^"]+"[^>]*>(.*?)</a>', sand_html, flags=re.S))
+        for raw_item in candidates:
+            title = _clean_text(raw_item)
+            if len(title) > 120 or "当前位置" in title:
+                continue
+            if re.search(r"(红砖|砂石|河砂|机制砂|碎石|石粉).*(价格|行情|报价)", title):
+                sand_stone_titles.append(title)
+    unique_sand_stone_titles: list[str] = []
+    for title in sand_stone_titles:
+        if title not in unique_sand_stone_titles:
+            unique_sand_stone_titles.append(title)
+        if len(unique_sand_stone_titles) >= 6:
+            break
+
+    reference_rows = [
+        ("红砖", "0.6-0.8 元/块"),
+        ("砂石", "100-200 元/m³"),
+        ("碎石/石子", "通常随地区、粒径和运输距离浮动，建议按当地砂石行情核价"),
+    ]
     lines = [
         "# 今日钢材/水泥/建材价格",
         f"更新时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         f"数据源：我的钢铁移动行情页：{MYSTEEL_MOBILE_URL}",
         "",
+        "## 钢材/水泥/建材行情摘要",
     ]
     lines.extend(f"- {title}" for title in unique_titles)
+    if unique_sand_stone_titles:
+        lines.append("")
+        lines.append("## 砂石/石材行情摘要")
+        lines.extend(f"- {title}" for title in unique_sand_stone_titles)
     lines.append("")
+    lines.append("## 红砖/砂石/石子参考价")
+    lines.extend(f"- {name}：{value}" for name, value in reference_rows)
+    lines.append("")
+    lines.append(f"参考价来源：AWhouse 建材计价信息汇总：{AWHOUSE_MATERIAL_COST_URL}")
     lines.append("备注：该工具展示公开页面行情摘要，不等同于指定城市/规格的成交价。")
+    lines.append("备注：红砖、砂石、石子为常用参考价区间或核价提示，非今日实时成交价。")
     lines.append("提示：免费公开端点稳定性和实时性取决于第三方服务，结果仅用于快速查看。")
     return "\n".join(lines)

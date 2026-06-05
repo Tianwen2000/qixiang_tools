@@ -21,6 +21,18 @@ const text = ref("");
 const result = ref("");
 const loading = ref(false);
 const params = reactive(buildInitialParams(props.tool));
+const compactInputToolSlugs = new Set([
+  "today-oil-price",
+  "today-international-crude",
+  "today-gold-price",
+  "today-exchange-rate",
+  "today-food-price",
+  "today-silver-price",
+  "today-stock-index",
+  "today-building-materials",
+]);
+const isCompactInputTool = computed(() => compactInputToolSlugs.has(props.tool.slug));
+const inputPlaceholder = computed(() => props.tool.description || "请输入内容");
 const visibleParams = computed(() =>
   (props.tool.params || []).filter((item) => {
     if (!item.showWhen) {
@@ -81,8 +93,15 @@ function clearOutput() {
 </script>
 
 <template>
-  <section class="tool-form">
-    <textarea v-model="text" rows="14" :placeholder="tool.description || '请输入内容'"></textarea>
+  <section class="tool-form" :class="{ 'tool-form--compact-input': isCompactInputTool }">
+    <input
+      v-if="isCompactInputTool"
+      v-model="text"
+      type="text"
+      :placeholder="inputPlaceholder"
+      @keydown.enter.prevent="submit"
+    />
+    <textarea v-else v-model="text" rows="14" :placeholder="inputPlaceholder"></textarea>
 
     <div v-if="visibleParams.length" class="param-row">
       <label v-for="item in visibleParams" :key="item.key">

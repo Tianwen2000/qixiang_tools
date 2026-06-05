@@ -200,6 +200,12 @@ def test_meta_endpoints() -> None:
     assert other_tools.status_code == 200
     other_tool_items = other_tools.json()["data"]
     other_tool_slugs = [item["slug"] for item in other_tool_items]
+    assert other_tool_slugs[:4] == [
+        "market-quote",
+        "today-stock-index",
+        "today-gold-price",
+        "today-oil-price",
+    ]
     assert "market-quote" in other_tool_slugs
     assert "today-oil-price" in other_tool_slugs
     assert "today-international-crude" in other_tool_slugs
@@ -282,6 +288,8 @@ def test_price_snapshot_tools_with_mocked_public_sources(monkeypatch) -> None:
             )
         if url == price_snapshot.MYSTEEL_MOBILE_URL:
             return '<a href="/x">6月5日(12:10)南京市场建筑钢材价格行情 高线 螺纹钢 盘螺 06-05</a>'
+        if url in price_snapshot.MYSTEEL_SAND_STONE_URLS:
+            return '<li>6月5日南京市场建设用砂石价格行情 河砂 机制砂 碎石 2026-06-05 11:30</li>'
         raise AssertionError(f"unexpected text url: {url}")
 
     monkeypatch.setattr(price_snapshot, "_request_json", fake_json)
@@ -309,10 +317,14 @@ def test_price_snapshot_tools_with_mocked_public_sources(monkeypatch) -> None:
     assert "WTI/纽约原油" in price_snapshot.run_international_crude()
     assert "纽约黄金折算" in price_snapshot.run_gold()
     assert "USD/CNY" in price_snapshot.run_exchange_rate("USD")
+    assert "100 USD -> CNY" in price_snapshot.run_exchange_rate("100美元兑人民币")
     assert "猪肉" in price_snapshot.run_food_price()
     assert "纽约白银折算" in price_snapshot.run_silver()
     assert "上证指数(000001)" in price_snapshot.run_stock_index("")
-    assert "南京市场建筑钢材价格行情" in price_snapshot.run_building_materials()
+    building_materials = price_snapshot.run_building_materials()
+    assert "南京市场建筑钢材价格行情" in building_materials
+    assert "南京市场建设用砂石价格行情" in building_materials
+    assert "红砖：0.6-0.8 元/块" in building_materials
 
 
 def test_local_ip_lookup_helpers() -> None:
