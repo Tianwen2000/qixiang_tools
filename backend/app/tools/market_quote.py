@@ -659,10 +659,23 @@ def _query_sina_intraday_kline_chart(secid: str, client: httpx.Client) -> dict[s
     if len(parsed_items) < 2:
         return None
 
-    latest_date = str(parsed_items[-1].get("date") or "")
-    visible_items = [item for item in parsed_items if item.get("date") == latest_date] if latest_date else []
-    if len(visible_items) < 2:
-        visible_items = parsed_items[-MAX_CHART_POINTS:]
+    grouped_items: dict[str, list[dict[str, Any]]] = {}
+    for item in parsed_items:
+        date_text = str(item.get("date") or "")
+        if date_text:
+            grouped_items.setdefault(date_text, []).append(item)
+
+    available_dates = list(grouped_items)
+    if not available_dates:
+        return None
+
+    latest_date = available_dates[-1]
+    selected_date = next((date for date in reversed(available_dates) if len(grouped_items[date]) >= 2), "")
+    if not selected_date:
+        return None
+
+    visible_items = grouped_items[selected_date][-MAX_CHART_POINTS:]
+    display_note = "当前交易日K线数据不足，展示上一交易日" if selected_date != latest_date else ""
 
     points = []
     for index, item in enumerate(visible_items):
@@ -674,6 +687,8 @@ def _query_sina_intraday_kline_chart(secid: str, client: httpx.Client) -> dict[s
 
     sampled_points = _sample_chart_points(points)
     quote_data = _query_sina_cn_quote_data(secid, client) or {}
+    quote_date = str(quote_data.get("updated_at") or "")[:10]
+    quote_matches_chart = bool(quote_date and quote_date == selected_date)
     _market_prefix, _, code = secid.partition(".")
     market_code = _int_number(_market_prefix)
     latest_bar = visible_items[-1]
@@ -695,23 +710,24 @@ def _query_sina_intraday_kline_chart(secid: str, client: httpx.Client) -> dict[s
         "points": sampled_points,
         "point_count": len(visible_items),
         "sampled": len(visible_items) > MAX_CHART_POINTS,
-        "pre_close": pre_close,
+        "pre_close": pre_close if quote_matches_chart else None,
         "start_time": start_time,
         "end_time": end_time,
-        "trade_date": latest_date,
+        "trade_date": selected_date,
         "time_range": f"{start_time} - {end_time}",
-        "updated_at": quote_data.get("updated_at") or end_time,
+        "updated_at": quote_data.get("updated_at") if quote_matches_chart else end_time,
         "source": "新浪财经5分钟K线",
         "source_url": f"{SINA_KLINE_URL}?symbol={sina_symbol}&scale=5&datalen=96",
+        "display_note": display_note,
         "latest_bar": {
-            "date": latest_date,
-            "open": _plain_number(quote_data.get("open")) or visible_items[0].get("open"),
-            "close": _plain_number(quote_data.get("latest")) or latest_bar.get("close"),
-            "high": _plain_number(quote_data.get("high")) or (max(high_values) if high_values else None),
-            "low": _plain_number(quote_data.get("low")) or (min(low_values) if low_values else None),
-            "volume": _plain_number(quote_data.get("volume"))
+            "date": selected_date,
+            "open": (_plain_number(quote_data.get("open")) if quote_matches_chart else None) or visible_items[0].get("open"),
+            "close": (_plain_number(quote_data.get("latest")) if quote_matches_chart else None) or latest_bar.get("close"),
+            "high": (_plain_number(quote_data.get("high")) if quote_matches_chart else None) or (max(high_values) if high_values else None),
+            "low": (_plain_number(quote_data.get("low")) if quote_matches_chart else None) or (min(low_values) if low_values else None),
+            "volume": (_plain_number(quote_data.get("volume")) if quote_matches_chart else None)
             or sum(_plain_number(item.get("volume")) or 0 for item in visible_items),
-            "amount": _plain_number(quote_data.get("amount")),
+            "amount": _plain_number(quote_data.get("amount")) if quote_matches_chart else None,
         },
     }
 

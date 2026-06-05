@@ -404,19 +404,20 @@ function makeMarketAxis(card, points, chart) {
 function buildChartTimeText(chart, points, axis) {
   const start = chart?.start_time || points[0]?.fullTime || "";
   const end = chart?.end_time || points[points.length - 1]?.fullTime || "";
+  const note = chart?.display_note ? ` / ${chart.display_note}` : "";
   if (chart?.kind === "daily_kline") {
-    return start && end ? `${compactChartTime(start)} - ${compactChartTime(end)}` : chart?.updated_at ? `更新 ${chart.updated_at}` : "";
+    return start && end ? `${compactChartTime(start)} - ${compactChartTime(end)}${note}` : chart?.updated_at ? `更新 ${chart.updated_at}${note}` : note.trim();
   }
   const axisRange = `${formatAbsoluteMinute(axis.start)}-${formatAbsoluteMinute(axis.end)}`;
   if (start && end) {
     const startInfo = normalizeChartTime(start);
     const endInfo = normalizeChartTime(end);
     if (startInfo.date && startInfo.date === endInfo.date) {
-      return `${startInfo.date} ${startInfo.axis}-${endInfo.axis} / 全时段 ${axisRange}`;
+      return `${startInfo.date} ${startInfo.axis}-${endInfo.axis} / 全时段 ${axisRange}${note}`;
     }
-    return `${compactChartTime(start)} - ${compactChartTime(end)} / 全时段 ${axisRange}`;
+    return `${compactChartTime(start)} - ${compactChartTime(end)} / 全时段 ${axisRange}${note}`;
   }
-  return chart?.updated_at ? `更新 ${chart.updated_at} / 全时段 ${axisRange}` : `全时段 ${axisRange}`;
+  return chart?.updated_at ? `更新 ${chart.updated_at} / 全时段 ${axisRange}${note}` : `全时段 ${axisRange}${note}`;
 }
 
 function withUnit(value, unit) {
@@ -533,7 +534,7 @@ function buildChartModel(card) {
   return {
     ...chartBox,
     title: `${card.name} ${chartTitle}`,
-    subtitle: `${card.symbol} · ${chart?.source || "公开分时"}${chart?.sampled ? " · 已抽样" : ""}`,
+    subtitle: `${card.symbol} · ${chart?.source || "公开分时"}${chart?.sampled ? " · 已抽样" : ""}${chart?.display_note ? ` · ${chart.display_note}` : ""}`,
     timeText: buildChartTimeText(chart, visiblePoints, axis),
     updatedAt: chart?.updated_at || card.updated_at || "",
     pricePath: buildLinePath(drawPoints, "priceY"),

@@ -586,6 +586,64 @@ def test_market_quote_helpers() -> None:
         (f"{market_quote.SINA_HQ_URL}sz399997", ""),
     ]
 
+    class MixedDateSinaClient(SinaOnlyClient):
+        def get(self, url: str, **kwargs: object) -> FakeResponse:
+            response = super().get(url, **kwargs)
+            if url != market_quote.SINA_KLINE_URL:
+                return response
+            return FakeResponse(
+                200,
+                [
+                    {
+                        "day": "2026-06-03 09:40:00",
+                        "open": "6870.000",
+                        "high": "6880.000",
+                        "low": "6860.000",
+                        "close": "6872.146",
+                        "volume": "1000",
+                    },
+                    {
+                        "day": "2026-06-03 09:45:00",
+                        "open": "6872.146",
+                        "high": "6885.000",
+                        "low": "6870.000",
+                        "close": "6882.404",
+                        "volume": "1200",
+                    },
+                    {
+                        "day": "2026-06-04 14:55:00",
+                        "open": "6760.000",
+                        "high": "6770.000",
+                        "low": "6750.000",
+                        "close": "6762.372",
+                        "volume": "1400",
+                    },
+                    {
+                        "day": "2026-06-04 15:00:00",
+                        "open": "6762.372",
+                        "high": "6768.000",
+                        "low": "6758.000",
+                        "close": "6758.918",
+                        "volume": "1600",
+                    },
+                    {
+                        "day": "2026-06-05 09:35:00",
+                        "open": "6860.000",
+                        "high": "6870.000",
+                        "low": "6850.000",
+                        "close": "6866.545",
+                        "volume": "2400",
+                    },
+                ],
+            )
+
+    mixed_card, mixed_error = market_quote._query_eastmoney("399997", "auto", MixedDateSinaClient())  # type: ignore[arg-type]
+    assert mixed_error is None
+    assert mixed_card["chart"]["trade_date"] == "2026-06-04"
+    assert mixed_card["chart"]["display_note"] == "当前交易日K线数据不足，展示上一交易日"
+    assert {point[0][:10] for point in mixed_card["chart"]["points"]} == {"2026-06-04"}
+    assert mixed_card["chart"]["time_range"] == "2026-06-04 14:55:00 - 2026-06-04 15:00:00"
+
 
 def test_douyin_id_extractor_execute_offline() -> None:
     sec_uid = "MS4wLjABAAAAabcdef1234567890"
