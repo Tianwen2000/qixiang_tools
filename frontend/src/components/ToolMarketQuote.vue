@@ -45,7 +45,7 @@ const cardItems = computed(() => cards.value.map((card) => ({ card, chart: build
 const chartBox = {
   width: 560,
   height: 238,
-  left: 52,
+  left: 56,
   right: 14,
   priceTop: 26,
   priceHeight: 124,
@@ -53,7 +53,9 @@ const chartBox = {
   volumeHeight: 44,
 };
 
-const chartInnerWidth = chartBox.width - chartBox.left - chartBox.right;
+function chartInnerWidth(layout) {
+  return Math.max(120, layout.width - layout.left - layout.right);
+}
 
 function setExample(value) {
   form.text = value;
@@ -134,6 +136,27 @@ function formatChartPrice(value) {
   return trimNumber(number, 4);
 }
 
+function formatChartAxisPrice(value) {
+  const number = finiteNumber(value);
+  if (number === null) {
+    return "--";
+  }
+  const abs = Math.abs(number);
+  if (abs >= 10000) {
+    return trimNumber(number, 0);
+  }
+  if (abs >= 1000) {
+    return trimNumber(number, 1);
+  }
+  if (abs >= 100) {
+    return trimNumber(number, 2);
+  }
+  if (abs >= 1) {
+    return trimNumber(number, 3);
+  }
+  return trimNumber(number, 4);
+}
+
 function formatChartVolume(value) {
   const number = finiteNumber(value);
   if (number === null) {
@@ -160,6 +183,32 @@ function chartCurrencyUnit(card) {
     return "美元";
   }
   return "";
+}
+
+function isValidChartPrice(value) {
+  const number = finiteNumber(value);
+  return number !== null && number > 0 ? number : null;
+}
+
+function estimateSvgTextWidth(value) {
+  return [...String(value || "")].reduce((width, char) => {
+    if (/[\u4e00-\u9fa5]/.test(char)) {
+      return width + 10;
+    }
+    if (/[A-Z]/i.test(char)) {
+      return width + 6.4;
+    }
+    if (/[0-9]/.test(char)) {
+      return width + 6.1;
+    }
+    return width + 4.8;
+  }, 0);
+}
+
+function makeChartLayout(priceLabels, volumeLabels) {
+  const maxLabelWidth = Math.max(...[...priceLabels, ...volumeLabels].map(estimateSvgTextWidth), 0);
+  const left = Math.min(116, Math.max(chartBox.left, Math.ceil(maxLabelWidth + 16)));
+  return { ...chartBox, left };
 }
 
 function padTime(value) {
@@ -273,7 +322,7 @@ function buildLinePath(points, key) {
 }
 
 // 把交易时段拼接成连续 X 轴：午休等非交易段不占宽度，跨段处两侧映射到同一 x（视觉无缝衔接）
-function finalizeAxis(segments, ticks, firstPoint, lastPoint) {
+function finalizeAxis(segments, ticks, firstPoint, lastPoint, layout = chartBox) {
   const segs = segments.map((seg) => ({ start: seg.start, end: seg.end }));
   // 扩展首末段以覆盖实际数据点（防盘前集合竞价/数据越界）
   segs[0].start = Math.min(segs[0].start, firstPoint.absolute);
@@ -303,7 +352,8 @@ function finalizeAxis(segments, ticks, firstPoint, lastPoint) {
     return acc;
   };
 
-  const projectX = (absolute) => chartBox.left + (tradingIndex(absolute) / total) * chartInnerWidth;
+  const innerWidth = chartInnerWidth(layout);
+  const projectX = (absolute) => layout.left + (tradingIndex(absolute) / total) * innerWidth;
 
   return {
     start: spans[0].start,
@@ -317,7 +367,7 @@ function finalizeAxis(segments, ticks, firstPoint, lastPoint) {
   };
 }
 
-function makeMarketAxis(card, points, chart) {
+function makeMarketAxis(card, points, chart, layout = chartBox) {
   const firstPoint = points[0];
   const lastPoint = points[points.length - 1];
   if (chart?.kind === "daily_kline") {
@@ -328,7 +378,7 @@ function makeMarketAxis(card, points, chart) {
       const absolute = point?.absolute ?? firstPoint.absolute + (fallbackEnd - firstPoint.absolute) * position;
       return { absolute, label: formatDateLabel(point?.date || dayNumberToDateText(absolute / 1440)) };
     });
-    return finalizeAxis([{ start: firstPoint.absolute, end: fallbackEnd }], ticks, firstPoint, lastPoint);
+    return finalizeAxis([{ start: firstPoint.absolute, end: fallbackEnd }], ticks, firstPoint, lastPoint, layout);
   }
 
   const baseDate = chart?.trade_date || firstPoint.date || lastPoint.date;
@@ -341,7 +391,7 @@ function makeMarketAxis(card, points, chart) {
     const start = firstPoint.absolute;
     const end = start + 390;
     const ticks = [0, 90, 195, 300, 390].map((offset) => ({ absolute: start + offset, label: formatAbsoluteMinute(start + offset) }));
-    return finalizeAxis([{ start, end }], ticks, firstPoint, lastPoint);
+    return finalizeAxis([{ start, end }], ticks, firstPoint, lastPoint, layout);
   }
 
   // 港股 / A 股：午休在 X 轴上不占宽度，分界处用合并刻度
@@ -388,7 +438,7 @@ function makeMarketAxis(card, points, chart) {
           return absolute === null ? null : { absolute, label: t.label || t.clock };
         })
         .filter(Boolean);
-      return finalizeAxis(segments, ticks, firstPoint, lastPoint);
+      return finalizeAxis(segments, ticks, firstPoint, lastPoint, layout);
     }
   }
 
@@ -398,7 +448,7 @@ function makeMarketAxis(card, points, chart) {
     const absolute = firstPoint.absolute + (fallbackEnd - firstPoint.absolute) * position;
     return { absolute, label: formatAbsoluteMinute(absolute) };
   });
-  return finalizeAxis([{ start: firstPoint.absolute, end: fallbackEnd }], ticks, firstPoint, lastPoint);
+  return finalizeAxis([{ start: firstPoint.absolute, end: fallbackEnd }], ticks, firstPoint, lastPoint, layout);
 }
 
 function buildChartTimeText(chart, points, axis) {
@@ -427,12 +477,13 @@ function withUnit(value, unit) {
   return `${value} ${unit}`;
 }
 
-function volumeBarWidth(axis, pointCount) {
+function volumeBarWidth(axis, pointCount, layout) {
+  const innerWidth = chartInnerWidth(layout);
   if (axis.kind === "daily") {
-    return Math.max(1, Math.min(4, (chartInnerWidth / Math.max(pointCount, 1)) * 0.58));
+    return Math.max(1, Math.min(4, (innerWidth / Math.max(pointCount, 1)) * 0.58));
   }
   const duration = Math.max(axis.totalTradingMinutes || (axis.end - axis.start), pointCount, 1);
-  return Math.max(1, Math.min(4, (chartInnerWidth / duration) * 0.7));
+  return Math.max(1, Math.min(4, (innerWidth / duration) * 0.7));
 }
 
 function visiblePoint(point, axis) {
@@ -448,8 +499,8 @@ function buildChartPoints(rawPoints, chartKind = "") {
         date: timeInfo.date,
         fullTime: timeInfo.raw,
         absolute: timeInfo.absolute,
-        price: finiteNumber(item?.[1]),
-        avg: finiteNumber(item?.[2]),
+        price: isValidChartPrice(item?.[1]),
+        avg: isValidChartPrice(item?.[2]),
         volume: finiteNumber(item?.[3]) || 0,
         isDaily: chartKind === "daily_kline",
       };
@@ -467,17 +518,18 @@ function buildChartModel(card) {
     return null;
   }
 
-  const axis = makeMarketAxis(card, points, chart);
+  let layout = chartBox;
+  let axis = makeMarketAxis(card, points, chart, layout);
   if (chart?.kind === "daily_kline") {
     axis.kind = "daily";
   }
-  const visiblePoints = points.filter((point) => visiblePoint(point, axis));
+  let visiblePoints = points.filter((point) => visiblePoint(point, axis));
   if (visiblePoints.length < 2) {
     return null;
   }
 
   const priceUnit = chartCurrencyUnit(card);
-  const preClose = finiteNumber(chart?.pre_close ?? card?.previous_close);
+  const preClose = isValidChartPrice(chart?.pre_close ?? card?.previous_close);
   const priceValues = visiblePoints.flatMap((point) => [point.price, point.avg]).filter((value) => value !== null);
   if (preClose !== null) {
     priceValues.push(preClose);
@@ -496,10 +548,25 @@ function buildChartModel(card) {
   }
 
   const maxVolume = Math.max(...visiblePoints.map((point) => point.volume), 1);
+  const previewPriceTicks = Array.from({ length: 5 }, (_, index) => {
+    const value = maxPrice - ((maxPrice - minPrice) / 4) * index;
+    return formatChartAxisPrice(value);
+  });
+  const previewVolumeTicks = [formatChartVolume(maxVolume), "0"];
+  layout = makeChartLayout(previewPriceTicks, previewVolumeTicks);
+  axis = makeMarketAxis(card, points, chart, layout);
+  if (chart?.kind === "daily_kline") {
+    axis.kind = "daily";
+  }
+  visiblePoints = points.filter((point) => visiblePoint(point, axis));
+  if (visiblePoints.length < 2) {
+    return null;
+  }
+
   const xFor = axis.projectX;
-  const yForPrice = (value) => chartBox.priceTop + ((maxPrice - value) / (maxPrice - minPrice)) * chartBox.priceHeight;
-  const yForVolume = (value) => chartBox.volumeTop + (1 - value / maxVolume) * chartBox.volumeHeight;
-  const barWidth = volumeBarWidth(axis, visiblePoints.length);
+  const yForPrice = (value) => layout.priceTop + ((maxPrice - value) / (maxPrice - minPrice)) * layout.priceHeight;
+  const yForVolume = (value) => layout.volumeTop + (1 - value / maxVolume) * layout.volumeHeight;
+  const barWidth = volumeBarWidth(axis, visiblePoints.length, layout);
 
   const drawPoints = visiblePoints.map((point) => ({
     ...point,
@@ -507,7 +574,7 @@ function buildChartModel(card) {
     priceY: yForPrice(point.price),
     avgY: point.avg === null ? null : yForPrice(point.avg),
     volumeY: yForVolume(point.volume),
-    volumeHeight: Math.max(1, chartBox.volumeTop + chartBox.volumeHeight - yForVolume(point.volume)),
+    volumeHeight: Math.max(1, layout.volumeTop + layout.volumeHeight - yForVolume(point.volume)),
     barWidth,
   }));
 
@@ -515,7 +582,7 @@ function buildChartModel(card) {
     const value = maxPrice - ((maxPrice - minPrice) / 4) * index;
     return {
       y: yForPrice(value),
-      label: formatChartPrice(value),
+      label: formatChartAxisPrice(value),
     };
   });
 
@@ -532,7 +599,7 @@ function buildChartModel(card) {
   const avgPath = buildLinePath(drawPoints, "avgY");
 
   return {
-    ...chartBox,
+    ...layout,
     title: `${card.name} ${chartTitle}`,
     subtitle: `${card.symbol} · ${chart?.source || "公开分时"}${chart?.sampled ? " · 已抽样" : ""}${chart?.display_note ? ` · ${chart.display_note}` : ""}`,
     timeText: buildChartTimeText(chart, visiblePoints, axis),
@@ -544,8 +611,8 @@ function buildChartModel(card) {
     priceUnit,
     priceTicks,
     volumeTicks: [
-      { y: chartBox.volumeTop, label: formatChartVolume(maxVolume) },
-      { y: chartBox.volumeTop + chartBox.volumeHeight, label: "0" },
+      { y: layout.volumeTop, label: formatChartVolume(maxVolume) },
+      { y: layout.volumeTop + layout.volumeHeight, label: "0" },
     ],
     gridX: axis.ticks,
     points: drawPoints,
