@@ -201,6 +201,14 @@ def test_meta_endpoints() -> None:
     other_tool_items = other_tools.json()["data"]
     other_tool_slugs = [item["slug"] for item in other_tool_items]
     assert "market-quote" in other_tool_slugs
+    assert "today-oil-price" in other_tool_slugs
+    assert "today-international-crude" in other_tool_slugs
+    assert "today-gold-price" in other_tool_slugs
+    assert "today-exchange-rate" in other_tool_slugs
+    assert "today-food-price" in other_tool_slugs
+    assert "today-silver-price" in other_tool_slugs
+    assert "today-stock-index" in other_tool_slugs
+    assert "today-building-materials" in other_tool_slugs
     assert "douyin-id-extractor" in other_tool_slugs
     assert "abstract-fan" in other_tool_slugs
     assert "abstract-ac" in other_tool_slugs
@@ -222,6 +230,89 @@ def test_meta_endpoints() -> None:
     upscaler_params = image_tool_items[compressor_index + 1]["params"]
     assert upscaler_params[0]["key"] == "mode"
     assert [item["value"] for item in upscaler_params[0]["options"]] == ["byte_size", "dimensions"]
+
+
+def test_price_snapshot_tools_with_mocked_public_sources(monkeypatch) -> None:
+    from app.tools import market_quote, price_snapshot
+
+    def fake_json(url, params=None, headers=None):
+        if url == price_snapshot.XXAPI_OIL_URL:
+            return {
+                "code": 200,
+                "data": [
+                    {
+                        "regionName": "北京市",
+                        "n89": "7.18",
+                        "n92": "7.66",
+                        "n95": "8.16",
+                        "n98": "9.14",
+                        "n0": "7.37",
+                        "date": "2026-06-05",
+                    }
+                ],
+            }
+        if url == price_snapshot.FRANKFURTER_URL:
+            if params and params.get("from") == "USD" and params.get("to") == "CNY":
+                return {"date": "2026-06-04", "rates": {"CNY": 7.1}}
+            return {
+                "date": "2026-06-04",
+                "rates": {"CNY": 7.1, "EUR": 0.86, "JPY": 143.1, "GBP": 0.74, "HKD": 7.83},
+            }
+        raise AssertionError(f"unexpected json url: {url}")
+
+    def fake_text(url, params=None, headers=None, encoding="utf-8"):
+        if url.startswith(price_snapshot.SINA_HQ_URL):
+            return "\n".join(
+                [
+                    'var hq_str_hf_CL="93.149,,93.050,93.080,93.540,92.520,12:29:36,93.040,92.820,0,3,6,2026-06-05,纽约原油,0";',
+                    'var hq_str_hf_OIL="95.418,,95.310,95.340,95.900,94.790,12:29:36,95.030,95.290,0,3,2,2026-06-05,布伦特原油,9387";',
+                    'var hq_str_hf_GC="4465.205,,4465.900,4466.300,4508.700,4461.200,12:29:33,4505.000,4503.000,0,1,2,2026-06-05,纽约黄金,0";',
+                    'var hq_str_hf_SI="72.796,,72.790,72.820,74.380,72.520,12:29:21,73.971,74.185,0,2,1,2026-06-05,纽约白银,0";',
+                    'var hq_str_USDCNY="12:23:09,7.1000,7.1000,7.1000,86,7.1000,7.1000,7.1000,7.1000,美元人民币,2026-06-05";',
+                ]
+            )
+        if url == price_snapshot.MOA_LIST_URL:
+            return '<a href="./202606/t20260604_6484728.htm">6月4日：“农产品批发价格200指数”比昨天上升0.12个点2026-06-04</a>'
+        if "t20260604_6484728.htm" in url:
+            return (
+                "猪肉平均价格为14.73元/公斤，比昨天下降0.1%；"
+                "鸡蛋10.48元/公斤，比昨天上升0.4%；"
+                "白条鸡17.29元/公斤，比昨天上升0.9%；"
+                "28种蔬菜平均价格为4.26元/公斤，比昨天上升1.2%。"
+            )
+        if url == price_snapshot.MYSTEEL_MOBILE_URL:
+            return '<a href="/x">6月5日(12:10)南京市场建筑钢材价格行情 高线 螺纹钢 盘螺 06-05</a>'
+        raise AssertionError(f"unexpected text url: {url}")
+
+    monkeypatch.setattr(price_snapshot, "_request_json", fake_json)
+    monkeypatch.setattr(price_snapshot, "_request_text", fake_text)
+    monkeypatch.setattr(
+        market_quote,
+        "run",
+        lambda query, market="auto": json.dumps(
+            {
+                "cards": [
+                    {
+                        "name": "上证指数",
+                        "symbol": "000001",
+                        "latest": 3384.5,
+                        "change_percent": 0.35,
+                        "updated_at": "2026-06-05 12:30:00",
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+    )
+
+    assert "今日油价 - 北京市" in price_snapshot.run_domestic_oil("北京")
+    assert "WTI/纽约原油" in price_snapshot.run_international_crude()
+    assert "纽约黄金折算" in price_snapshot.run_gold()
+    assert "USD/CNY" in price_snapshot.run_exchange_rate("USD")
+    assert "猪肉" in price_snapshot.run_food_price()
+    assert "纽约白银折算" in price_snapshot.run_silver()
+    assert "上证指数(000001)" in price_snapshot.run_stock_index("")
+    assert "南京市场建筑钢材价格行情" in price_snapshot.run_building_materials()
 
 
 def test_local_ip_lookup_helpers() -> None:
