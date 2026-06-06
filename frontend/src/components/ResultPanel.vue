@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 
+import { writeClipboardText } from "../utils/clipboard.js";
 import { downloadBlob, downloadText } from "../utils/download.js";
 import { showToast } from "../utils/toast.js";
 
@@ -51,7 +52,7 @@ async function copyResult() {
     return;
   }
   try {
-    await navigator.clipboard.writeText(props.result);
+    await writeClipboardText(props.result);
     copied.value = true;
     showToast({
       type: "success",
