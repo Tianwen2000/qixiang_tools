@@ -2408,6 +2408,20 @@ def test_unicode_hex_and_punycode_codecs_execute() -> None:
     assert unicode_decode_response.status_code == 200
     assert unicode_decode_response.json()["data"]["result"] == "你好"
 
+    mixed_unicode_decode_response = client.post(
+        "/api/tools/unicode-chinese-converter/execute",
+        json={"text": "普通中文 + \\u4f60\\u597d + \\u{1f600} + \\ud83d\\ude00", "params": {"action": "to_text"}},
+    )
+    assert mixed_unicode_decode_response.status_code == 200
+    assert mixed_unicode_decode_response.json()["data"]["result"] == "普通中文 + 你好 + 😀 + 😀"
+
+    default_unicode_decode_response = client.post(
+        "/api/tools/unicode-chinese-converter/execute",
+        json={"text": "\\u9ed8\\u8ba4\\u89e3\\u7801", "params": {}},
+    )
+    assert default_unicode_decode_response.status_code == 200
+    assert default_unicode_decode_response.json()["data"]["result"] == "默认解码"
+
     hex_response = client.post(
         "/api/tools/hex-string-codec/execute",
         json={"text": "hello", "params": {"action": "text_to_hex"}},

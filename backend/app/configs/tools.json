@@ -3762,10 +3762,10 @@
   {
     "slug": "unicode-chinese-converter",
     "module": "unicode_converter",
-    "name": "Unicode 中文互转",
+    "name": "Unicode 转字符串",
     "category": "encode",
-    "summary": "支持中文转 Unicode 转义和 Unicode 转中文。",
-    "description": "适合接口调试、转义文本处理和字符编码查看。",
+    "summary": "把 Unicode 转义内容还原成可读字符串。",
+    "description": "适合处理接口日志、JSON 转义文本、JS Unicode 字面量和混合文本里的 Unicode 码点。",
     "input_mode": "text",
     "result_type": "text",
     "component": "ToolTextForm",
@@ -3775,15 +3775,15 @@
         "key": "action",
         "label": "转换方式",
         "type": "radio",
-        "default": "to_unicode",
+        "default": "to_text",
         "options": [
           {
-            "label": "中文转 Unicode",
-            "value": "to_unicode"
+            "label": "Unicode 转字符串",
+            "value": "to_text"
           },
           {
-            "label": "Unicode 转中文",
-            "value": "to_text"
+            "label": "字符串转 Unicode",
+            "value": "to_unicode"
           }
         ]
       }
