@@ -61,6 +61,10 @@ def _codepoint_text(text: str) -> str:
     return ", ".join(str(ord(char)) for char in text)
 
 
+def _unicode_standard_text(text: str) -> str:
+    return ", ".join(_unicode_label(ord(char)) for char in text)
+
+
 def _display_char(char: str) -> str:
     display_map = {
         "\n": "\\n",
@@ -92,12 +96,8 @@ def _format_detail_table(input_text: str) -> str:
     return "\n".join(rows)
 
 
-def _format_result(character_result: str, input_text: str, include_detail_table: bool) -> str:
-    sections = [
-        f"字符结果：{character_result}",
-        f"Unicode 码点：{_codepoint_text(character_result)}",
-        f"Unicode 转义：{_unicode_escape_text(character_result)}",
-    ]
+def _format_result(label: str, value: str, input_text: str, include_detail_table: bool) -> str:
+    sections = [f"{label}：{value}"]
     if include_detail_table:
         sections.extend(["", _format_detail_table(input_text)])
     return "\n".join(sections)
@@ -119,9 +119,15 @@ def _unicode_to_text(text: str) -> str:
 
 def run(text: str, action: str = "to_text", include_detail_table: bool = False, **_: dict) -> str:
     if action == "to_text":
-        return _format_result(_unicode_to_text(text), text, include_detail_table)
+        return _format_result("字符结果", _unicode_to_text(text), text, include_detail_table)
 
-    if action in {"to_codepoints", "to_unicode", "to_escape"}:
-        return _format_result(text, text, include_detail_table)
+    if action in {"to_codepoints", "to_unicode"}:
+        return _format_result("Unicode 码点", _codepoint_text(text), text, include_detail_table)
+
+    if action == "to_escape":
+        return _format_result("Unicode 转义", _unicode_escape_text(text), text, include_detail_table)
+
+    if action == "to_standard":
+        return _format_result("Unicode 标准写法", _unicode_standard_text(text), text, include_detail_table)
 
     raise AppException(message="操作方式无效", code=4001, status_code=400)

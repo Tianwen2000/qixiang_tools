@@ -55,6 +55,21 @@ input,
 select,
 textarea {
   font: inherit;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+textarea {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow-x: hidden;
 }
 
 .catalog-page,
@@ -827,6 +842,15 @@ textarea {
 .file-name,
 .result-panel p {
   color: var(--muted);
+}
+
+.tool-description,
+.tool-card p,
+.file-name,
+.result-panel p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .loading-state {
