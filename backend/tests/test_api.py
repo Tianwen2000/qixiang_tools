@@ -2398,29 +2398,59 @@ def test_unicode_hex_and_punycode_codecs_execute() -> None:
         json={"text": "你好", "params": {"action": "to_unicode"}},
     )
     assert unicode_response.status_code == 200
-    escaped = unicode_response.json()["data"]["result"]
-    assert "\\u4f60" in escaped
+    codepoints = unicode_response.json()["data"]["result"]
+    assert "字符显示：你" in codepoints
+    assert "10进制码点：20320" in codepoints
+    assert "字符显示：好" in codepoints
+    assert "10进制码点：22909" in codepoints
+
+    ascii_unicode_response = client.post(
+        "/api/tools/unicode-chinese-converter/execute",
+        json={"text": "1", "params": {"action": "to_unicode"}},
+    )
+    assert ascii_unicode_response.status_code == 200
+    ascii_unicode_result = ascii_unicode_response.json()["data"]["result"]
+    assert "字符显示：1" in ascii_unicode_result
+    assert "10进制码点：49" in ascii_unicode_result
 
     unicode_decode_response = client.post(
         "/api/tools/unicode-chinese-converter/execute",
-        json={"text": escaped, "params": {"action": "to_text"}},
+        json={"text": "\\u4f60\\u597d", "params": {"action": "to_text"}},
     )
     assert unicode_decode_response.status_code == 200
-    assert unicode_decode_response.json()["data"]["result"] == "你好"
+    unicode_decode_result = unicode_decode_response.json()["data"]["result"]
+    assert "字符串：你好" in unicode_decode_result
+    assert "10进制码点：20320" in unicode_decode_result
+
+    codepoint_decode_response = client.post(
+        "/api/tools/unicode-chinese-converter/execute",
+        json={"text": "20320 22909", "params": {"action": "to_text"}},
+    )
+    assert codepoint_decode_response.status_code == 200
+    assert "字符串：你好" in codepoint_decode_response.json()["data"]["result"]
+
+    ascii_codepoint_decode_response = client.post(
+        "/api/tools/unicode-chinese-converter/execute",
+        json={"text": "49", "params": {"action": "to_text"}},
+    )
+    assert ascii_codepoint_decode_response.status_code == 200
+    ascii_codepoint_decode_result = ascii_codepoint_decode_response.json()["data"]["result"]
+    assert "字符串：1" in ascii_codepoint_decode_result
+    assert "10进制码点：49" in ascii_codepoint_decode_result
 
     mixed_unicode_decode_response = client.post(
         "/api/tools/unicode-chinese-converter/execute",
         json={"text": "普通中文 + \\u4f60\\u597d + \\u{1f600} + \\ud83d\\ude00", "params": {"action": "to_text"}},
     )
     assert mixed_unicode_decode_response.status_code == 200
-    assert mixed_unicode_decode_response.json()["data"]["result"] == "普通中文 + 你好 + 😀 + 😀"
+    assert "字符串：普通中文 + 你好 + 😀 + 😀" in mixed_unicode_decode_response.json()["data"]["result"]
 
     default_unicode_decode_response = client.post(
         "/api/tools/unicode-chinese-converter/execute",
         json={"text": "\\u9ed8\\u8ba4\\u89e3\\u7801", "params": {}},
     )
     assert default_unicode_decode_response.status_code == 200
-    assert default_unicode_decode_response.json()["data"]["result"] == "默认解码"
+    assert "字符串：默认解码" in default_unicode_decode_response.json()["data"]["result"]
 
     hex_response = client.post(
         "/api/tools/hex-string-codec/execute",

@@ -3764,8 +3764,8 @@
     "module": "unicode_converter",
     "name": "Unicode 转字符串",
     "category": "encode",
-    "summary": "把 Unicode 转义内容还原成可读字符串。",
-    "description": "适合处理接口日志、JSON 转义文本、JS Unicode 字面量和混合文本里的 Unicode 码点。",
+    "summary": "把 Unicode 转义或码点还原成可读字符串。",
+    "description": "适合处理接口日志、JSON 转义文本、JS Unicode 字面量、十进制码点和混合文本里的 Unicode 内容，输出会同时展示字符串和码点明细。",
     "input_mode": "text",
     "result_type": "text",
     "component": "ToolTextForm",
@@ -3782,7 +3782,7 @@
             "value": "to_text"
           },
           {
-            "label": "字符串转 Unicode",
+            "label": "字符串转 Unicode 码点",
             "value": "to_unicode"
           }
         ]
