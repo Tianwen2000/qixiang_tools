@@ -3762,32 +3762,15 @@
   {
     "slug": "unicode-chinese-converter",
     "module": "unicode_converter",
-    "name": "Unicode 转字符串",
+    "name": "字符与unicode码点进制互转",
     "category": "encode",
-    "summary": "把 Unicode 转义或码点还原成可读字符串。",
-    "description": "适合处理接口日志、JSON 转义文本、JS Unicode 字面量、十进制码点和混合文本里的 Unicode 内容，输出会同时展示字符串和码点明细。",
+    "summary": "支持 Unicode 转字符、字符转 Unicode 码点和字符转 Unicode 转义。",
+    "description": "字符结果：显示最终转换出来或原始输入对应的字符串结果。Unicode 码点：显示每个字符对应的十进制 Unicode 码点，用英文逗号分隔。Unicode 转义：显示每个字符对应的 Unicode 转义形式，格式为 \\uXXXX，不足 4 位前面补 0。",
     "input_mode": "text",
     "result_type": "text",
-    "component": "ToolTextForm",
+    "component": "ToolUnicodeConverter",
     "enabled": true,
-    "params": [
-      {
-        "key": "action",
-        "label": "转换方式",
-        "type": "radio",
-        "default": "to_text",
-        "options": [
-          {
-            "label": "Unicode 转字符串",
-            "value": "to_text"
-          },
-          {
-            "label": "字符串转 Unicode 码点",
-            "value": "to_unicode"
-          }
-        ]
-      }
-    ]
+    "params": []
   },
   {
     "slug": "sha-hash",

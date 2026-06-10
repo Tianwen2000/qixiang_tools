@@ -5,7 +5,7 @@ from app.core.exceptions import AppException
 
 TOOL_META = {
     "slug": "unicode-chinese-converter",
-    "name": "Unicode 转字符串",
+    "name": "字符与unicode码点进制互转",
     "category": "encode",
     "input_mode": "text",
     "result_type": "text",
@@ -39,35 +39,89 @@ def _codepoint_list_to_text(text: str) -> str:
     return "".join(_parse_codepoint_token(token.group(0)) for token in CODEPOINT_TOKEN_PATTERN.finditer(text))
 
 
-def _format_codepoint_details(text: str) -> str:
-    if not text:
-        return "（空字符串）"
-    return "\n".join(f"字符显示：{char}\n10进制码点：{ord(char)}" for char in text)
+def _unicode_label(codepoint: int) -> str:
+    return f"U+{codepoint:04X}"
 
 
-def _format_text_result(text: str) -> str:
-    return f"字符串：{text}\n\n码点明细：\n{_format_codepoint_details(text)}"
+def _unicode_escape_char(char: str) -> str:
+    codepoint = ord(char)
+    if codepoint <= 0xFFFF:
+        return f"\\u{codepoint:04x}"
+    value = codepoint - 0x10000
+    high = 0xD800 + (value >> 10)
+    low = 0xDC00 + (value & 0x3FF)
+    return f"\\u{high:04x}\\u{low:04x}"
+
+
+def _unicode_escape_text(text: str) -> str:
+    return "".join(_unicode_escape_char(char) for char in text)
+
+
+def _codepoint_text(text: str) -> str:
+    return ", ".join(str(ord(char)) for char in text)
+
+
+def _display_char(char: str) -> str:
+    display_map = {
+        "\n": "\\n",
+        "\r": "\\r",
+        "\t": "\\t",
+        " ": "空格",
+    }
+    return display_map.get(char, char)
+
+
+def _format_detail_table(input_text: str) -> str:
+    rows = ["输入字符进制详情表", "字符\t二进制\t八进制\t十进制\t十六进制\tUnicode"]
+    for char in input_text:
+        codepoint = ord(char)
+        rows.append(
+            "\t".join(
+                [
+                    _display_char(char),
+                    format(codepoint, "b"),
+                    format(codepoint, "o"),
+                    str(codepoint),
+                    format(codepoint, "X"),
+                    _unicode_label(codepoint),
+                ],
+            ),
+        )
+    if len(rows) == 2:
+        rows.append("（空字符串）\t\t\t\t\t")
+    return "\n".join(rows)
+
+
+def _format_result(character_result: str, input_text: str, include_detail_table: bool) -> str:
+    sections = [
+        f"字符结果：{character_result}",
+        f"Unicode 码点：{_codepoint_text(character_result)}",
+        f"Unicode 转义：{_unicode_escape_text(character_result)}",
+    ]
+    if include_detail_table:
+        sections.extend(["", _format_detail_table(input_text)])
+    return "\n".join(sections)
 
 
 def _unicode_to_text(text: str) -> str:
     if CODEPOINT_LIST_PATTERN.fullmatch(text):
-        return _format_text_result(_codepoint_list_to_text(text))
+        return _codepoint_list_to_text(text)
 
     decoded = UNICODE_ESCAPE_PATTERN.sub(
         lambda match: _codepoint_to_char(next(group for group in match.groups() if group)),
         text,
     )
     try:
-        return _format_text_result(decoded.encode("utf-16", "surrogatepass").decode("utf-16"))
+        return decoded.encode("utf-16", "surrogatepass").decode("utf-16")
     except UnicodeDecodeError as exc:
         raise AppException(message="Unicode 代理对文本无效", code=4001, status_code=400) from exc
 
 
-def run(text: str, action: str = "to_text", **_: dict) -> str:
-    if action == "to_unicode":
-        return _format_codepoint_details(text)
-
+def run(text: str, action: str = "to_text", include_detail_table: bool = False, **_: dict) -> str:
     if action == "to_text":
-        return _unicode_to_text(text)
+        return _format_result(_unicode_to_text(text), text, include_detail_table)
+
+    if action in {"to_codepoints", "to_unicode", "to_escape"}:
+        return _format_result(text, text, include_detail_table)
 
     raise AppException(message="操作方式无效", code=4001, status_code=400)
