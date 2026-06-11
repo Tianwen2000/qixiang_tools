@@ -141,7 +141,7 @@
   {
     "slug": "json-xml-converter",
     "module": "json_xml_converter",
-    "name": "JSON/XML 互转",
+    "name": "JSON 和 XML 互转",
     "category": "format",
     "summary": "JSON 与 XML 双向转换。",
     "description": "支持 JSON 转 XML，以及 XML 转 JSON，适合接口调试和结构搬运。",
@@ -171,9 +171,9 @@
   {
     "slug": "json-url-params",
     "module": "json_url_params",
-    "name": "JSON 与 URL 参数互转",
+    "name": "JSON 和 URL 参数互转",
     "category": "format",
-    "summary": "JSON 与 QueryString 双向转换。",
+    "summary": "JSON 与 URL 参数双向转换。",
     "description": "支持 JSON 对象与 URL 查询参数互转，适合接口联调和参数排查。",
     "input_mode": "text",
     "result_type": "text",
@@ -479,6 +479,43 @@
             "value": "newline"
           }
         ]
+      }
+    ]
+  },
+  {
+    "slug": "character-count-slice",
+    "module": "character_count_slice",
+    "name": "字符统计截取输出",
+    "category": "ops",
+    "summary": "统计文本总字符、特殊字符和空白字符，并按最前或最后截取输出。",
+    "description": "输入一段文本后，会按 Unicode 字符逐个统计总数、普通字符数、空白/标点/符号/控制字符数，并输出指定方向的截取结果。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "slice_from",
+        "label": "截取方向",
+        "type": "radio",
+        "default": "front",
+        "options": [
+          {
+            "label": "最前",
+            "value": "front"
+          },
+          {
+            "label": "最后",
+            "value": "back"
+          }
+        ]
+      },
+      {
+        "key": "slice_count",
+        "label": "截取字符数",
+        "type": "text",
+        "default": 20,
+        "placeholder": "例如 20"
       }
     ]
   },
@@ -933,7 +970,7 @@
     "slug": "json-to-typescript",
     "module": "json_to_typescript",
     "name": "JSON 转 TypeScript",
-    "category": "format",
+    "category": "dev",
     "summary": "根据 JSON 结构生成 TypeScript 类型。",
     "description": "适合接口返回值建模、前端类型声明和快速生成 interface。",
     "input_mode": "text",
@@ -954,7 +991,7 @@
     "slug": "json-to-java",
     "module": "json_to_java",
     "name": "JSON 转 Java 实体类",
-    "category": "format",
+    "category": "dev",
     "summary": "根据 JSON 结构生成 Java POJO。",
     "description": "适合接口对象建模、实体类占位和后端字段梳理。",
     "input_mode": "text",
@@ -975,7 +1012,7 @@
     "slug": "json-to-csharp",
     "module": "json_to_csharp",
     "name": "JSON 转 C# 实体类",
-    "category": "format",
+    "category": "dev",
     "summary": "根据 JSON 结构生成 C# 类定义。",
     "description": "适合 .NET 项目里的 DTO、VO 和接口模型搭建。",
     "input_mode": "text",
@@ -996,7 +1033,7 @@
     "slug": "json-to-golang",
     "module": "json_to_golang",
     "name": "JSON 转 Golang 结构体",
-    "category": "format",
+    "category": "dev",
     "summary": "根据 JSON 结构生成 Go struct。",
     "description": "适合接口联调、后端模型初稿和结构体字段定义。",
     "input_mode": "text",
@@ -1017,7 +1054,7 @@
     "slug": "json-to-sql",
     "module": "json_to_sql",
     "name": "JSON 转 SQL",
-    "category": "format",
+    "category": "dev",
     "summary": "根据 JSON 字段生成 SQL 建表语句。",
     "description": "适合快速产出数据表结构草稿，复杂字段会自动退回 JSON/TEXT。",
     "input_mode": "text",
@@ -1129,9 +1166,9 @@
   {
     "slug": "color-converter",
     "module": "color_converter",
-    "name": "颜色选择器转换器",
+    "name": "颜色格式互转",
     "category": "format",
-    "summary": "支持 HEX、RGB、RGBA 互转。",
+    "summary": "在 HEX、RGB、RGBA 等颜色格式之间转换。",
     "description": "适合前端颜色调试、设计稿还原和色值换算。",
     "input_mode": "text",
     "result_type": "text",
@@ -1303,7 +1340,7 @@
   {
     "slug": "json-yaml-converter",
     "module": "json_yaml_converter",
-    "name": "JSON/YAML 互转",
+    "name": "JSON 和 YAML 互转",
     "category": "format",
     "summary": "支持 JSON 与 YAML 双向转换。",
     "description": "适合配置文件整理、接口样例转换和结构调整。",
@@ -2785,6 +2822,608 @@
     ]
   },
   {
+    "slug": "word-pdf-converter",
+    "module": "word_pdf_converter",
+    "name": "Word 和 PDF 互转",
+    "summary": "在 Word 文档与 PDF 文件之间互转。",
+    "description": "沿用现有轻量文档转换链路，优先保留文本内容和基础结构。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "word_to_pdf",
+        "options": [
+          {
+            "label": "Word 转 PDF",
+            "value": "word_to_pdf"
+          },
+          {
+            "label": "PDF 转 Word",
+            "value": "pdf_to_word"
+          }
+        ]
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "pdf-jpg-converter",
+    "module": "pdf_jpg_converter",
+    "name": "PDF 和 JPG 互转",
+    "summary": "PDF 页面导出 JPG，或图片封装为 PDF。",
+    "description": "PDF 转 JPG 会按页导出并打包下载；JPG/PNG/WEBP/BMP 转 PDF 会生成单页 PDF。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "pdf_to_jpg",
+        "options": [
+          {
+            "label": "PDF 转 JPG",
+            "value": "pdf_to_jpg"
+          },
+          {
+            "label": "JPG 转 PDF",
+            "value": "jpg_to_pdf"
+          }
+        ]
+      },
+      {
+        "key": "scale",
+        "label": "清晰度倍数",
+        "type": "select",
+        "default": 2,
+        "showWhen": {
+          "direction": "pdf_to_jpg"
+        },
+        "options": [
+          {
+            "label": "1.5 倍",
+            "value": 1.5
+          },
+          {
+            "label": "2 倍",
+            "value": 2
+          },
+          {
+            "label": "3 倍",
+            "value": 3
+          }
+        ]
+      },
+      {
+        "key": "quality",
+        "label": "JPG 质量",
+        "type": "select",
+        "default": 90,
+        "showWhen": {
+          "direction": "pdf_to_jpg"
+        },
+        "options": [
+          {
+            "label": "80",
+            "value": 80
+          },
+          {
+            "label": "90",
+            "value": 90
+          },
+          {
+            "label": "95",
+            "value": 95
+          }
+        ]
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "pdf-epub-converter",
+    "module": "pdf_epub_converter",
+    "name": "PDF 和 EPUB 互转",
+    "summary": "PDF 与 EPUB 电子书格式互转。",
+    "description": "适合文本资料在 PDF 和 EPUB 阅读格式之间轻量转换。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "pdf_to_epub",
+        "options": [
+          {
+            "label": "PDF 转 EPUB",
+            "value": "pdf_to_epub"
+          },
+          {
+            "label": "EPUB 转 PDF",
+            "value": "epub_to_pdf"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用转换方向或原始标题"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "pdf-txt-converter",
+    "module": "pdf_txt_converter",
+    "name": "PDF 和 TXT 互转",
+    "summary": "PDF 提取 TXT，或 TXT 生成轻量 PDF。",
+    "description": "适合文本型 PDF 和纯文本资料之间互转。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "pdf_to_txt",
+        "options": [
+          {
+            "label": "PDF 转 TXT",
+            "value": "pdf_to_txt"
+          },
+          {
+            "label": "TXT 转 PDF",
+            "value": "txt_to_pdf"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "PDF 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "TXT 转 PDF 时可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "pdf-html-converter",
+    "module": "pdf_html_converter",
+    "name": "PDF 和 HTML 互转",
+    "category": "format",
+    "summary": "PDF 与 HTML 页面互转。",
+    "description": "PDF 转 HTML 会提取文本生成页面；HTML 转 PDF 会提取可见文本生成轻量 PDF。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "pdf_to_html",
+        "options": [
+          {
+            "label": "PDF 转 HTML",
+            "value": "pdf_to_html"
+          },
+          {
+            "label": "HTML 转 PDF",
+            "value": "html_to_pdf"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选"
+      }
+    ]
+  },
+  {
+    "slug": "word-txt-converter",
+    "module": "word_txt_converter",
+    "name": "Word 和 TXT 互转",
+    "summary": "Word 文档与 TXT 文本互转。",
+    "description": "适合文档内容提取、纯文本整理和基础 Word 文档生成。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "word_to_txt",
+        "options": [
+          {
+            "label": "Word 转 TXT",
+            "value": "word_to_txt"
+          },
+          {
+            "label": "TXT 转 Word",
+            "value": "txt_to_word"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Word 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "TXT 转 Word 时可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "txt-epub-converter",
+    "module": "txt_epub_converter",
+    "name": "TXT 和 EPUB 互转",
+    "summary": "TXT 文本与 EPUB 电子书互转。",
+    "description": "适合纯文本资料制作电子书，或从 EPUB 提取正文文本。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "txt_to_epub",
+        "options": [
+          {
+            "label": "TXT 转 EPUB",
+            "value": "txt_to_epub"
+          },
+          {
+            "label": "EPUB 转 TXT",
+            "value": "epub_to_txt"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "电子书标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "TXT 转 EPUB 时可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "word-epub-converter",
+    "module": "word_epub_converter",
+    "name": "Word 和 EPUB 互转",
+    "summary": "Word 文档与 EPUB 电子书互转。",
+    "description": "适合把文档制作成电子书，或把 EPUB 正文整理为 Word。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "word_to_epub",
+        "options": [
+          {
+            "label": "Word 转 EPUB",
+            "value": "word_to_epub"
+          },
+          {
+            "label": "EPUB 转 Word",
+            "value": "epub_to_word"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选，默认使用转换方向或原始标题"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "word-html-converter",
+    "module": "word_html_converter",
+    "name": "Word 和 HTML 互转",
+    "summary": "Word 文档与 HTML 页面互转。",
+    "description": "Word 转 HTML 会生成轻量页面；HTML 转 Word 会提取页面文本生成 docx。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "word_to_html",
+        "options": [
+          {
+            "label": "Word 转 HTML",
+            "value": "word_to_html"
+          },
+          {
+            "label": "HTML 转 Word",
+            "value": "html_to_word"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "txt-html-converter",
+    "module": "txt_html_converter",
+    "name": "TXT 和 HTML 互转",
+    "summary": "TXT 文本与 HTML 页面互转。",
+    "description": "TXT 转 HTML 会生成阅读页面；HTML 转 TXT 会提取页面可见文本。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "txt_to_html",
+        "options": [
+          {
+            "label": "TXT 转 HTML",
+            "value": "txt_to_html"
+          },
+          {
+            "label": "HTML 转 TXT",
+            "value": "html_to_txt"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "HTML 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "TXT 转 HTML 时可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "excel-csv-converter",
+    "module": "excel_csv_converter",
+    "name": "Excel 和 CSV 互转",
+    "summary": "Excel 工作簿与 CSV 数据互转。",
+    "description": "Excel 多工作表转 CSV 时会自动打包；CSV 转 Excel 会生成 xlsx。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "excel_to_csv",
+        "options": [
+          {
+            "label": "Excel 转 CSV",
+            "value": "excel_to_csv"
+          },
+          {
+            "label": "CSV 转 Excel",
+            "value": "csv_to_excel"
+          }
+        ]
+      },
+      {
+        "key": "sheet_name",
+        "label": "工作表名",
+        "type": "text",
+        "default": "",
+        "placeholder": "CSV 转 Excel 时可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "excel-txt-converter",
+    "module": "excel_txt_converter",
+    "name": "Excel 和 TXT 互转",
+    "summary": "Excel 表格与 TXT 文本互转。",
+    "description": "Excel 转 TXT 会导出表格文本；TXT 转 Excel 会按行生成表格。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "excel_to_txt",
+        "options": [
+          {
+            "label": "Excel 转 TXT",
+            "value": "excel_to_txt"
+          },
+          {
+            "label": "TXT 转 Excel",
+            "value": "txt_to_excel"
+          }
+        ]
+      },
+      {
+        "key": "sheet_name",
+        "label": "工作表名",
+        "type": "text",
+        "default": "",
+        "placeholder": "TXT 转 Excel 时可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "csv-txt-converter",
+    "module": "csv_txt_converter",
+    "name": "CSV 和 TXT 互转",
+    "summary": "CSV 数据与 TXT 文本互转。",
+    "description": "CSV 转 TXT 会导出可读文本；TXT 转 CSV 会按行、制表符或逗号整理为 CSV。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "csv_to_txt",
+        "options": [
+          {
+            "label": "CSV 转 TXT",
+            "value": "csv_to_txt"
+          },
+          {
+            "label": "TXT 转 CSV",
+            "value": "txt_to_csv"
+          }
+        ]
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "excel-html-converter",
+    "module": "excel_html_converter",
+    "name": "Excel 和 HTML 互转",
+    "summary": "Excel 表格与 HTML 页面互转。",
+    "description": "Excel 转 HTML 会生成表格页面；HTML 转 Excel 会提取表格或文本生成 xlsx。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "excel_to_html",
+        "options": [
+          {
+            "label": "Excel 转 HTML",
+            "value": "excel_to_html"
+          },
+          {
+            "label": "HTML 转 Excel",
+            "value": "html_to_excel"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "HTML 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "Excel 转 HTML 时可选"
+      },
+      {
+        "key": "sheet_name",
+        "label": "工作表名",
+        "type": "text",
+        "default": "",
+        "placeholder": "HTML 转 Excel 时可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
+    "slug": "csv-html-converter",
+    "module": "csv_html_converter",
+    "name": "CSV 和 HTML 互转",
+    "summary": "CSV 数据与 HTML 页面互转。",
+    "description": "CSV 转 HTML 会生成表格页面；HTML 转 CSV 会提取页面表格并导出。",
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "csv_to_html",
+        "options": [
+          {
+            "label": "CSV 转 HTML",
+            "value": "csv_to_html"
+          },
+          {
+            "label": "HTML 转 CSV",
+            "value": "html_to_csv"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "HTML 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "CSV 转 HTML 时可选"
+      }
+    ],
+    "category": "format",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true
+  },
+  {
     "slug": "docx-to-pdf",
     "module": "docx_to_pdf",
     "name": "Word 转 PDF",
@@ -2795,7 +3434,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "pdf-to-word",
@@ -2808,7 +3448,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "pdf-to-jpg",
@@ -2862,7 +3503,8 @@
           }
         ]
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "jpg-to-pdf",
@@ -2875,7 +3517,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "pdf-to-epub",
@@ -2896,7 +3539,8 @@
         "default": "",
         "placeholder": "可选，默认使用转换后的标题"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "epub-to-pdf",
@@ -2917,7 +3561,8 @@
         "default": "",
         "placeholder": "可选，默认使用电子书标题"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "pdf-to-txt",
@@ -2930,7 +3575,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "word-to-txt",
@@ -2943,7 +3589,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "txt-to-word",
@@ -2964,7 +3611,8 @@
         "default": "",
         "placeholder": "可选，默认使用 TXT 转 Word"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "txt-to-pdf",
@@ -2985,7 +3633,8 @@
         "default": "",
         "placeholder": "可选，默认使用 TXT 转 PDF"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "txt-to-epub",
@@ -3006,7 +3655,8 @@
         "default": "",
         "placeholder": "可选，默认使用 TXT 转 EPUB"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "heic-to-pdf",
@@ -3040,7 +3690,8 @@
         "default": "",
         "placeholder": "可选，默认使用 Word 转 EPUB"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "epub-to-word",
@@ -3061,7 +3712,8 @@
         "default": "",
         "placeholder": "可选，默认使用电子书标题"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "epub-to-txt",
@@ -3074,7 +3726,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "word-to-html",
@@ -3095,7 +3748,8 @@
         "default": "",
         "placeholder": "可选，默认使用 Word 转 HTML"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "pdf-to-html",
@@ -3116,7 +3770,8 @@
         "default": "",
         "placeholder": "可选，默认使用 PDF 转 HTML"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "txt-to-html",
@@ -3137,7 +3792,8 @@
         "default": "",
         "placeholder": "可选，默认使用 TXT 转 HTML"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "excel-to-csv",
@@ -3150,7 +3806,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "csv-to-excel",
@@ -3171,7 +3828,8 @@
         "default": "",
         "placeholder": "可选，默认使用 Sheet1"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "excel-to-html",
@@ -3192,7 +3850,8 @@
         "default": "",
         "placeholder": "可选，默认使用 Excel 转 HTML"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "csv-to-html",
@@ -3213,7 +3872,8 @@
         "default": "",
         "placeholder": "可选，默认使用 CSV 转 HTML"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "ppt-to-txt",
@@ -3226,7 +3886,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "ppt-to-html",
@@ -3247,7 +3908,8 @@
         "default": "",
         "placeholder": "可选，默认使用 PPT 转 HTML"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "ppt-to-word",
@@ -3268,7 +3930,8 @@
         "default": "",
         "placeholder": "可选，默认使用 PPT 转 Word"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "ppt-to-pdf",
@@ -3289,7 +3952,8 @@
         "default": "",
         "placeholder": "可选，默认使用 PPT 转 PDF"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "excel-to-txt",
@@ -3302,7 +3966,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "excel-to-pdf",
@@ -3323,7 +3988,8 @@
         "default": "",
         "placeholder": "可选，默认使用 Excel 转 PDF"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "csv-to-txt",
@@ -3336,7 +4002,8 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "csv-to-pdf",
@@ -3357,7 +4024,8 @@
         "default": "",
         "placeholder": "可选，默认使用 CSV 转 PDF"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "excel-to-word",
@@ -3378,7 +4046,8 @@
         "default": "",
         "placeholder": "可选，默认使用 Excel 转 Word"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "csv-to-word",
@@ -3399,7 +4068,8 @@
         "default": "",
         "placeholder": "可选，默认使用 CSV 转 Word"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "excel-to-epub",
@@ -3420,7 +4090,8 @@
         "default": "",
         "placeholder": "可选，默认使用 Excel 转 EPUB"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "csv-to-epub",
@@ -3441,7 +4112,8 @@
         "default": "",
         "placeholder": "可选，默认使用 CSV 转 EPUB"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "ppt-to-epub",
@@ -3462,7 +4134,8 @@
         "default": "",
         "placeholder": "可选，默认使用 PPT 转 EPUB"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "random-phone-generator",
@@ -3692,6 +4365,483 @@
     "params": []
   },
   {
+    "slug": "excel-pdf-converter",
+    "module": "excel_pdf_converter",
+    "name": "Excel 和 PDF 互转",
+    "category": "format",
+    "summary": "Excel 表格与 PDF 文件互转。",
+    "description": "Excel 转 PDF 会生成轻量文本 PDF；PDF 转 Excel 会提取文本行生成 xlsx。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "excel_to_pdf",
+        "options": [
+          {
+            "label": "Excel 转 PDF",
+            "value": "excel_to_pdf"
+          },
+          {
+            "label": "PDF 转 Excel",
+            "value": "pdf_to_excel"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选"
+      },
+      {
+        "key": "sheet_name",
+        "label": "工作表名",
+        "type": "text",
+        "default": "",
+        "placeholder": "PDF 转 Excel 时可选"
+      }
+    ]
+  },
+  {
+    "slug": "csv-pdf-converter",
+    "module": "csv_pdf_converter",
+    "name": "CSV 和 PDF 互转",
+    "category": "format",
+    "summary": "CSV 数据与 PDF 文件互转。",
+    "description": "CSV 转 PDF 会生成轻量文本 PDF；PDF 转 CSV 会提取文本行生成 csv。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "csv_to_pdf",
+        "options": [
+          {
+            "label": "CSV 转 PDF",
+            "value": "csv_to_pdf"
+          },
+          {
+            "label": "PDF 转 CSV",
+            "value": "pdf_to_csv"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "CSV 转 PDF 时可选"
+      }
+    ]
+  },
+  {
+    "slug": "excel-word-converter",
+    "module": "excel_word_converter",
+    "name": "Excel 和 Word 互转",
+    "category": "format",
+    "summary": "Excel 表格与 Word 文档互转。",
+    "description": "Excel 转 Word 会导出表格文本；Word 转 Excel 会提取文本和表格生成 xlsx。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "excel_to_word",
+        "options": [
+          {
+            "label": "Excel 转 Word",
+            "value": "excel_to_word"
+          },
+          {
+            "label": "Word 转 Excel",
+            "value": "word_to_excel"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "Excel 转 Word 时可选"
+      },
+      {
+        "key": "sheet_name",
+        "label": "工作表名",
+        "type": "text",
+        "default": "",
+        "placeholder": "Word 转 Excel 时可选"
+      }
+    ]
+  },
+  {
+    "slug": "csv-word-converter",
+    "module": "csv_word_converter",
+    "name": "CSV 和 Word 互转",
+    "category": "format",
+    "summary": "CSV 数据与 Word 文档互转。",
+    "description": "CSV 转 Word 会导出表格文本；Word 转 CSV 会提取文本和表格生成 csv。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "csv_to_word",
+        "options": [
+          {
+            "label": "CSV 转 Word",
+            "value": "csv_to_word"
+          },
+          {
+            "label": "Word 转 CSV",
+            "value": "word_to_csv"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "CSV 转 Word 时可选"
+      }
+    ]
+  },
+  {
+    "slug": "excel-epub-converter",
+    "module": "excel_epub_converter",
+    "name": "Excel 和 EPUB 互转",
+    "category": "format",
+    "summary": "Excel 表格与 EPUB 电子书互转。",
+    "description": "Excel 转 EPUB 会导出表格文本；EPUB 转 Excel 会提取正文生成 xlsx。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "excel_to_epub",
+        "options": [
+          {
+            "label": "Excel 转 EPUB",
+            "value": "excel_to_epub"
+          },
+          {
+            "label": "EPUB 转 Excel",
+            "value": "epub_to_excel"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "Excel 转 EPUB 时可选"
+      },
+      {
+        "key": "sheet_name",
+        "label": "工作表名",
+        "type": "text",
+        "default": "",
+        "placeholder": "EPUB 转 Excel 时可选"
+      }
+    ]
+  },
+  {
+    "slug": "csv-epub-converter",
+    "module": "csv_epub_converter",
+    "name": "CSV 和 EPUB 互转",
+    "category": "format",
+    "summary": "CSV 数据与 EPUB 电子书互转。",
+    "description": "CSV 转 EPUB 会导出表格文本；EPUB 转 CSV 会提取正文生成 csv。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "csv_to_epub",
+        "options": [
+          {
+            "label": "CSV 转 EPUB",
+            "value": "csv_to_epub"
+          },
+          {
+            "label": "EPUB 转 CSV",
+            "value": "epub_to_csv"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "CSV 转 EPUB 时可选"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-txt-converter",
+    "module": "ppt_txt_converter",
+    "name": "PPT 和 TXT 互转",
+    "category": "format",
+    "summary": "PPT 文本与 TXT 文本互转。",
+    "description": "PPT 转 TXT 会提取幻灯片文字；TXT 转 PPT 会生成基础演示文稿。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "ppt_to_txt",
+        "options": [
+          {
+            "label": "PPT 转 TXT",
+            "value": "ppt_to_txt"
+          },
+          {
+            "label": "TXT 转 PPT",
+            "value": "txt_to_ppt"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "PPT 标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "TXT 转 PPT 时可选"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-html-converter",
+    "module": "ppt_html_converter",
+    "name": "PPT 和 HTML 互转",
+    "category": "format",
+    "summary": "PPT 文本与 HTML 页面互转。",
+    "description": "PPT 转 HTML 会生成轻量页面；HTML 转 PPT 会提取文本生成基础演示文稿。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "ppt_to_html",
+        "options": [
+          {
+            "label": "PPT 转 HTML",
+            "value": "ppt_to_html"
+          },
+          {
+            "label": "HTML 转 PPT",
+            "value": "html_to_ppt"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-word-converter",
+    "module": "ppt_word_converter",
+    "name": "PPT 和 Word 互转",
+    "category": "format",
+    "summary": "PPT 文本与 Word 文档互转。",
+    "description": "PPT 转 Word 会提取幻灯片文字；Word 转 PPT 会按内容生成基础演示文稿。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "ppt_to_word",
+        "options": [
+          {
+            "label": "PPT 转 Word",
+            "value": "ppt_to_word"
+          },
+          {
+            "label": "Word 转 PPT",
+            "value": "word_to_ppt"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-pdf-converter",
+    "module": "ppt_pdf_converter",
+    "name": "PPT 和 PDF 互转",
+    "category": "format",
+    "summary": "PPT 文本与 PDF 文件互转。",
+    "description": "PPT 转 PDF 会生成轻量文本 PDF；PDF 转 PPT 会提取文本生成基础演示文稿。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "ppt_to_pdf",
+        "options": [
+          {
+            "label": "PPT 转 PDF",
+            "value": "ppt_to_pdf"
+          },
+          {
+            "label": "PDF 转 PPT",
+            "value": "pdf_to_ppt"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选"
+      }
+    ]
+  },
+  {
+    "slug": "ppt-epub-converter",
+    "module": "ppt_epub_converter",
+    "name": "PPT 和 EPUB 互转",
+    "category": "format",
+    "summary": "PPT 文本与 EPUB 电子书互转。",
+    "description": "PPT 转 EPUB 会导出幻灯片文字；EPUB 转 PPT 会提取正文生成基础演示文稿。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "ppt_to_epub",
+        "options": [
+          {
+            "label": "PPT 转 EPUB",
+            "value": "ppt_to_epub"
+          },
+          {
+            "label": "EPUB 转 PPT",
+            "value": "epub_to_ppt"
+          }
+        ]
+      },
+      {
+        "key": "title",
+        "label": "标题",
+        "type": "text",
+        "default": "",
+        "placeholder": "可选"
+      }
+    ]
+  },
+  {
+    "slug": "json-xlsx-converter",
+    "module": "json_xlsx_converter",
+    "name": "JSON 和 XLSX 互转",
+    "category": "format",
+    "summary": "JSON 文件与 XLSX 表格互转。",
+    "description": "上传 JSON 文件可生成 xlsx，上传 xlsx 可导出 JSON 文件。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "visible": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "json_to_xlsx",
+        "options": [
+          {
+            "label": "JSON 转 XLSX",
+            "value": "json_to_xlsx"
+          },
+          {
+            "label": "XLSX 转 JSON",
+            "value": "xlsx_to_json"
+          }
+        ]
+      },
+      {
+        "key": "sheet_name",
+        "label": "工作表名",
+        "type": "text",
+        "default": "",
+        "placeholder": "JSON 转 XLSX 时可选"
+      }
+    ]
+  },
+  {
     "slug": "json-to-xlsx",
     "module": "json_to_xlsx",
     "name": "JSON 转 XLSX",
@@ -3710,7 +4860,8 @@
         "default": "Sheet1",
         "placeholder": "请输入工作表名称"
       }
-    ]
+    ],
+    "visible": false
   },
   {
     "slug": "xlsx-to-json",
@@ -3723,7 +4874,8 @@
     "result_type": "text",
     "component": "ToolFileForm",
     "enabled": true,
-    "params": []
+    "params": [],
+    "visible": false
   },
   {
     "slug": "sqlite-viewer",
@@ -5773,7 +6925,7 @@
   {
     "slug": "image-format-converter",
     "module": "image_format_converter",
-    "name": "图片格式转换",
+    "name": "图片格式互转",
     "category": "format",
     "summary": "在 PNG、JPEG、WEBP、BMP、ICO 等格式之间转换。",
     "description": "适合网页素材转换、图标处理和兼容性导出。",
@@ -5807,6 +6959,216 @@
           {
             "label": "ICO",
             "value": "ico"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "mp3-flac-converter",
+    "module": "mp3_flac_converter",
+    "name": "MP3 和 FLAC 互转",
+    "category": "format",
+    "summary": "在 MP3 与 FLAC 音频格式之间转换。",
+    "description": "上传 MP3 或 FLAC 文件后选择转换方向，后端通过 ffmpeg 生成目标音频文件。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "mp3_to_flac",
+        "options": [
+          {
+            "label": "MP3 转 FLAC",
+            "value": "mp3_to_flac"
+          },
+          {
+            "label": "FLAC 转 MP3",
+            "value": "flac_to_mp3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "wav-mp3-converter",
+    "module": "wav_mp3_converter",
+    "name": "WAV 和 MP3 互转",
+    "category": "format",
+    "summary": "在 WAV 与 MP3 音频格式之间转换。",
+    "description": "上传 WAV 或 MP3 文件后选择转换方向，适合无损素材与常用音频格式互换。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "wav_to_mp3",
+        "options": [
+          {
+            "label": "WAV 转 MP3",
+            "value": "wav_to_mp3"
+          },
+          {
+            "label": "MP3 转 WAV",
+            "value": "mp3_to_wav"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "mov-mp4-converter",
+    "module": "mov_mp4_converter",
+    "name": "MOV 和 MP4 互转",
+    "category": "format",
+    "summary": "在 MOV 与 MP4 视频容器之间转换。",
+    "description": "优先无损封装转换，遇到不兼容编码时自动转码为常见 H.264/AAC 输出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "mov_to_mp4",
+        "options": [
+          {
+            "label": "MOV 转 MP4",
+            "value": "mov_to_mp4"
+          },
+          {
+            "label": "MP4 转 MOV",
+            "value": "mp4_to_mov"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "mp3-mp4-converter",
+    "module": "mp3_mp4_converter",
+    "name": "MP3 和 MP4 互转",
+    "category": "format",
+    "summary": "MP4 提取 MP3，或把 MP3 转成音频 MP4。",
+    "description": "适合从视频中提取音频，或把 MP3 转为 AAC 音频轨的 MP4 文件。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "mp4_to_mp3",
+        "options": [
+          {
+            "label": "MP4 转 MP3",
+            "value": "mp4_to_mp3"
+          },
+          {
+            "label": "MP3 转 MP4",
+            "value": "mp3_to_mp4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "gif-mp4-converter",
+    "module": "gif_mp4_converter",
+    "name": "GIF 和 MP4 互转",
+    "category": "format",
+    "summary": "在 GIF 动图与 MP4 视频之间转换。",
+    "description": "GIF 转 MP4 使用 H.264 输出，MP4 转 GIF 会按常用帧率生成动图。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "gif_to_mp4",
+        "options": [
+          {
+            "label": "GIF 转 MP4",
+            "value": "gif_to_mp4"
+          },
+          {
+            "label": "MP4 转 GIF",
+            "value": "mp4_to_gif"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "gif-png-converter",
+    "module": "gif_png_converter",
+    "name": "GIF 和 PNG 互转",
+    "category": "format",
+    "summary": "GIF 与 PNG 图片互转。",
+    "description": "GIF 动图转 PNG 会按帧导出并打包为 zip；PNG 转 GIF 会生成单帧 GIF。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "gif_to_png",
+        "options": [
+          {
+            "label": "GIF 转 PNG",
+            "value": "gif_to_png"
+          },
+          {
+            "label": "PNG 转 GIF",
+            "value": "png_to_gif"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "gif-jpg-converter",
+    "module": "gif_jpg_converter",
+    "name": "GIF 和 JPG 互转",
+    "category": "format",
+    "summary": "GIF 与 JPG 图片互转。",
+    "description": "GIF 动图转 JPG 会按帧导出并打包为 zip；JPG 转 GIF 会生成单帧 GIF。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "gif_to_jpg",
+        "options": [
+          {
+            "label": "GIF 转 JPG",
+            "value": "gif_to_jpg"
+          },
+          {
+            "label": "JPG 转 GIF",
+            "value": "jpg_to_gif"
           }
         ]
       }
@@ -7154,10 +8516,10 @@
   {
     "slug": "abstract-fan",
     "module": "abstract_fan",
-    "name": "抽象小风扇",
+    "name": "赛博抽象小风扇",
     "category": "other",
     "summary": "纯前端小风扇按钮和风声合成。",
-    "description": "点击电源、档位、摆头和音量即可在浏览器里体验抽象小风扇，不依赖后端执行。",
+    "description": "点击开关和档位即可在浏览器里体验赛博抽象小风扇，风声会跟随档位自动变化，不依赖后端执行。",
     "input_mode": "local",
     "result_type": "text",
     "component": "ToolAbstractAppliance",
@@ -7167,10 +8529,10 @@
   {
     "slug": "abstract-ac",
     "module": "abstract_ac",
-    "name": "抽象小空调",
+    "name": "赛博抽象小空调",
     "category": "other",
     "summary": "纯前端小空调按钮和空调声合成。",
-    "description": "包含电源、制冷/送风、温度、摆风和音量控制，声音由浏览器实时合成。",
+    "description": "包含制冷、制热和开关三个图标按钮，声音由浏览器实时合成。",
     "input_mode": "local",
     "result_type": "text",
     "component": "ToolAbstractAppliance",

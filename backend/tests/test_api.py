@@ -7,6 +7,8 @@ import tempfile
 import uuid
 import zipfile
 from pathlib import Path
+from subprocess import CompletedProcess
+from unittest.mock import patch
 from urllib.parse import parse_qs
 
 import qrcode
@@ -105,6 +107,21 @@ def make_txt_bytes(text: str) -> bytes:
     return text.encode("utf-8")
 
 
+def make_html_bytes() -> bytes:
+    return b"""<!doctype html>
+<html>
+  <head><title>HTML Demo</title></head>
+  <body>
+    <h1>HTML Demo</h1>
+    <table><tr><th>Name</th><th>Score</th></tr><tr><td>Alice</td><td>98</td></tr></table>
+  </body>
+</html>"""
+
+
+def make_media_bytes() -> bytes:
+    return b"fake media bytes"
+
+
 def make_heic_bytes(color: tuple[int, int, int] = (90, 140, 210), size: tuple[int, int] = (120, 80)) -> bytes:
     image = Image.new("RGB", size, color)
     stream = io.BytesIO()
@@ -183,6 +200,7 @@ def test_meta_endpoints() -> None:
     ]
     assert "text-format-cleaner" in ops_tool_slugs
     assert "invisible-control-chars" in ops_tool_slugs
+    assert "character-count-slice" in ops_tool_slugs
     command_tool_items = [item for item in ops_tool_items if item["component"] == "ToolCommandCatalog"]
     assert all(item["input_mode"] == "local" for item in command_tool_items)
     assert any(
@@ -212,6 +230,22 @@ def test_meta_endpoints() -> None:
     assert "today-gold-price" in other_tool_slugs
     assert "today-exchange-rate" in other_tool_slugs
     assert "today-food-price" in other_tool_slugs
+
+    format_tools = client.get("/api/tools", params={"category": "format"})
+    assert format_tools.status_code == 200
+    format_tool_slugs = [item["slug"] for item in format_tools.json()["data"]]
+    assert "word-pdf-converter" in format_tool_slugs
+    assert "pdf-html-converter" in format_tool_slugs
+    assert "json-xlsx-converter" in format_tool_slugs
+    assert "ppt-txt-converter" in format_tool_slugs
+    assert "excel-csv-converter" in format_tool_slugs
+    assert "docx-to-pdf" not in format_tool_slugs
+    assert "pdf-to-html" not in format_tool_slugs
+    assert "json-to-typescript" not in format_tool_slugs
+
+    hidden_tool = client.get("/api/tools/docx-to-pdf")
+    assert hidden_tool.status_code == 200
+    assert hidden_tool.json()["data"]["visible"] is False
     assert "today-silver-price" in other_tool_slugs
     assert "today-stock-index" in other_tool_slugs
     assert "today-building-materials" in other_tool_slugs
@@ -1425,6 +1459,160 @@ def test_even_more_office_to_document_conversion_tools_upload() -> None:
     assert "application/epub+zip" in ppt_to_epub_response.headers["content-type"]
 
 
+def test_format_pair_conversion_tools_upload() -> None:
+    word_pdf_response = client.post(
+        "/api/tools/word-pdf-converter/upload",
+        data={"params": json.dumps({"direction": "word_to_pdf"})},
+        files={
+            "file": (
+                "demo.docx",
+                make_docx_bytes("Hello from Word"),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        },
+    )
+    assert word_pdf_response.status_code == 200
+    assert word_pdf_response.headers["content-type"].startswith("application/pdf")
+
+    pdf_html_response = client.post(
+        "/api/tools/pdf-html-converter/upload",
+        data={"params": json.dumps({"direction": "html_to_pdf"})},
+        files={"file": ("demo.html", make_html_bytes(), "text/html")},
+    )
+    assert pdf_html_response.status_code == 200
+    assert pdf_html_response.headers["content-type"].startswith("application/pdf")
+
+    word_html_response = client.post(
+        "/api/tools/word-html-converter/upload",
+        data={"params": json.dumps({"direction": "html_to_word"})},
+        files={"file": ("demo.html", make_html_bytes(), "text/html")},
+    )
+    assert word_html_response.status_code == 200
+    assert "wordprocessingml.document" in word_html_response.headers["content-type"]
+
+    excel_txt_response = client.post(
+        "/api/tools/excel-txt-converter/upload",
+        data={"params": json.dumps({"direction": "txt_to_excel", "sheet_name": "导入"})},
+        files={"file": ("demo.txt", make_txt_bytes("姓名\t分数\n张三\t95"), "text/plain")},
+    )
+    assert excel_txt_response.status_code == 200
+    assert "spreadsheetml.sheet" in excel_txt_response.headers["content-type"]
+
+    csv_html_response = client.post(
+        "/api/tools/csv-html-converter/upload",
+        data={"params": json.dumps({"direction": "html_to_csv"})},
+        files={"file": ("demo.html", make_html_bytes(), "text/html")},
+    )
+    assert csv_html_response.status_code == 200
+    assert csv_html_response.headers["content-type"].startswith("text/csv")
+
+    json_xlsx_response = client.post(
+        "/api/tools/json-xlsx-converter/upload",
+        data={"params": json.dumps({"direction": "json_to_xlsx", "sheet_name": "数据"})},
+        files={"file": ("demo.json", b'[{"name":"Alice","score":98}]', "application/json")},
+    )
+    assert json_xlsx_response.status_code == 200
+    assert "spreadsheetml.sheet" in json_xlsx_response.headers["content-type"]
+
+    ppt_txt_response = client.post(
+        "/api/tools/ppt-txt-converter/upload",
+        data={"params": json.dumps({"direction": "txt_to_ppt", "title": "TXT PPT"})},
+        files={"file": ("demo.txt", make_txt_bytes("第一页\n第二页"), "text/plain")},
+    )
+    assert ppt_txt_response.status_code == 200
+    assert "presentationml.presentation" in ppt_txt_response.headers["content-type"]
+
+    excel_pdf_response = client.post(
+        "/api/tools/excel-pdf-converter/upload",
+        data={"params": json.dumps({"direction": "pdf_to_excel", "sheet_name": "PDF 数据"})},
+        files={"file": ("demo.pdf", make_pdf_bytes("Name Score Alice 98"), "application/pdf")},
+    )
+    assert excel_pdf_response.status_code == 200
+    assert "spreadsheetml.sheet" in excel_pdf_response.headers["content-type"]
+
+
+def test_media_conversion_tools_upload() -> None:
+    def fake_ffmpeg_run(command, **kwargs):
+        Path(command[-1]).write_bytes(b"converted media")
+        return CompletedProcess(command, 0, "", "")
+
+    cases = [
+        ("mp3-flac-converter", "demo.mp3", "audio/mpeg", {"direction": "mp3_to_flac"}, ("audio/flac", "audio/x-flac")),
+        ("wav-mp3-converter", "demo.wav", "audio/wav", {"direction": "wav_to_mp3"}, ("audio/mpeg",)),
+        ("mov-mp4-converter", "demo.mov", "video/quicktime", {"direction": "mov_to_mp4"}, ("video/mp4",)),
+        ("mp3-mp4-converter", "demo.mp4", "video/mp4", {"direction": "mp4_to_mp3"}, ("audio/mpeg",)),
+        ("gif-mp4-converter", "demo.gif", "image/gif", {"direction": "gif_to_mp4"}, ("video/mp4",)),
+    ]
+
+    with patch("app.tools.media_converter.shutil.which", return_value="/usr/bin/ffmpeg"), patch(
+        "app.tools.media_converter.subprocess.run",
+        side_effect=fake_ffmpeg_run,
+    ):
+        for slug, filename, content_type, params, expected_content_types in cases:
+            response = client.post(
+                f"/api/tools/{slug}/upload",
+                data={"params": json.dumps(params)},
+                files={"file": (filename, make_media_bytes(), content_type)},
+            )
+            assert response.status_code == 200
+            assert response.content == b"converted media"
+            assert response.headers["content-type"].startswith(expected_content_types)
+            assert "attachment" in response.headers.get("content-disposition", "")
+
+
+def test_media_conversion_rejects_wrong_direction_input_suffix() -> None:
+    with patch("app.tools.media_converter.shutil.which", return_value="/usr/bin/ffmpeg"):
+        response = client.post(
+            "/api/tools/mp3-flac-converter/upload",
+            data={"params": json.dumps({"direction": "flac_to_mp3"})},
+            files={"file": ("demo.mp3", make_media_bytes(), "audio/mpeg")},
+        )
+    assert response.status_code == 400
+    assert ".flac" in response.json()["message"]
+
+
+def test_gif_image_conversion_tools_upload() -> None:
+    gif_to_png_response = client.post(
+        "/api/tools/gif-png-converter/upload",
+        data={"params": json.dumps({"direction": "gif_to_png"})},
+        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
+    )
+    assert gif_to_png_response.status_code == 200
+    assert gif_to_png_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(gif_to_png_response.content)) as archive:
+        names = archive.namelist()
+        assert "frame-001.png" in names
+        assert "frame-002.png" in names
+
+    png_to_gif_response = client.post(
+        "/api/tools/gif-png-converter/upload",
+        data={"params": json.dumps({"direction": "png_to_gif"})},
+        files={"file": ("demo.png", make_png_bytes(), "image/png")},
+    )
+    assert png_to_gif_response.status_code == 200
+    assert png_to_gif_response.headers["content-type"].startswith("image/gif")
+
+    gif_to_jpg_response = client.post(
+        "/api/tools/gif-jpg-converter/upload",
+        data={"params": json.dumps({"direction": "gif_to_jpg"})},
+        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
+    )
+    assert gif_to_jpg_response.status_code == 200
+    assert gif_to_jpg_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(gif_to_jpg_response.content)) as archive:
+        names = archive.namelist()
+        assert "frame-001.jpg" in names
+        assert "frame-002.jpg" in names
+
+    jpg_to_gif_response = client.post(
+        "/api/tools/gif-jpg-converter/upload",
+        data={"params": json.dumps({"direction": "jpg_to_gif"})},
+        files={"file": ("demo.jpg", make_jpg_bytes(), "image/jpeg")},
+    )
+    assert jpg_to_gif_response.status_code == 200
+    assert jpg_to_gif_response.headers["content-type"].startswith("image/gif")
+
+
 def test_generated_image_tools_execute() -> None:
     art_qr_response = client.post(
         "/api/tools/art-qr-generator/execute",
@@ -2082,6 +2270,26 @@ def test_text_generation_and_layout_tools_execute() -> None:
     )
     assert copybook_response.status_code == 200
     assert copybook_response.json()["data"]["result"] == "天　天　天"
+
+
+def test_character_count_slice_execute() -> None:
+    response = client.post(
+        "/api/tools/character-count-slice/execute",
+        json={"text": "ab 中!\n🙂 ", "params": {"slice_from": "back", "slice_count": 4}},
+    )
+    assert response.status_code == 200
+    result = response.json()["data"]["result"]
+    assert "总字符数：8" in result
+    assert "普通字符数：3" in result
+    assert "特殊/空白字符总数：5" in result
+    assert "空白字符数：3" in result
+    assert "标点字符数：1" in result
+    assert "符号/Emoji 数：1" in result
+    assert "空格 SPACE（U+0020，空白字符）：2" in result
+    assert "换行 LF（U+000A，空白字符）：1" in result
+    assert "截取方向：最后" in result
+    assert "实际输出字符数：4" in result
+    assert result.endswith("!\n🙂 ")
 
 
 def test_superscript_subscript_and_word_group_tools_execute() -> None:

@@ -42,6 +42,33 @@ OFFICE_EXTRACT_TOOL_SUFFIXES = {
     "ppt-image-extractor": {"pptx"},
 }
 DOCUMENT_TOOL_SUFFIXES = {
+    "word-pdf-converter": {"docx", "pdf"},
+    "pdf-jpg-converter": {"pdf", "jpg", "jpeg", "png", "webp", "bmp"},
+    "pdf-epub-converter": {"pdf", "epub"},
+    "pdf-txt-converter": {"pdf", "txt"},
+    "pdf-html-converter": {"pdf", "html", "htm"},
+    "word-txt-converter": {"docx", "txt"},
+    "txt-epub-converter": {"txt", "epub"},
+    "word-epub-converter": {"docx", "epub"},
+    "word-html-converter": {"docx", "html", "htm"},
+    "txt-html-converter": {"txt", "html", "htm"},
+    "excel-csv-converter": {"xlsx", "csv"},
+    "excel-txt-converter": {"xlsx", "txt"},
+    "csv-txt-converter": {"csv", "txt"},
+    "excel-html-converter": {"xlsx", "html", "htm"},
+    "csv-html-converter": {"csv", "html", "htm"},
+    "excel-pdf-converter": {"xlsx", "pdf"},
+    "csv-pdf-converter": {"csv", "pdf"},
+    "excel-word-converter": {"xlsx", "docx"},
+    "csv-word-converter": {"csv", "docx"},
+    "excel-epub-converter": {"xlsx", "epub"},
+    "csv-epub-converter": {"csv", "epub"},
+    "ppt-txt-converter": {"pptx", "txt"},
+    "ppt-html-converter": {"pptx", "html", "htm"},
+    "ppt-word-converter": {"pptx", "docx"},
+    "ppt-pdf-converter": {"pptx", "pdf"},
+    "ppt-epub-converter": {"pptx", "epub"},
+    "json-xlsx-converter": {"json", "xlsx"},
     "docx-to-pdf": {"docx"},
     "pdf-to-word": {"pdf"},
     "pdf-to-jpg": {"pdf"},
@@ -77,6 +104,17 @@ DOCUMENT_TOOL_SUFFIXES = {
     "excel-to-epub": {"xlsx"},
     "csv-to-epub": {"csv"},
     "ppt-to-epub": {"pptx"},
+}
+MEDIA_TOOL_SUFFIXES = {
+    "mp3-flac-converter": {"mp3", "flac"},
+    "wav-mp3-converter": {"wav", "mp3"},
+    "mov-mp4-converter": {"mov", "mp4"},
+    "mp3-mp4-converter": {"mp3", "mp4"},
+    "gif-mp4-converter": {"gif", "mp4"},
+}
+GIF_IMAGE_TOOL_SUFFIXES = {
+    "gif-png-converter": {"gif", "png"},
+    "gif-jpg-converter": {"gif", "jpg", "jpeg"},
 }
 
 
@@ -122,4 +160,10 @@ def validate_upload_for_tool(file: UploadFile, tool_slug: str) -> None:
             raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
     elif tool_slug in DOCUMENT_TOOL_SUFFIXES:
         if suffix not in DOCUMENT_TOOL_SUFFIXES[tool_slug]:
+            raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
+    elif tool_slug in MEDIA_TOOL_SUFFIXES:
+        if suffix not in MEDIA_TOOL_SUFFIXES[tool_slug]:
+            raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
+    elif tool_slug in GIF_IMAGE_TOOL_SUFFIXES:
+        if suffix not in GIF_IMAGE_TOOL_SUFFIXES[tool_slug]:
             raise AppException(message="上传文件类型不正确", code=4002, status_code=400)

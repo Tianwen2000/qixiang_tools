@@ -6,8 +6,8 @@ function sortByOrder(items) {
 }
 
 export const fallbackCategories = sortByOrder(rawCategories).filter((item) => item.enabled !== false);
-export const fallbackTools = rawTools.filter((item) => item.enabled !== false);
+export const fallbackTools = rawTools.filter((item) => item.enabled !== false && item.visible !== false);
 
 export function getFallbackTool(slug) {
-  return fallbackTools.find((tool) => tool.slug === slug) || null;
+  return rawTools.find((tool) => tool.enabled !== false && tool.slug === slug) || null;
 }

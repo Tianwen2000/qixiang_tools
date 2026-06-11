@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 
 import { showToast } from "../utils/toast.js";
 
@@ -13,22 +13,18 @@ const props = defineProps({
 const isAc = computed(() => props.tool.slug === "abstract-ac");
 const isOn = ref(false);
 const speed = ref(2);
-const swing = ref(true);
-const muted = ref(false);
-const volume = ref(0.42);
 const mode = ref("cool");
-const temperature = ref(24);
 const audioAvailable = ref(true);
 
-const title = computed(() => (isAc.value ? "抽象小空调" : "抽象小风扇"));
+const title = computed(() => props.tool.name || (isAc.value ? "赛博抽象小空调" : "赛博抽象小风扇"));
 const statusText = computed(() => {
   if (!isOn.value) {
     return "待机";
   }
   if (isAc.value) {
-    return `${mode.value === "cool" ? "制冷" : "送风"} · ${temperature.value}℃ · ${speed.value} 档`;
+    return mode.value === "cool" ? "制冷运行" : "制热运行";
   }
-  return `${speed.value} 档 · ${swing.value ? "摆头" : "定向"}`;
+  return `${speed.value} 档`;
 });
 const fanSpinDuration = computed(() => `${Math.max(0.34, 1.42 - speed.value * 0.28)}s`);
 const airflowOpacity = computed(() => (isOn.value ? 0.28 + speed.value * 0.16 : 0));
@@ -37,6 +33,12 @@ let audioContext = null;
 let noiseBuffer = null;
 let activeSources = [];
 let activeNodes = [];
+
+const fanSoundProfiles = {
+  1: { rpm: 720, airGain: 0.11, airCutoff: 820, motorGain: 0.018 },
+  2: { rpm: 980, airGain: 0.16, airCutoff: 1180, motorGain: 0.026 },
+  3: { rpm: 1260, airGain: 0.22, airCutoff: 1650, motorGain: 0.036 },
+};
 
 function getAudioContext() {
   if (typeof window === "undefined") {
@@ -83,68 +85,238 @@ function stopGraph() {
 
 function buildFanSound(context, master) {
   noiseBuffer ||= createNoiseBuffer(context);
+  const profile = fanSoundProfiles[speed.value] || fanSoundProfiles[2];
+  const bladePassFrequency = (profile.rpm * 3) / 60;
   const noise = context.createBufferSource();
-  const filter = context.createBiquadFilter();
-  const gain = context.createGain();
-  const motor = context.createOscillator();
-  const motorGain = context.createGain();
+  const airFilter = context.createBiquadFilter();
+  const airGain = context.createGain();
+  const bladeTone = context.createOscillator();
+  const bladeToneGain = context.createGain();
+  const bladeHarmonic = context.createOscillator();
+  const bladeHarmonicGain = context.createGain();
+  const airPulse = context.createOscillator();
+  const airPulseDepth = context.createGain();
 
   noise.buffer = noiseBuffer;
   noise.loop = true;
-  filter.type = "lowpass";
-  filter.frequency.value = 520 + speed.value * 360;
-  gain.gain.value = 0.13 + speed.value * 0.055;
-  motor.type = "sine";
-  motor.frequency.value = 78 + speed.value * 18;
-  motorGain.gain.value = 0.018 + speed.value * 0.007;
+  airFilter.type = "lowpass";
+  airFilter.frequency.value = profile.airCutoff;
+  airFilter.Q.value = 0.7;
+  airGain.gain.value = profile.airGain;
+  bladeTone.type = "triangle";
+  bladeTone.frequency.value = bladePassFrequency;
+  bladeToneGain.gain.value = profile.motorGain;
+  bladeHarmonic.type = "sine";
+  bladeHarmonic.frequency.value = bladePassFrequency * 2;
+  bladeHarmonicGain.gain.value = profile.motorGain * 0.45;
+  airPulse.type = "sine";
+  airPulse.frequency.value = 0.65 + speed.value * 0.24;
+  airPulseDepth.gain.value = profile.airGain * 0.18;
 
-  noise.connect(filter);
-  filter.connect(gain);
-  gain.connect(master);
-  motor.connect(motorGain);
-  motorGain.connect(master);
+  noise.connect(airFilter);
+  airFilter.connect(airGain);
+  airGain.connect(master);
+  bladeTone.connect(bladeToneGain);
+  bladeToneGain.connect(master);
+  bladeHarmonic.connect(bladeHarmonicGain);
+  bladeHarmonicGain.connect(master);
+  airPulse.connect(airPulseDepth);
+  airPulseDepth.connect(airGain.gain);
   noise.start();
-  motor.start();
-  activeSources.push(noise, motor);
-  activeNodes.push(noise, filter, gain, motor, motorGain, master);
+  bladeTone.start();
+  bladeHarmonic.start();
+  airPulse.start();
+  activeSources.push(noise, bladeTone, bladeHarmonic, airPulse);
+  activeNodes.push(noise, airFilter, airGain, bladeTone, bladeToneGain, bladeHarmonic, bladeHarmonicGain, airPulse, airPulseDepth, master);
 }
 
 function buildAcSound(context, master) {
   noiseBuffer ||= createNoiseBuffer(context);
-  const noise = context.createBufferSource();
+  const airNoise = context.createBufferSource();
+  const airHighpass = context.createBiquadFilter();
+  const airLowpass = context.createBiquadFilter();
+  const airGain = context.createGain();
+  const hissNoise = context.createBufferSource();
+  const hissFilter = context.createBiquadFilter();
+  const hissGain = context.createGain();
+  const compressorHum = context.createOscillator();
+  const compressorHumGain = context.createGain();
+  const compressorOvertone = context.createOscillator();
+  const compressorOvertoneGain = context.createGain();
+  const compressorPulse = context.createOscillator();
+  const compressorPulseDepth = context.createGain();
+
+  const cooling = mode.value === "cool";
+  airNoise.buffer = noiseBuffer;
+  airNoise.loop = true;
+  airHighpass.type = "highpass";
+  airHighpass.frequency.value = cooling ? 130 : 110;
+  airLowpass.type = "lowpass";
+  airLowpass.frequency.value = cooling ? 1280 : 940;
+  airLowpass.Q.value = 0.62;
+  airGain.gain.value = cooling ? 0.14 : 0.11;
+
+  hissNoise.buffer = noiseBuffer;
+  hissNoise.loop = true;
+  hissFilter.type = "bandpass";
+  hissFilter.frequency.value = cooling ? 2400 : 1700;
+  hissFilter.Q.value = 0.7;
+  hissGain.gain.value = cooling ? 0.022 : 0.012;
+
+  compressorHum.type = "sine";
+  compressorHum.frequency.value = cooling ? 54 : 46;
+  compressorHumGain.gain.value = cooling ? 0.034 : 0.026;
+  compressorOvertone.type = "triangle";
+  compressorOvertone.frequency.value = cooling ? 108 : 92;
+  compressorOvertoneGain.gain.value = cooling ? 0.012 : 0.009;
+  compressorPulse.type = "sine";
+  compressorPulse.frequency.value = 0.36;
+  compressorPulseDepth.gain.value = cooling ? 0.01 : 0.007;
+
+  airNoise.connect(airHighpass);
+  airHighpass.connect(airLowpass);
+  airLowpass.connect(airGain);
+  airGain.connect(master);
+  hissNoise.connect(hissFilter);
+  hissFilter.connect(hissGain);
+  hissGain.connect(master);
+  compressorHum.connect(compressorHumGain);
+  compressorHumGain.connect(master);
+  compressorOvertone.connect(compressorOvertoneGain);
+  compressorOvertoneGain.connect(master);
+  compressorPulse.connect(compressorPulseDepth);
+  compressorPulseDepth.connect(compressorHumGain.gain);
+  airNoise.start();
+  hissNoise.start();
+  compressorHum.start();
+  compressorOvertone.start();
+  compressorPulse.start();
+  activeSources.push(airNoise, hissNoise, compressorHum, compressorOvertone, compressorPulse);
+  activeNodes.push(
+    airNoise,
+    airHighpass,
+    airLowpass,
+    airGain,
+    hissNoise,
+    hissFilter,
+    hissGain,
+    compressorHum,
+    compressorHumGain,
+    compressorOvertone,
+    compressorOvertoneGain,
+    compressorPulse,
+    compressorPulseDepth,
+    master,
+  );
+}
+
+function playTone(context, { frequency, endFrequency = frequency, startTime, duration, type = "sine", gainValue }) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, startTime);
+  if (endFrequency !== frequency) {
+    oscillator.frequency.exponentialRampToValueAtTime(endFrequency, startTime + duration * 0.82);
+  }
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.012);
+  gain.gain.setTargetAtTime(gainValue * 0.84, startTime + duration * 0.45, 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration + 0.02);
+}
+
+function playButtonClick(context, startTime, gainValue) {
+  const click = context.createBufferSource();
   const filter = context.createBiquadFilter();
-  const noiseGain = context.createGain();
-  const compressor = context.createOscillator();
-  const compressorGain = context.createGain();
+  const gain = context.createGain();
+  const buffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.018), context.sampleRate);
+  const channel = buffer.getChannelData(0);
+  for (let index = 0; index < channel.length; index += 1) {
+    channel[index] = (Math.random() * 2 - 1) * (1 - index / channel.length);
+  }
+  click.buffer = buffer;
+  filter.type = "highpass";
+  filter.frequency.value = 1700;
+  gain.gain.setValueAtTime(gainValue, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.018);
+  click.connect(filter);
+  filter.connect(gain);
+  gain.connect(context.destination);
+  click.start(startTime);
+}
 
-  noise.buffer = noiseBuffer;
-  noise.loop = true;
-  filter.type = "bandpass";
-  filter.frequency.value = mode.value === "cool" ? 840 : 640;
-  filter.Q.value = 0.8;
-  noiseGain.gain.value = 0.09 + speed.value * 0.035;
-  compressor.type = "triangle";
-  compressor.frequency.value = mode.value === "cool" ? 58 : 44;
-  compressorGain.gain.value = mode.value === "cool" ? 0.028 : 0.015;
+async function playControlTone(kind) {
+  const context = getAudioContext();
+  if (!context) {
+    audioAvailable.value = false;
+    return;
+  }
+  try {
+    await context.resume();
+    audioAvailable.value = true;
+  } catch {
+    audioAvailable.value = false;
+    return;
+  }
 
-  noise.connect(filter);
-  filter.connect(noiseGain);
-  noiseGain.connect(master);
-  compressor.connect(compressorGain);
-  compressorGain.connect(master);
-  noise.start();
-  compressor.start();
-  activeSources.push(noise, compressor);
-  activeNodes.push(noise, filter, noiseGain, compressor, compressorGain, master);
+  const now = context.currentTime;
+  const gainValue = isAc.value ? 0.09 : Math.min(0.13, 0.045 + speed.value * 0.026);
+  playButtonClick(context, now, gainValue * 0.12);
+  if (kind === "power") {
+    const beepFrequency = isAc.value ? 1780 : 1680;
+    playTone(context, {
+      frequency: beepFrequency,
+      endFrequency: beepFrequency * 1.035,
+      startTime: now + 0.012,
+      duration: 0.12,
+      type: "sine",
+      gainValue,
+    });
+    playTone(context, {
+      frequency: beepFrequency * 2.01,
+      endFrequency: beepFrequency * 2.04,
+      startTime: now + 0.018,
+      duration: 0.065,
+      type: "sine",
+      gainValue: gainValue * 0.18,
+    });
+    return;
+  }
+  if (kind === "cool") {
+    playTone(context, { frequency: 1120, endFrequency: 1180, startTime: now + 0.012, duration: 0.16, type: "sine", gainValue });
+    playTone(context, { frequency: 1520, endFrequency: 1450, startTime: now + 0.17, duration: 0.08, type: "triangle", gainValue: gainValue * 0.46 });
+    return;
+  }
+  if (kind === "heat") {
+    playTone(context, { frequency: 760, endFrequency: 720, startTime: now + 0.012, duration: 0.18, type: "sine", gainValue: gainValue * 0.9 });
+    playTone(context, { frequency: 980, endFrequency: 1040, startTime: now + 0.18, duration: 0.09, type: "triangle", gainValue: gainValue * 0.42 });
+    return;
+  }
+  if (kind.startsWith("speed-")) {
+    const targetSpeed = Number(kind.slice(6)) || speed.value;
+    const toneGain = Math.min(0.13, 0.05 + targetSpeed * 0.025);
+    playTone(context, {
+      frequency: 880 + targetSpeed * 130,
+      endFrequency: 920 + targetSpeed * 140,
+      startTime: now + 0.012,
+      duration: 0.13,
+      type: "sine",
+      gainValue: toneGain,
+    });
+    return;
+  }
 }
 
 function rebuildAudioGraph() {
   stopGraph();
-  if (!isOn.value || muted.value || volume.value <= 0 || !audioContext) {
+  if (!isOn.value || !audioContext) {
     return;
   }
   const master = audioContext.createGain();
-  master.gain.value = Math.min(0.55, Math.max(0, volume.value));
+  master.gain.value = isAc.value ? 0.34 : Math.min(0.46, 0.16 + speed.value * 0.1);
   master.connect(audioContext.destination);
   if (isAc.value) {
     buildAcSound(audioContext, master);
@@ -181,6 +353,7 @@ async function activateAudio() {
 }
 
 async function togglePower() {
+  await playControlTone("power");
   isOn.value = !isOn.value;
   if (isOn.value) {
     await activateAudio();
@@ -191,44 +364,20 @@ async function togglePower() {
 
 async function setSpeed(nextSpeed) {
   speed.value = nextSpeed;
+  await playControlTone(`speed-${nextSpeed}`);
   if (isOn.value) {
     await activateAudio();
   }
 }
 
-async function setMode(nextMode) {
+async function setAcMode(nextMode) {
+  await playControlTone(nextMode);
   mode.value = nextMode;
-  if (isOn.value) {
-    await activateAudio();
+  if (!isOn.value) {
+    isOn.value = true;
   }
+  await activateAudio();
 }
-
-async function nudgeTemperature(delta) {
-  temperature.value = Math.min(30, Math.max(16, temperature.value + delta));
-  if (isOn.value && mode.value === "cool") {
-    await activateAudio();
-  }
-}
-
-async function toggleSwing() {
-  swing.value = !swing.value;
-  if (isOn.value) {
-    await activateAudio();
-  }
-}
-
-async function toggleMute() {
-  muted.value = !muted.value;
-  if (isOn.value) {
-    await activateAudio();
-  }
-}
-
-watch([volume, () => props.tool.slug], () => {
-  if (audioContext) {
-    rebuildAudioGraph();
-  }
-});
 
 onBeforeUnmount(() => {
   stopGraph();
@@ -245,14 +394,13 @@ onBeforeUnmount(() => {
       <div class="local-tool-header-bar">
         <div>
           <h3>{{ title }}</h3>
-          <p>纯前端按钮和 Web Audio 声音，状态只保存在当前页面。</p>
         </div>
         <span class="appliance-state" :class="{ active: isOn }">{{ statusText }}</span>
       </div>
     </div>
 
     <div class="appliance-stage">
-      <div v-if="!isAc" class="fan-machine" :class="{ oscillating: swing && isOn }">
+      <div v-if="!isAc" class="fan-machine">
         <div class="fan-cage">
           <div class="fan-ring"></div>
           <div class="fan-blades" :class="{ spinning: isOn }" :style="{ '--spin-duration': fanSpinDuration }">
@@ -273,9 +421,29 @@ onBeforeUnmount(() => {
 
       <div v-else class="ac-machine">
         <div class="ac-body">
-          <div class="ac-display">{{ isOn ? `${temperature}℃` : "--" }}</div>
+          <div class="ac-energy-label" aria-label="能耗简要图">
+            <div class="energy-head">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <div class="energy-bars">
+              <span class="green wide"></span>
+              <span class="green"></span>
+              <span class="yellow mid"></span>
+              <span class="orange wide"></span>
+              <span class="red"></span>
+            </div>
+            <div class="energy-lines">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+          <div class="ac-display">{{ isOn ? (mode === "cool" ? "❄" : "♨") : "--" }}</div>
           <div class="ac-light" :class="{ active: isOn }"></div>
-          <div class="ac-vent" :class="{ swinging: swing && isOn }">
+          <div class="ac-vent" :class="{ swinging: isOn }">
             <span></span>
             <span></span>
             <span></span>
@@ -290,42 +458,37 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="appliance-controls">
-      <button type="button" class="power-button" :class="{ active: isOn }" @click="togglePower">电源</button>
+    <div v-if="!isAc" class="appliance-controls fan-controls">
+      <button type="button" class="power-button" :class="{ active: isOn }" @click="togglePower">关</button>
 
       <div class="appliance-control-group">
-        <span>档位</span>
         <div class="segmented-buttons">
           <button v-for="item in [1, 2, 3]" :key="item" type="button" :class="{ active: speed === item }" @click="setSpeed(item)">
             {{ item }}
           </button>
         </div>
       </div>
+    </div>
 
-      <div v-if="isAc" class="appliance-control-group temperature-control">
-        <span>温度</span>
-        <div>
-          <button type="button" @click="nudgeTemperature(-1)">-</button>
-          <strong>{{ temperature }}℃</strong>
-          <button type="button" @click="nudgeTemperature(1)">+</button>
-        </div>
-      </div>
-
-      <div v-if="isAc" class="appliance-control-group">
-        <span>模式</span>
-        <div class="segmented-buttons">
-          <button type="button" :class="{ active: mode === 'cool' }" @click="setMode('cool')">制冷</button>
-          <button type="button" :class="{ active: mode === 'wind' }" @click="setMode('wind')">送风</button>
-        </div>
-      </div>
-
-      <button type="button" class="secondary-button" :class="{ active: swing }" @click="toggleSwing">{{ swing ? "摆头开" : "摆头关" }}</button>
-      <button type="button" class="secondary-button" :class="{ active: muted }" @click="toggleMute">{{ muted ? "静音" : "声音" }}</button>
-
-      <label class="volume-control">
-        <span>音量</span>
-        <input v-model.number="volume" type="range" min="0" max="0.55" step="0.01" :disabled="!audioAvailable" />
-      </label>
+    <div v-else class="appliance-controls ac-controls" aria-label="空调控制">
+      <button type="button" class="icon-button cool-button" :class="{ active: isOn && mode === 'cool' }" aria-label="制冷" title="制冷" @click="setAcMode('cool')">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v18M5 6.5l14 11M19 6.5l-14 11" />
+          <path d="M8 4.8 12 7l4-2.2M8 19.2 12 17l4 2.2M4.5 10.2 8.4 12l-3.9 1.8M19.5 10.2 15.6 12l3.9 1.8" />
+        </svg>
+      </button>
+      <button type="button" class="icon-button heat-button" :class="{ active: isOn && mode === 'heat' }" aria-label="制热" title="制热" @click="setAcMode('heat')">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 20c3-1.5 3.2-4.2 1.5-6.4C6.9 11.5 7.3 8.8 10 6c-.4 2.7 1.1 4.2 2.9 5.8 2.1 1.9 2.7 5.2-.9 8.2" />
+          <path d="M15.6 19.2c2.2-1.2 2.9-3.5 1.7-5.5-.7-1.2-.4-2.8 1-4.3.1 2 .9 3.1 2 4.5 1.2 1.6.7 4-1.4 5.3" />
+        </svg>
+      </button>
+      <button type="button" class="icon-button power-button" :class="{ active: isOn }" aria-label="开关" title="开关" @click="togglePower">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v9" />
+          <path d="M7.2 6.8a7 7 0 1 0 9.6 0" />
+        </svg>
+      </button>
     </div>
   </section>
 </template>
@@ -381,6 +544,10 @@ onBeforeUnmount(() => {
     repeating-linear-gradient(90deg, rgba(115, 139, 166, 0.06) 0 1px, transparent 1px 42px);
 }
 
+.abstract-appliance-tool.ac .appliance-stage {
+  min-height: 320px;
+}
+
 .fan-machine {
   position: relative;
   display: grid;
@@ -389,14 +556,9 @@ onBeforeUnmount(() => {
   transform-origin: 50% 68%;
 }
 
-.fan-machine.oscillating {
-  animation: fan-swing 2.8s ease-in-out infinite;
-  will-change: transform;
-}
-
 .fan-cage {
   position: relative;
-  width: min(260px, 64vw);
+  width: min(310px, 68vw);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -407,7 +569,7 @@ onBeforeUnmount(() => {
     repeating-conic-gradient(from 0deg, rgba(91, 110, 130, 0.28) 0deg 2deg, transparent 2deg 15deg),
     rgba(255, 255, 255, 0.72);
   box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.7), 0 28px 60px rgba(75, 95, 120, 0.18);
-  /* 把昂贵的网罩渐变栅格化成独立合成层，摆头时只做位移而不重绘 */
+  /* 把昂贵的网罩渐变栅格化成独立合成层，旋转时减少重绘 */
   transform: translateZ(0);
   backface-visibility: hidden;
 }
@@ -465,15 +627,15 @@ onBeforeUnmount(() => {
 
 .fan-neck {
   width: 32px;
-  height: 86px;
+  height: 96px;
   margin-top: -4px;
   border-radius: 20px;
   background: linear-gradient(90deg, #9cb4c9, #edf4fa 48%, #8fa9c0);
 }
 
 .fan-base {
-  width: 168px;
-  height: 44px;
+  width: 190px;
+  height: 48px;
   border-radius: 50%;
   background: linear-gradient(180deg, #f6f9fc, #b8c8d8);
   box-shadow: 0 18px 34px rgba(75, 95, 120, 0.2);
@@ -515,43 +677,119 @@ onBeforeUnmount(() => {
 
 .ac-machine {
   position: relative;
-  width: min(560px, 100%);
+  width: min(620px, 100%);
   max-width: 100%;
   display: grid;
   justify-items: center;
-  gap: 18px;
+  gap: 16px;
 }
 
 .ac-body {
   position: relative;
-  width: 100%;
+  width: min(560px, 92vw);
   min-width: 0;
-  min-height: 154px;
+  min-height: 172px;
   border-radius: 8px;
   border: 1px solid rgba(187, 202, 216, 0.92);
-  background: linear-gradient(180deg, #ffffff, #e8f0f6);
-  box-shadow: 0 26px 62px rgba(75, 95, 120, 0.18);
+  background: linear-gradient(180deg, #ffffff, #e9f1f7);
+  box-shadow: 0 26px 58px rgba(52, 77, 101, 0.18), inset 0 -14px 28px rgba(131, 154, 177, 0.12);
+}
+
+.ac-energy-label {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  width: 82px;
+  height: 104px;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 3px solid #66b6f3;
+  box-shadow: inset 0 0 0 1px rgba(27, 96, 160, 0.12);
+  padding: 7px 7px 6px;
+}
+
+.energy-head {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 7px;
+}
+
+.energy-head span {
+  width: 7px;
+  height: 5px;
+  border-radius: 999px;
+  background: #42a7ec;
+}
+
+.energy-bars {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 9px;
+}
+
+.energy-bars span {
+  height: 4px;
+  border-radius: 999px;
+}
+
+.energy-bars .green {
+  width: 34px;
+  background: #2ec86b;
+}
+
+.energy-bars .yellow {
+  width: 42px;
+  background: #f4c430;
+}
+
+.energy-bars .orange {
+  width: 50px;
+  background: #ff8a2a;
+}
+
+.energy-bars .red {
+  width: 60px;
+  background: #f04438;
+}
+
+.energy-bars .mid {
+  width: 46px;
+}
+
+.energy-bars .wide {
+  width: 55px;
+}
+
+.energy-lines {
+  display: grid;
+  gap: 3px;
+}
+
+.energy-lines span {
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #3b4b5f 0 3px, transparent 3px 6px);
 }
 
 .ac-display {
   position: absolute;
-  top: 26px;
+  top: 28px;
   right: 34px;
   min-width: 76px;
-  border-radius: 8px;
-  padding: 8px 12px;
-  background: #172033;
-  color: #9ef7df;
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: #26384d;
+  color: #eef9ff;
   text-align: center;
   font-weight: 800;
   letter-spacing: 0;
+  font-size: 20px;
 }
 
 .ac-light {
   position: absolute;
-  top: 38px;
-  left: 36px;
-  width: 12px;
+  top: 44px;
+  right: 126px;
+  width: 14px;
   aspect-ratio: 1;
   border-radius: 50%;
   background: #a5b3c0;
@@ -564,9 +802,9 @@ onBeforeUnmount(() => {
 
 .ac-vent {
   position: absolute;
-  left: 36px;
+  left: 132px;
   right: 36px;
-  bottom: 28px;
+  bottom: 30px;
   display: grid;
   gap: 8px;
   transform-origin: 50% 0;
@@ -578,20 +816,20 @@ onBeforeUnmount(() => {
 }
 
 .ac-vent span {
-  height: 7px;
+  height: 6px;
   border-radius: 999px;
   background: linear-gradient(90deg, #aabccc, #f8fbfd, #aabccc);
 }
 
 .ac-airflow {
-  top: 158px;
+  top: 176px;
   display: grid;
   justify-items: center;
   gap: 18px;
 }
 
 .ac-airflow span {
-  width: min(460px, 72vw);
+  width: min(420px, 72vw);
 }
 
 .ac-airflow span:nth-child(4) {
@@ -606,8 +844,15 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
-.appliance-controls button,
-.temperature-control button {
+.fan-controls {
+  justify-content: center;
+}
+
+.ac-controls {
+  justify-content: center;
+}
+
+.appliance-controls button {
   min-width: 72px;
   border: 1px solid #dbe3eb;
   border-radius: 14px;
@@ -615,6 +860,40 @@ onBeforeUnmount(() => {
   background: #fff;
   color: var(--ink);
   cursor: pointer;
+}
+
+.ac-controls .icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  min-width: 64px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  padding: 0;
+}
+
+.ac-controls .icon-button svg {
+  width: 30px;
+  height: 30px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.ac-controls .cool-button {
+  color: #1687d9;
+  background: #eef8ff;
+}
+
+.ac-controls .heat-button {
+  color: #dc5a1f;
+  background: #fff3ec;
+}
+
+.ac-controls .power-button {
+  color: #324154;
 }
 
 .appliance-controls button.active,
@@ -625,49 +904,27 @@ onBeforeUnmount(() => {
   color: #fff;
 }
 
-.appliance-control-group,
-.volume-control {
+.appliance-control-group {
   display: grid;
   gap: 8px;
   min-width: 120px;
   max-width: 100%;
 }
 
-.appliance-control-group > span,
-.volume-control > span {
+.appliance-control-group > span {
   color: var(--muted);
   font-size: 13px;
 }
 
-.segmented-buttons,
-.temperature-control > div {
+.segmented-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.temperature-control strong {
-  min-width: 54px;
-  text-align: center;
-}
-
-.volume-control input {
-  width: 160px;
-}
-
 @keyframes fan-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes fan-swing {
-  0%,
-  100% {
-    transform: rotate(-10deg);
-  }
-  50% {
-    transform: rotate(10deg);
   }
 }
 
@@ -696,7 +953,6 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fan-machine.oscillating,
   .fan-blades.spinning,
   .ac-vent.swinging,
   .fan-wind span,
@@ -737,23 +993,15 @@ onBeforeUnmount(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .appliance-controls button,
-  .temperature-control button {
+  .appliance-controls button {
     min-width: 0;
   }
 
-  .appliance-control-group,
-  .volume-control,
-  .volume-control input {
+  .appliance-control-group {
     width: 100%;
   }
 
-  .volume-control {
-    grid-column: 1 / -1;
-  }
-
-  .segmented-buttons,
-  .temperature-control > div {
+  .segmented-buttons {
     min-width: 0;
   }
 
@@ -761,7 +1009,46 @@ onBeforeUnmount(() => {
     flex: 1 1 0;
   }
 
-  /* 移动端降低大模糊阴影的填充开销，减轻摆头/旋转时的卡顿 */
+  .abstract-appliance-tool.ac .appliance-stage {
+    min-height: 300px;
+  }
+
+  .ac-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ac-body {
+    width: min(460px, 92vw);
+    min-height: 160px;
+  }
+
+  .ac-energy-label {
+    top: 16px;
+    left: 18px;
+    transform: scale(0.86);
+    transform-origin: top left;
+  }
+
+  .ac-display {
+    top: 24px;
+    right: 24px;
+  }
+
+  .ac-light {
+    top: 40px;
+    right: 108px;
+  }
+
+  .ac-vent {
+    left: 112px;
+    right: 24px;
+  }
+
+  .ac-airflow {
+    top: 164px;
+  }
+
+  /* 移动端降低大模糊阴影的填充开销，减轻旋转时的卡顿 */
   .fan-cage {
     box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.7), 0 14px 26px rgba(75, 95, 120, 0.16);
   }

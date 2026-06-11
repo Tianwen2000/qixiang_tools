@@ -37,6 +37,7 @@ class ToolMeta(BaseModel):
     result_type: str
     component: str
     enabled: bool = True
+    visible: bool = True
     params: list[ToolParamMeta] = Field(default_factory=list)
 
 
@@ -50,4 +51,5 @@ class ToolMetaOut(BaseModel):
     result_type: str
     component: str
     enabled: bool = True
+    visible: bool = True
     params: list[ToolParamMeta] = Field(default_factory=list)

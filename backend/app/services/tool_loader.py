@@ -32,7 +32,7 @@ def list_categories() -> list[CategoryMeta]:
 
 
 def list_tools(category: str | None = None, keyword: str | None = None) -> list[ToolMeta]:
-    items = [item for item in load_tools() if item.enabled]
+    items = [item for item in load_tools() if item.enabled and item.visible]
     if category:
         items = [item for item in items if item.category == category]
     if keyword:
