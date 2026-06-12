@@ -201,6 +201,17 @@ def test_meta_endpoints() -> None:
     assert "text-format-cleaner" in ops_tool_slugs
     assert "invisible-control-chars" in ops_tool_slugs
     assert "character-count-slice" in ops_tool_slugs
+    assert "free-translate" in ops_tool_slugs
+    translate_tool = next(item for item in ops_tool_items if item["slug"] == "free-translate")
+    assert translate_tool["input_mode"] == "text"
+    source_param = next(param for param in translate_tool["params"] if param["key"] == "source_language")
+    target_param = next(param for param in translate_tool["params"] if param["key"] == "target_language")
+    assert source_param["default"] == "en"
+    assert target_param["default"] == "zh-CN"
+    source_options = source_param["options"]
+    target_options = target_param["options"]
+    assert {item["value"] for item in source_options} == {item["value"] for item in target_options}
+    assert "auto" not in {item["value"] for item in source_options}
     command_tool_items = [item for item in ops_tool_items if item["component"] == "ToolCommandCatalog"]
     assert all(item["input_mode"] == "local" for item in command_tool_items)
     assert any(
@@ -2290,6 +2301,89 @@ def test_character_count_slice_execute() -> None:
     assert "截取方向：最后" in result
     assert "实际输出字符数：4" in result
     assert result.endswith("!\n🙂 ")
+
+
+def test_free_translate_execute(monkeypatch) -> None:
+    from app.tools import free_translate
+
+    captured = {}
+
+    def fake_request_json(url, params):
+        captured["url"] = url
+        captured["params"] = params
+        return {
+            "responseStatus": 200,
+            "quotaFinished": False,
+            "responseData": {"translatedText": "你好", "match": 1},
+        }
+
+    monkeypatch.setattr(free_translate, "_request_json", fake_request_json)
+    response = client.post(
+        "/api/tools/free-translate/execute",
+        json={"text": "hello", "params": {}},
+    )
+    assert response.status_code == 200
+    result = response.json()["data"]["result"]
+    assert "翻译结果\n你好" in result
+    assert "请求信息\n匹配度：100%\n输入 UTF-8 字节数：5/500" in result
+    assert "服务：" not in result
+    assert "源语言：" not in result
+    assert "目标语言：" not in result
+    assert captured["url"] == free_translate.MYMEMORY_GET_URL
+    assert captured["params"]["q"] == "hello"
+    assert captured["params"]["langpair"] == "en|zh-CN"
+    assert captured["params"]["mt"] == "1"
+
+
+def test_free_translate_falls_back_when_human_match_missing(monkeypatch) -> None:
+    from app.tools import free_translate
+
+    calls = []
+
+    def fake_request_json(url, params):
+        calls.append(params)
+        if params["mt"] == "0":
+            return {
+                "responseStatus": 200,
+                "quotaFinished": False,
+                "responseData": {"translatedText": None, "match": None},
+                "matches": [],
+            }
+        return {
+            "responseStatus": 200,
+            "quotaFinished": False,
+            "responseData": {"translatedText": "提示参数错误或图像未获批准", "match": 0.85},
+        }
+
+    monkeypatch.setattr(free_translate, "_request_json", fake_request_json)
+    response = client.post(
+        "/api/tools/free-translate/execute",
+        json={
+            "text": "Prompt parameter error or image not approved",
+            "params": {"source_language": "en", "target_language": "zh-CN", "mt": "0"},
+        },
+    )
+    assert response.status_code == 200
+    result = response.json()["data"]["result"]
+    assert "提示参数错误或图像未获批准" in result
+    assert "匹配度：85%" in result
+    assert [call["mt"] for call in calls] == ["0", "1"]
+
+
+def test_free_translate_rejects_unsupported_request_rules() -> None:
+    response = client.post(
+        "/api/tools/free-translate/execute",
+        json={"text": "hello", "params": {"source_language": "auto", "target_language": "zh-CN"}},
+    )
+    assert response.status_code == 400
+    assert response.json()["message"] == "源语言不支持"
+
+    long_response = client.post(
+        "/api/tools/free-translate/execute",
+        json={"text": "中" * 200, "params": {"source_language": "zh-CN", "target_language": "en"}},
+    )
+    assert long_response.status_code == 400
+    assert "500 UTF-8 字节" in long_response.json()["message"]
 
 
 def test_superscript_subscript_and_word_group_tools_execute() -> None:

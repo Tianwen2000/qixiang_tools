@@ -520,6 +520,172 @@
     ]
   },
   {
+    "slug": "free-translate",
+    "module": "free_translate",
+    "name": "免费翻译",
+    "category": "ops",
+    "summary": "调用免密免费翻译接口，把文本翻译成指定语言。",
+    "description": "使用 MyMemory 免费 REST API，按接口要求单次最多 500 UTF-8 字节；语言选项按当前接入 API 支持范围收敛，适合中英及常见语言短文本互译。",
+    "input_mode": "text",
+    "result_type": "text",
+    "component": "ToolTextForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "source_language",
+        "label": "源语言",
+        "type": "select",
+        "default": "en",
+        "options": [
+          {
+            "label": "英语",
+            "value": "en"
+          },
+          {
+            "label": "中文（简体）",
+            "value": "zh-CN"
+          },
+          {
+            "label": "中文（繁体）",
+            "value": "zh-TW"
+          },
+          {
+            "label": "日语",
+            "value": "ja"
+          },
+          {
+            "label": "韩语",
+            "value": "ko"
+          },
+          {
+            "label": "法语",
+            "value": "fr"
+          },
+          {
+            "label": "德语",
+            "value": "de"
+          },
+          {
+            "label": "西班牙语",
+            "value": "es"
+          },
+          {
+            "label": "俄语",
+            "value": "ru"
+          },
+          {
+            "label": "葡萄牙语",
+            "value": "pt"
+          },
+          {
+            "label": "意大利语",
+            "value": "it"
+          },
+          {
+            "label": "阿拉伯语",
+            "value": "ar"
+          },
+          {
+            "label": "泰语",
+            "value": "th"
+          },
+          {
+            "label": "越南语",
+            "value": "vi"
+          },
+          {
+            "label": "印尼语",
+            "value": "id"
+          }
+        ]
+      },
+      {
+        "key": "target_language",
+        "label": "目标语言",
+        "type": "select",
+        "default": "zh-CN",
+        "options": [
+          {
+            "label": "中文（简体）",
+            "value": "zh-CN"
+          },
+          {
+            "label": "中文（繁体）",
+            "value": "zh-TW"
+          },
+          {
+            "label": "英语",
+            "value": "en"
+          },
+          {
+            "label": "日语",
+            "value": "ja"
+          },
+          {
+            "label": "韩语",
+            "value": "ko"
+          },
+          {
+            "label": "法语",
+            "value": "fr"
+          },
+          {
+            "label": "德语",
+            "value": "de"
+          },
+          {
+            "label": "西班牙语",
+            "value": "es"
+          },
+          {
+            "label": "俄语",
+            "value": "ru"
+          },
+          {
+            "label": "葡萄牙语",
+            "value": "pt"
+          },
+          {
+            "label": "意大利语",
+            "value": "it"
+          },
+          {
+            "label": "阿拉伯语",
+            "value": "ar"
+          },
+          {
+            "label": "泰语",
+            "value": "th"
+          },
+          {
+            "label": "越南语",
+            "value": "vi"
+          },
+          {
+            "label": "印尼语",
+            "value": "id"
+          }
+        ]
+      },
+      {
+        "key": "mt",
+        "label": "机器翻译",
+        "type": "radio",
+        "default": "1",
+        "options": [
+          {
+            "label": "开启",
+            "value": "1"
+          },
+          {
+            "label": "优先人工语料",
+            "value": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "slug": "local-ip-lookup",
     "module": "local_ip_lookup",
     "name": "本地ip查询",
