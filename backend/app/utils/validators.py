@@ -119,6 +119,7 @@ GIF_IMAGE_TOOL_SUFFIXES = {
 SVG_IMAGE_TOOL_SUFFIXES = {
     "jpg-svg-converter": {"jpg", "jpeg", "svg"},
     "png-svg-converter": {"png", "svg"},
+    "gif-svg-converter": {"gif", "svg"},
 }
 
 

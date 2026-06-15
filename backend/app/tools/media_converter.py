@@ -134,6 +134,42 @@ CONVERSION_SPECS = {
 }
 
 
+def _resolve_ffmpeg_path() -> str | None:
+    system_ffmpeg = shutil.which("ffmpeg")
+    if system_ffmpeg:
+        return system_ffmpeg
+
+    try:
+        import imageio_ffmpeg
+    except Exception:
+        return None
+
+    try:
+        bundled_ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return None
+
+    if bundled_ffmpeg and Path(bundled_ffmpeg).is_file():
+        return str(bundled_ffmpeg)
+    return None
+
+
+def _is_mp4_without_audio_error(tool_slug: str, direction: str, error_message: str) -> bool:
+    if tool_slug != "mp3-mp4-converter" or direction != "mp4_to_mp3":
+        return False
+
+    normalized_error = error_message.lower()
+    return any(
+        marker in normalized_error
+        for marker in (
+            "output file does not contain any stream",
+            "stream map 'a",
+            "matches no streams",
+            "does not contain any stream",
+        )
+    )
+
+
 def convert_media(input_path: str, output_dir: str, tool_slug: str, direction: str) -> str:
     tool_specs = CONVERSION_SPECS.get(tool_slug)
     if not tool_specs or direction not in tool_specs:
@@ -146,9 +182,9 @@ def convert_media(input_path: str, output_dir: str, tool_slug: str, direction: s
     if source_suffix != expected_suffix:
         raise AppException(message=f"当前方向请上传 .{expected_suffix} 文件", code=4002, status_code=400)
 
-    ffmpeg_path = shutil.which("ffmpeg")
+    ffmpeg_path = _resolve_ffmpeg_path()
     if not ffmpeg_path:
-        raise AppException(message="未检测到 ffmpeg，请先在服务器安装 ffmpeg 后再使用音视频转换工具", code=5004, status_code=500)
+        raise AppException(message="未检测到 ffmpeg，请先安装后端依赖或在服务器安装 ffmpeg 后再使用音视频转换工具", code=5004, status_code=500)
 
     output_suffix = spec["output_suffix"]
     target_path = Path(output_dir) / f"converted.{output_suffix}"
@@ -170,6 +206,13 @@ def convert_media(input_path: str, output_dir: str, tool_slug: str, direction: s
             return str(target_path)
         last_error = (completed.stderr or completed.stdout or "").strip()
         target_path.unlink(missing_ok=True)
+
+    if _is_mp4_without_audio_error(tool_slug, direction, last_error):
+        raise AppException(
+            message="转换失败：未检测到该 MP4 文件中的音频内容，无法转换为 MP3。请上传包含声音的视频文件后重试。",
+            code=5005,
+            status_code=500,
+        )
 
     detail = f"：{last_error[-300:]}" if last_error else ""
     raise AppException(message=f"音视频转换失败{detail}", code=5005, status_code=500)

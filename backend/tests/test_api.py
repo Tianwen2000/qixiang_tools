@@ -4,6 +4,7 @@ import io
 import json
 import sqlite3
 import tempfile
+from types import SimpleNamespace
 import uuid
 import zipfile
 from pathlib import Path
@@ -72,6 +73,16 @@ def make_styled_svg_bytes() -> bytes:
         "<style>.body{fill:#f5a22f}.line{stroke:#111111;stroke-width:2;fill:none}</style>"
         '<rect class="body" width="48" height="32"/>'
         '<path class="line" d="M6 6 L42 26"/>'
+        "</svg>"
+    ).encode("utf-8")
+
+
+def make_animated_svg_bytes() -> bytes:
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="32" viewBox="0 0 48 32">'
+        '<circle cx="10" cy="16" r="8" fill="#f5a22f">'
+        '<animate attributeName="cx" values="10;38;10" dur="1s" repeatCount="indefinite"/>'
+        "</circle>"
         "</svg>"
     ).encode("utf-8")
 
@@ -271,6 +282,7 @@ def test_meta_endpoints() -> None:
     assert "excel-csv-converter" in format_tool_slugs
     assert "jpg-svg-converter" in format_tool_slugs
     assert "png-svg-converter" in format_tool_slugs
+    assert "gif-svg-converter" in format_tool_slugs
     assert "docx-to-pdf" not in format_tool_slugs
     assert "pdf-to-html" not in format_tool_slugs
     assert "json-to-typescript" not in format_tool_slugs
@@ -1603,6 +1615,54 @@ def test_media_conversion_rejects_wrong_direction_input_suffix() -> None:
     assert ".flac" in response.json()["message"]
 
 
+def test_media_conversion_uses_imageio_ffmpeg_when_system_ffmpeg_missing(tmp_path) -> None:
+    fake_ffmpeg = tmp_path / "ffmpeg"
+    fake_ffmpeg.write_bytes(b"fake")
+
+    def fake_ffmpeg_run(command, **kwargs):
+        Path(command[-1]).write_bytes(b"converted media")
+        return CompletedProcess(command, 0, "", "")
+
+    fake_imageio_ffmpeg = SimpleNamespace(get_ffmpeg_exe=lambda: str(fake_ffmpeg))
+
+    with patch("app.tools.media_converter.shutil.which", return_value=None), patch.dict(
+        "sys.modules", {"imageio_ffmpeg": fake_imageio_ffmpeg}
+    ), patch("app.tools.media_converter.subprocess.run", side_effect=fake_ffmpeg_run) as run_mock:
+        response = client.post(
+            "/api/tools/wav-mp3-converter/upload",
+            data={"params": json.dumps({"direction": "wav_to_mp3"})},
+            files={"file": ("demo.wav", make_media_bytes(), "audio/wav")},
+        )
+
+    assert response.status_code == 200
+    assert response.content == b"converted media"
+    assert run_mock.call_args.args[0][0] == str(fake_ffmpeg)
+
+
+def test_mp4_to_mp3_without_audio_returns_friendly_message() -> None:
+    stderr = (
+        "Output file does not contain any stream\n"
+        "Error opening output file /tmp/converted.mp3.\n"
+        "Error opening output files: Invalid argument"
+    )
+
+    def fake_ffmpeg_run(command, **kwargs):
+        return CompletedProcess(command, 234, "", stderr)
+
+    with patch("app.tools.media_converter.shutil.which", return_value="/usr/bin/ffmpeg"), patch(
+        "app.tools.media_converter.subprocess.run",
+        side_effect=fake_ffmpeg_run,
+    ):
+        response = client.post(
+            "/api/tools/mp3-mp4-converter/upload",
+            data={"params": json.dumps({"direction": "mp4_to_mp3"})},
+            files={"file": ("silent.mp4", make_media_bytes(), "video/mp4")},
+        )
+
+    assert response.status_code == 500
+    assert response.json()["message"] == "转换失败：未检测到该 MP4 文件中的音频内容，无法转换为 MP3。请上传包含声音的视频文件后重试。"
+
+
 def test_gif_mp4_conversion_filters_preserve_visual_content() -> None:
     commands: list[list[str]] = []
 
@@ -1727,6 +1787,54 @@ def test_svg_image_conversion_tools_upload() -> None:
     png_image = Image.open(io.BytesIO(svg_to_png_response.content))
     assert png_image.size == (48, 32)
     assert png_image.convert("RGBA").getpixel((8, 26))[:3] == (245, 162, 47)
+
+    gif_to_svg_response = client.post(
+        "/api/tools/gif-svg-converter/upload",
+        data={"params": json.dumps({"direction": "gif_to_svg"})},
+        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
+    )
+    assert gif_to_svg_response.status_code == 200
+    assert "image/svg+xml" in gif_to_svg_response.headers["content-type"]
+    assert b"data:image/gif;base64," in gif_to_svg_response.content
+
+    svg_to_gif_response = client.post(
+        "/api/tools/gif-svg-converter/upload",
+        data={"params": json.dumps({"direction": "svg_to_gif"})},
+        files={"file": ("demo.svg", make_styled_svg_bytes(), "image/svg+xml")},
+    )
+    assert svg_to_gif_response.status_code == 200
+    assert svg_to_gif_response.headers["content-type"].startswith("image/gif")
+    gif_image = Image.open(io.BytesIO(svg_to_gif_response.content))
+    assert gif_image.size == (48, 32)
+
+
+def test_animated_svg_to_gif_uses_frame_renderer(monkeypatch) -> None:
+    from app.tools import svg_image_converter
+
+    captured = {}
+
+    def fake_render_animated_svg_to_gif(source, target_path, duration_seconds, fps):
+        captured["source"] = source
+        captured["duration_seconds"] = duration_seconds
+        captured["fps"] = fps
+        first = Image.new("RGBA", (48, 32), (245, 162, 47, 255))
+        second = Image.new("RGBA", (48, 32), (53, 198, 166, 255))
+        first.save(target_path, format="GIF", save_all=True, append_images=[second], duration=[100, 100], loop=0)
+        return str(target_path)
+
+    monkeypatch.setattr(svg_image_converter, "_render_animated_svg_to_gif", fake_render_animated_svg_to_gif)
+    response = client.post(
+        "/api/tools/gif-svg-converter/upload",
+        data={"params": json.dumps({"direction": "svg_to_gif", "duration_seconds": 3, "fps": 8})},
+        files={"file": ("animated.svg", make_animated_svg_bytes(), "image/svg+xml")},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/gif")
+    assert captured["duration_seconds"] == 3
+    assert captured["fps"] == 8
+    image = Image.open(io.BytesIO(response.content))
+    assert image.n_frames == 2
 
 
 def test_generated_image_tools_execute() -> None:

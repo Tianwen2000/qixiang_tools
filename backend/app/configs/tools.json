@@ -7191,6 +7191,90 @@
     ]
   },
   {
+    "slug": "gif-svg-converter",
+    "module": "gif_svg_converter",
+    "name": "GIF 和 SVG 互转",
+    "category": "format",
+    "summary": "GIF 与 SVG 图片互转。",
+    "description": "GIF 转 SVG 会生成内嵌原 GIF 的 SVG 文件，保留动图数据；SVG 转 GIF 会把 SVG 渲染为单帧 GIF，适合图标和网页素材导出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "gif_to_svg",
+        "options": [
+          {
+            "label": "GIF 转 SVG",
+            "value": "gif_to_svg"
+          },
+          {
+            "label": "SVG 转 GIF",
+            "value": "svg_to_gif"
+          }
+        ]
+      },
+      {
+        "key": "duration_seconds",
+        "label": "动画时长",
+        "type": "select",
+        "default": 2,
+        "showWhen": {
+          "direction": "svg_to_gif"
+        },
+        "options": [
+          {
+            "label": "1 秒",
+            "value": 1
+          },
+          {
+            "label": "2 秒",
+            "value": 2
+          },
+          {
+            "label": "3 秒",
+            "value": 3
+          },
+          {
+            "label": "5 秒",
+            "value": 5
+          }
+        ]
+      },
+      {
+        "key": "fps",
+        "label": "动画帧率",
+        "type": "select",
+        "default": 12,
+        "showWhen": {
+          "direction": "svg_to_gif"
+        },
+        "options": [
+          {
+            "label": "8 FPS",
+            "value": 8
+          },
+          {
+            "label": "12 FPS",
+            "value": 12
+          },
+          {
+            "label": "15 FPS",
+            "value": 15
+          },
+          {
+            "label": "24 FPS",
+            "value": 24
+          }
+        ]
+      }
+    ]
+  },
+  {
     "slug": "mp3-flac-converter",
     "module": "mp3_flac_converter",
     "name": "MP3 和 FLAC 互转",
