@@ -7131,6 +7131,66 @@
     ]
   },
   {
+    "slug": "jpg-svg-converter",
+    "module": "jpg_svg_converter",
+    "name": "JPG 和 SVG 互转",
+    "category": "format",
+    "summary": "JPG 与 SVG 图片互转。",
+    "description": "JPG 转 SVG 会生成内嵌原图的 SVG 文件；SVG 转 JPG 会渲染为白底位图，适合网页素材和图标预览导出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "jpg_to_svg",
+        "options": [
+          {
+            "label": "JPG 转 SVG",
+            "value": "jpg_to_svg"
+          },
+          {
+            "label": "SVG 转 JPG",
+            "value": "svg_to_jpg"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "png-svg-converter",
+    "module": "png_svg_converter",
+    "name": "PNG 和 SVG 互转",
+    "category": "format",
+    "summary": "PNG 与 SVG 图片互转。",
+    "description": "PNG 转 SVG 会生成内嵌原图的 SVG 文件；SVG 转 PNG 会保留透明通道并渲染为位图，适合网页素材和图标预览导出。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "png_to_svg",
+        "options": [
+          {
+            "label": "PNG 转 SVG",
+            "value": "png_to_svg"
+          },
+          {
+            "label": "SVG 转 PNG",
+            "value": "svg_to_png"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "slug": "mp3-flac-converter",
     "module": "mp3_flac_converter",
     "name": "MP3 和 FLAC 互转",

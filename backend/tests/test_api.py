@@ -57,6 +57,25 @@ def make_gif_bytes() -> bytes:
     return stream.getvalue()
 
 
+def make_svg_bytes() -> bytes:
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="32" viewBox="0 0 48 32">'
+        '<rect width="48" height="32" fill="#35c6a6"/>'
+        '<circle cx="24" cy="16" r="9" fill="#ffffff"/>'
+        "</svg>"
+    ).encode("utf-8")
+
+
+def make_styled_svg_bytes() -> bytes:
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="32" viewBox="0 0 48 32">'
+        "<style>.body{fill:#f5a22f}.line{stroke:#111111;stroke-width:2;fill:none}</style>"
+        '<rect class="body" width="48" height="32"/>'
+        '<path class="line" d="M6 6 L42 26"/>'
+        "</svg>"
+    ).encode("utf-8")
+
+
 def make_zip_bytes(files: dict[str, bytes]) -> bytes:
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -250,6 +269,8 @@ def test_meta_endpoints() -> None:
     assert "json-xlsx-converter" in format_tool_slugs
     assert "ppt-txt-converter" in format_tool_slugs
     assert "excel-csv-converter" in format_tool_slugs
+    assert "jpg-svg-converter" in format_tool_slugs
+    assert "png-svg-converter" in format_tool_slugs
     assert "docx-to-pdf" not in format_tool_slugs
     assert "pdf-to-html" not in format_tool_slugs
     assert "json-to-typescript" not in format_tool_slugs
@@ -1582,6 +1603,45 @@ def test_media_conversion_rejects_wrong_direction_input_suffix() -> None:
     assert ".flac" in response.json()["message"]
 
 
+def test_gif_mp4_conversion_filters_preserve_visual_content() -> None:
+    commands: list[list[str]] = []
+
+    def fake_ffmpeg_run(command, **kwargs):
+        commands.append(command)
+        Path(command[-1]).write_bytes(b"converted media")
+        return CompletedProcess(command, 0, "", "")
+
+    with patch("app.tools.media_converter.shutil.which", return_value="/usr/bin/ffmpeg"), patch(
+        "app.tools.media_converter.subprocess.run",
+        side_effect=fake_ffmpeg_run,
+    ):
+        gif_to_mp4_response = client.post(
+            "/api/tools/gif-mp4-converter/upload",
+            data={"params": json.dumps({"direction": "gif_to_mp4"})},
+            files={"file": ("demo.gif", make_media_bytes(), "image/gif")},
+        )
+        mp4_to_gif_response = client.post(
+            "/api/tools/gif-mp4-converter/upload",
+            data={"params": json.dumps({"direction": "mp4_to_gif"})},
+            files={"file": ("demo.mp4", make_media_bytes(), "video/mp4")},
+        )
+
+    assert gif_to_mp4_response.status_code == 200
+    assert mp4_to_gif_response.status_code == 200
+
+    gif_to_mp4_command = " ".join(commands[0])
+    assert "drawbox" in gif_to_mp4_command
+    assert "overlay" in gif_to_mp4_command
+    assert "pad=ceil(iw/2)*2:ceil(ih/2)*2" in gif_to_mp4_command
+    assert "scale=trunc(iw/2)*2" not in gif_to_mp4_command
+
+    mp4_to_gif_command = " ".join(commands[1])
+    assert "palettegen" in mp4_to_gif_command
+    assert "paletteuse" in mp4_to_gif_command
+    assert "fps=15" not in mp4_to_gif_command
+    assert "scale=640" not in mp4_to_gif_command
+
+
 def test_gif_image_conversion_tools_upload() -> None:
     gif_to_png_response = client.post(
         "/api/tools/gif-png-converter/upload",
@@ -1622,6 +1682,51 @@ def test_gif_image_conversion_tools_upload() -> None:
     )
     assert jpg_to_gif_response.status_code == 200
     assert jpg_to_gif_response.headers["content-type"].startswith("image/gif")
+
+
+def test_svg_image_conversion_tools_upload() -> None:
+    jpg_to_svg_response = client.post(
+        "/api/tools/jpg-svg-converter/upload",
+        data={"params": json.dumps({"direction": "jpg_to_svg"})},
+        files={"file": ("demo.jpg", make_jpg_bytes(), "image/jpeg")},
+    )
+    assert jpg_to_svg_response.status_code == 200
+    assert "image/svg+xml" in jpg_to_svg_response.headers["content-type"]
+    assert b"data:image/jpeg;base64," in jpg_to_svg_response.content
+
+    svg_to_jpg_response = client.post(
+        "/api/tools/jpg-svg-converter/upload",
+        data={"params": json.dumps({"direction": "svg_to_jpg"})},
+        files={"file": ("demo.svg", make_styled_svg_bytes(), "image/svg+xml")},
+    )
+    assert svg_to_jpg_response.status_code == 200
+    assert svg_to_jpg_response.headers["content-type"].startswith("image/jpeg")
+    jpg_image = Image.open(io.BytesIO(svg_to_jpg_response.content))
+    assert jpg_image.size == (48, 32)
+    red, green, blue = jpg_image.convert("RGB").getpixel((8, 26))
+    assert red > 200
+    assert green > 120
+    assert blue < 80
+
+    png_to_svg_response = client.post(
+        "/api/tools/png-svg-converter/upload",
+        data={"params": json.dumps({"direction": "png_to_svg"})},
+        files={"file": ("demo.png", make_png_bytes(), "image/png")},
+    )
+    assert png_to_svg_response.status_code == 200
+    assert "image/svg+xml" in png_to_svg_response.headers["content-type"]
+    assert b"data:image/png;base64," in png_to_svg_response.content
+
+    svg_to_png_response = client.post(
+        "/api/tools/png-svg-converter/upload",
+        data={"params": json.dumps({"direction": "svg_to_png"})},
+        files={"file": ("demo.svg", make_styled_svg_bytes(), "image/svg+xml")},
+    )
+    assert svg_to_png_response.status_code == 200
+    assert svg_to_png_response.headers["content-type"].startswith("image/png")
+    png_image = Image.open(io.BytesIO(svg_to_png_response.content))
+    assert png_image.size == (48, 32)
+    assert png_image.convert("RGBA").getpixel((8, 26))[:3] == (245, 162, 47)
 
 
 def test_generated_image_tools_execute() -> None:

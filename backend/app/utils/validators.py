@@ -116,6 +116,10 @@ GIF_IMAGE_TOOL_SUFFIXES = {
     "gif-png-converter": {"gif", "png"},
     "gif-jpg-converter": {"gif", "jpg", "jpeg"},
 }
+SVG_IMAGE_TOOL_SUFFIXES = {
+    "jpg-svg-converter": {"jpg", "jpeg", "svg"},
+    "png-svg-converter": {"png", "svg"},
+}
 
 
 def validate_tool_supports_mode(input_mode: str, allowed: set[str]) -> None:
@@ -167,3 +171,8 @@ def validate_upload_for_tool(file: UploadFile, tool_slug: str) -> None:
     elif tool_slug in GIF_IMAGE_TOOL_SUFFIXES:
         if suffix not in GIF_IMAGE_TOOL_SUFFIXES[tool_slug]:
             raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
+    elif tool_slug in SVG_IMAGE_TOOL_SUFFIXES:
+        if suffix not in SVG_IMAGE_TOOL_SUFFIXES[tool_slug]:
+            raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
+        if content_type and not content_type.startswith("image/"):
+            raise AppException(message="无效的图片文件", code=4002, status_code=400)

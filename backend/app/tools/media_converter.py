@@ -97,14 +97,22 @@ CONVERSION_SPECS = {
             "args": [
                 "-i",
                 "{input}",
-                "-movflags",
-                "+faststart",
-                "-pix_fmt",
-                "yuv420p",
-                "-vf",
-                "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                "-filter_complex",
+                (
+                    "[0:v]format=rgba,split[fg][bg];"
+                    "[bg]drawbox=x=0:y=0:w=iw:h=ih:color=white@1:t=fill[bg];"
+                    "[bg][fg]overlay=format=auto,"
+                    "pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:color=white,"
+                    "format=yuv420p"
+                ),
                 "-c:v",
                 "libx264",
+                "-preset",
+                "medium",
+                "-crf",
+                "18",
+                "-movflags",
+                "+faststart",
                 "-an",
                 "{output}",
             ],
@@ -112,7 +120,15 @@ CONVERSION_SPECS = {
         "mp4_to_gif": {
             "input_suffix": "mp4",
             "output_suffix": "gif",
-            "args": ["-i", "{input}", "-vf", "fps=15,scale=640:-1:flags=lanczos", "{output}"],
+            "args": [
+                "-i",
+                "{input}",
+                "-filter_complex",
+                "[0:v]split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse=dither=sierra2_4a",
+                "-loop",
+                "0",
+                "{output}",
+            ],
         },
     },
 }
