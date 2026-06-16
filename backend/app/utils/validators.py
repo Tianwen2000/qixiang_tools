@@ -112,6 +112,10 @@ MEDIA_TOOL_SUFFIXES = {
     "mp3-mp4-converter": {"mp3", "mp4"},
     "gif-mp4-converter": {"gif", "mp4"},
 }
+ANIMATED_FRAME_TOOL_SUFFIXES = {
+    "animated-frames-converter": {"gif", "png", "apng", "webp", "avif", "zip"},
+    "svg-animation-converter": {"svg", "zip"},
+}
 GIF_IMAGE_TOOL_SUFFIXES = {
     "gif-png-converter": {"gif", "png"},
     "gif-jpg-converter": {"gif", "jpg", "jpeg"},
@@ -168,6 +172,9 @@ def validate_upload_for_tool(file: UploadFile, tool_slug: str) -> None:
             raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
     elif tool_slug in MEDIA_TOOL_SUFFIXES:
         if suffix not in MEDIA_TOOL_SUFFIXES[tool_slug]:
+            raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
+    elif tool_slug in ANIMATED_FRAME_TOOL_SUFFIXES:
+        if suffix not in ANIMATED_FRAME_TOOL_SUFFIXES[tool_slug]:
             raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
     elif tool_slug in GIF_IMAGE_TOOL_SUFFIXES:
         if suffix not in GIF_IMAGE_TOOL_SUFFIXES[tool_slug]:

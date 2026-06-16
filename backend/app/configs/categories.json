@@ -58,14 +58,14 @@
   {
     "slug": "game",
     "name": "益智游戏",
-    "description": "适合摸鱼放松和轻量挑战的本地小游戏，不走后端执行。",
+    "description": "适合摸鱼放松和轻量挑战的本地前端小游戏。",
     "enabled": true,
     "sort_order": 60
   },
   {
     "slug": "other",
     "name": "其他",
-    "description": "先放一些不便归类但很实用的本地小工具和检测工具。",
+    "description": "先放一些不便归类但很实用的本地小工具和检测工具。（若有其他需求或bug请联系作者文琦新增和修改）",
     "enabled": true,
     "sort_order": 58
   }

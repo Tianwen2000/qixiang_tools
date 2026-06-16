@@ -283,6 +283,8 @@ def test_meta_endpoints() -> None:
     assert "jpg-svg-converter" in format_tool_slugs
     assert "png-svg-converter" in format_tool_slugs
     assert "gif-svg-converter" in format_tool_slugs
+    assert "animated-frames-converter" in format_tool_slugs
+    assert "svg-animation-converter" in format_tool_slugs
     assert "docx-to-pdf" not in format_tool_slugs
     assert "pdf-to-html" not in format_tool_slugs
     assert "json-to-typescript" not in format_tool_slugs
@@ -314,6 +316,29 @@ def test_meta_endpoints() -> None:
     upscaler_params = image_tool_items[compressor_index + 1]["params"]
     assert upscaler_params[0]["key"] == "mode"
     assert [item["value"] for item in upscaler_params[0]["options"]] == ["byte_size", "dimensions"]
+
+
+def test_format_file_tools_have_upload_validation_coverage() -> None:
+    from app.utils import validators
+
+    format_tools = client.get("/api/tools", params={"category": "format"})
+    assert format_tools.status_code == 200
+    format_file_slugs = {
+        item["slug"]
+        for item in format_tools.json()["data"]
+        if item["input_mode"] == "file" and item.get("enabled", True)
+    }
+    covered_slugs = set(validators.IMAGE_TOOL_SLUGS)
+    covered_slugs.update(validators.ZIP_IMAGE_TOOL_SLUGS)
+    covered_slugs.update(validators.OFFICE_EXTRACT_TOOL_SUFFIXES)
+    covered_slugs.update(validators.DOCUMENT_TOOL_SUFFIXES)
+    covered_slugs.update(validators.MEDIA_TOOL_SUFFIXES)
+    covered_slugs.update(validators.ANIMATED_FRAME_TOOL_SUFFIXES)
+    covered_slugs.update(validators.GIF_IMAGE_TOOL_SUFFIXES)
+    covered_slugs.update(validators.SVG_IMAGE_TOOL_SUFFIXES)
+    covered_slugs.update({"xlsx-to-json", "sqlite-viewer"})
+
+    assert format_file_slugs - covered_slugs == set()
 
 
 def test_price_snapshot_tools_with_mocked_public_sources(monkeypatch) -> None:
@@ -1702,6 +1727,114 @@ def test_gif_mp4_conversion_filters_preserve_visual_content() -> None:
     assert "scale=640" not in mp4_to_gif_command
 
 
+def test_animated_frames_converter_split_and_compose() -> None:
+    split_response = client.post(
+        "/api/tools/animated-frames-converter/upload",
+        data={"params": json.dumps({"action": "split", "input_format": "gif"})},
+        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
+    )
+    assert split_response.status_code == 200
+    assert split_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(split_response.content)) as archive:
+        names = archive.namelist()
+        assert len(names) >= 2
+        assert all(name.endswith(".png") for name in names)
+
+    image_zip = make_zip_bytes(
+        {
+            "001.png": make_png_bytes((255, 0, 0), (48, 48)),
+            "002.png": make_png_bytes((0, 0, 255), (48, 48)),
+        }
+    )
+    compose_response = client.post(
+        "/api/tools/animated-frames-converter/upload",
+        data={"params": json.dumps({"action": "compose", "output_format": "gif", "fps": "12"})},
+        files={"file": ("frames.zip", image_zip, "application/zip")},
+    )
+    assert compose_response.status_code == 200
+    assert compose_response.headers["content-type"].startswith("image/gif")
+    with Image.open(io.BytesIO(compose_response.content)) as image:
+        assert getattr(image, "n_frames", 1) >= 2
+
+
+def test_animated_frames_converter_friendly_validation_errors() -> None:
+    mismatch_response = client.post(
+        "/api/tools/animated-frames-converter/upload",
+        data={"params": json.dumps({"action": "split", "input_format": "webp"})},
+        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
+    )
+    assert mismatch_response.status_code == 400
+    assert mismatch_response.json()["message"] == "上传文件格式与所选格式不一致，请重新选择。"
+
+    single_frame = io.BytesIO()
+    Image.new("RGBA", (32, 32), (255, 0, 0, 255)).save(single_frame, format="GIF")
+    single_response = client.post(
+        "/api/tools/animated-frames-converter/upload",
+        data={"params": json.dumps({"action": "split", "input_format": "gif"})},
+        files={"file": ("single.gif", single_frame.getvalue(), "image/gif")},
+    )
+    assert single_response.status_code == 400
+    assert single_response.json()["message"] == "未检测到多帧动画内容，无法拆分。"
+
+
+def test_animated_frames_converter_avif_encode_unsupported_message() -> None:
+    image_zip = make_zip_bytes(
+        {
+            "001.png": make_png_bytes((255, 0, 0), (32, 32)),
+            "002.png": make_png_bytes((0, 0, 255), (32, 32)),
+        }
+    )
+
+    def fake_ffmpeg_run(command, **kwargs):
+        return CompletedProcess(command, 1, "", "Unknown encoder 'libaom-av1'")
+
+    with patch("app.tools.animated_frames_converter._resolve_ffmpeg_path", return_value="/usr/bin/ffmpeg"), patch(
+        "app.tools.animated_frames_converter.subprocess.run",
+        side_effect=fake_ffmpeg_run,
+    ):
+        response = client.post(
+            "/api/tools/animated-frames-converter/upload",
+            data={"params": json.dumps({"action": "compose", "output_format": "avif", "fps": "12"})},
+            files={"file": ("frames.zip", image_zip, "application/zip")},
+        )
+
+    assert response.status_code == 500
+    assert response.json()["message"] == "当前服务器暂不支持 AVIF 动图编码。"
+
+
+def test_animated_frames_converter_rejects_unsafe_zip_payloads() -> None:
+    too_many_images = make_zip_bytes(
+        {
+            "001.png": make_png_bytes((255, 0, 0), (16, 16)),
+            "002.png": make_png_bytes((0, 0, 255), (16, 16)),
+            "003.png": make_png_bytes((0, 255, 0), (16, 16)),
+        }
+    )
+    with patch("app.tools.animated_frames_converter.MAX_ZIP_FILES", 2):
+        too_many_response = client.post(
+            "/api/tools/animated-frames-converter/upload",
+            data={"params": json.dumps({"action": "compose", "output_format": "gif", "fps": "12"})},
+            files={"file": ("frames.zip", too_many_images, "application/zip")},
+        )
+    assert too_many_response.status_code == 400
+    assert too_many_response.json()["message"] == "ZIP 内文件数量过多，最多支持 2 个图片文件。"
+
+    oversized_zip = make_zip_bytes(
+        {
+            "001.png": make_png_bytes((255, 0, 0), (16, 16)),
+            "002.png": make_png_bytes((0, 0, 255), (16, 16)),
+        }
+    )
+    with patch("app.tools.animated_frames_converter.MAX_ZIP_TOTAL_UNCOMPRESSED_BYTES", 64):
+        oversized_response = client.post(
+            "/api/tools/animated-frames-converter/upload",
+            data={"params": json.dumps({"action": "compose", "output_format": "gif", "fps": "12"})},
+            files={"file": ("frames.zip", oversized_zip, "application/zip")},
+        )
+    assert oversized_response.status_code == 400
+    assert oversized_response.json()["message"] == "ZIP 解压后体积过大，请减少图片数量或压缩后再上传。"
+
+
 def test_gif_image_conversion_tools_upload() -> None:
     gif_to_png_response = client.post(
         "/api/tools/gif-png-converter/upload",
@@ -1835,6 +1968,54 @@ def test_animated_svg_to_gif_uses_frame_renderer(monkeypatch) -> None:
     assert captured["fps"] == 8
     image = Image.open(io.BytesIO(response.content))
     assert image.n_frames == 2
+
+
+def test_svg_animation_converter_split_and_compose(monkeypatch) -> None:
+    from app.tools import svg_animation_converter
+
+    def fake_capture_frames(sync_playwright, html, width, height, frame_count, frame_delay_ms):
+        return [
+            Image.new("RGBA", (width, height), (255, 0, 0, 255)),
+            Image.new("RGBA", (width, height), (0, 0, 255, 255)),
+        ]
+
+    monkeypatch.setattr(svg_animation_converter, "_capture_animated_svg_frames", fake_capture_frames)
+
+    split_response = client.post(
+        "/api/tools/svg-animation-converter/upload",
+        data={"params": json.dumps({"action": "split", "duration_seconds": 1, "fps": "8"})},
+        files={"file": ("animated.svg", make_animated_svg_bytes(), "image/svg+xml")},
+    )
+    assert split_response.status_code == 200
+    assert split_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(split_response.content)) as archive:
+        assert archive.namelist() == ["frame-0001.png", "frame-0002.png"]
+
+    image_zip = make_zip_bytes(
+        {
+            "001.png": make_png_bytes((255, 0, 0), (48, 32)),
+            "002.png": make_png_bytes((0, 0, 255), (48, 32)),
+        }
+    )
+    compose_response = client.post(
+        "/api/tools/svg-animation-converter/upload",
+        data={"params": json.dumps({"action": "compose", "fps": "12"})},
+        files={"file": ("frames.zip", image_zip, "application/zip")},
+    )
+    assert compose_response.status_code == 200
+    assert "image/svg+xml" in compose_response.headers["content-type"]
+    assert b"<animate" in compose_response.content
+    assert b"data:image/png;base64," in compose_response.content
+
+
+def test_svg_animation_converter_rejects_static_svg() -> None:
+    response = client.post(
+        "/api/tools/svg-animation-converter/upload",
+        data={"params": json.dumps({"action": "split", "duration_seconds": 1, "fps": "8"})},
+        files={"file": ("static.svg", make_svg_bytes(), "image/svg+xml")},
+    )
+    assert response.status_code == 400
+    assert response.json()["message"] == "未检测到 SVG 动画内容，无法拆分。"
 
 
 def test_generated_image_tools_execute() -> None:

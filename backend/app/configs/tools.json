@@ -7275,6 +7275,164 @@
     ]
   },
   {
+    "slug": "animated-frames-converter",
+    "module": "animated_frames_converter",
+    "name": "GIF、WebP 等动图拆分合成",
+    "category": "format",
+    "summary": "GIF、APNG、WebP、AVIF 动图拆分为 PNG 序列帧，或把多张图片合成为动图。",
+    "description": "拆分模式请上传所选格式的多帧动图；合成模式请上传包含多张图片的 ZIP 压缩包，后端使用 ffmpeg 生成 GIF、APNG、WebP 或 AVIF 动图。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "功能",
+        "type": "radio",
+        "default": "split",
+        "options": [
+          {
+            "label": "动图拆分",
+            "value": "split"
+          },
+          {
+            "label": "图片合成动图",
+            "value": "compose"
+          }
+        ]
+      },
+      {
+        "key": "input_format",
+        "label": "输入格式",
+        "type": "radio",
+        "default": "gif",
+        "showWhen": {
+          "action": "split"
+        },
+        "options": [
+          {
+            "label": "GIF",
+            "value": "gif"
+          },
+          {
+            "label": "APNG",
+            "value": "apng"
+          },
+          {
+            "label": "WebP",
+            "value": "webp"
+          },
+          {
+            "label": "AVIF",
+            "value": "avif"
+          }
+        ]
+      },
+      {
+        "key": "output_format",
+        "label": "输出格式",
+        "type": "radio",
+        "default": "gif",
+        "showWhen": {
+          "action": "compose"
+        },
+        "options": [
+          {
+            "label": "GIF",
+            "value": "gif"
+          },
+          {
+            "label": "APNG",
+            "value": "apng"
+          },
+          {
+            "label": "WebP",
+            "value": "webp"
+          },
+          {
+            "label": "AVIF",
+            "value": "avif"
+          }
+        ]
+      },
+      {
+        "key": "fps",
+        "label": "FPS",
+        "type": "text",
+        "default": "12",
+        "placeholder": "例如 12",
+        "showWhen": {
+          "action": "compose"
+        }
+      }
+    ]
+  },
+  {
+    "slug": "svg-animation-converter",
+    "module": "svg_animation_converter",
+    "name": "SVG 动图拆分和合成",
+    "category": "format",
+    "summary": "SVG 动画拆分为 PNG 序列帧，或把图片 ZIP 合成为 SVG 动图。",
+    "description": "拆分模式请上传包含动画的 SVG；合成模式请上传包含多张图片的 ZIP 压缩包，后端会生成内嵌图片帧的 SVG 动图。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "action",
+        "label": "功能",
+        "type": "radio",
+        "default": "split",
+        "options": [
+          {
+            "label": "SVG 动图拆分",
+            "value": "split"
+          },
+          {
+            "label": "图片合成 SVG 动图",
+            "value": "compose"
+          }
+        ]
+      },
+      {
+        "key": "duration_seconds",
+        "label": "拆分时长",
+        "type": "select",
+        "default": 2,
+        "showWhen": {
+          "action": "split"
+        },
+        "options": [
+          {
+            "label": "1 秒",
+            "value": 1
+          },
+          {
+            "label": "2 秒",
+            "value": 2
+          },
+          {
+            "label": "3 秒",
+            "value": 3
+          },
+          {
+            "label": "5 秒",
+            "value": 5
+          }
+        ]
+      },
+      {
+        "key": "fps",
+        "label": "FPS",
+        "type": "text",
+        "default": "12",
+        "placeholder": "例如 12"
+      }
+    ]
+  },
+  {
     "slug": "mp3-flac-converter",
     "module": "mp3_flac_converter",
     "name": "MP3 和 FLAC 互转",
