@@ -16,6 +16,12 @@ const router = createRouter({
     { path: "/preview", name: "preview", component: PreviewPage, meta: { wallpaperMode: "seasonal" } },
     { path: "/feedback", name: "feedback", component: FeedbackPage, meta: { wallpaperMode: "seasonal" } },
     { path: "/support", name: "support", component: SupportPage, meta: { wallpaperMode: "seasonal" } },
+    {
+      path: "/admin",
+      name: "admin",
+      component: () => import("../components/ai-assistant/AdminConsole.vue"),
+      meta: { wallpaperMode: "seasonal" },
+    },
     { path: "/:pathMatch(.*)*", redirect: { name: "home" } },
   ],
 });

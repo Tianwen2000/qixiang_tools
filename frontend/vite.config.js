@@ -7,6 +7,7 @@ export default defineConfig({
     host: true,
     port: 5173,
     allowedHosts: [
+      "192.168.9.69", // 本机当前局域网 IP，手机同 Wi-Fi 调试时访问
       "vol-advice-invest-commented.trycloudflare.com", // 开放一个trycloudflare.com的白名单以便临时分享给别人访问，每次更改cf的域名后，这里都需要对应更改
     ],
     proxy: {

@@ -1,6 +1,6 @@
 # Docker 部署命令笔记
 
-> 适用于当前 `qixiang_tools` 项目：后端 `FastAPI`，前端 `Vue 3 + Vite`，无数据库。  
+> 适用于当前 `qixiang_tools` 项目：后端 `FastAPI`，前端 `Vue 3 + Vite`；工具不依赖数据库，登录/AI 模块使用 MySQL。  
 > 文档只写命令和必要配置，服务器 IP、账号、仓库地址都用占位符。
 
 ## 1. 首版部署
@@ -334,5 +334,5 @@ docker compose up -d --build
 - Docker 方式不需要在服务器手动 `npm run build`，前端构建会在 `frontend/Dockerfile` 里完成。
 - 音视频互转工具依赖 `ffmpeg`，所以后端镜像里必须安装 `ffmpeg`。
 - 中文图片、水印、证书等工具可能用到中文字体，所以后端镜像里安装 `fonts-noto-cjk`。
-- 当前项目没有数据库，暂时不需要 MySQL、Redis 容器。
-- 如果以后接数据库，再在 `docker-compose.yml` 里新增 `mysql` 或 `redis` 服务，并给后端加环境变量。
+- 登录/AI 模块需要 MySQL：可连宿主机已装的 MySQL，或在 `docker-compose.yml` 里新增 `mysql` 服务，并给后端配 `DATABASE_URL` 等环境变量（见 [AI 助手与登录系统说明](./AI助手与登录系统说明.md)）；其余工具不需要数据库。
+- 如果以后还要缓存等能力，再按需新增 `redis` 服务。

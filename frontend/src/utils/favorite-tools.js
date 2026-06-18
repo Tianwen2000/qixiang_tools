@@ -1,21 +1,92 @@
 import { computed, reactive, readonly } from "vue";
 
-import { readJsonCache, writeJsonCache } from "./page-cache.js";
+import { writeJsonCache } from "./page-cache.js";
 
 const FAVORITES_STORAGE_KEY = "tw-favorite-tools-v2";
+const FAVORITES_BACKUP_STORAGE_KEY = "tw-favorite-tools-v2-backup";
+const FAVORITES_LEGACY_STORAGE_KEYS = ["tw-favorite-tools-v1", "tw-favorite-tools"];
 const FAVORITES_MARKER_COOKIE_KEY = "tw_has_favorites";
+const FAVORITES_BACKUP_COOKIE_KEY = "tw_favorite_tools_v2";
 const FAVORITES_EVENT = "tw-favorites-change";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const COOKIE_VALUE_MAX_LENGTH = 3500;
+
+const initialFavoriteStorage = readFavoriteSlugsFromStorage();
 
 const state = reactive({
-  slugs: readFavoriteSlugsFromStorage(),
+  slugs: initialFavoriteStorage.slugs,
 });
 
 let syncBound = false;
 
-function readFavoriteSlugsFromStorage() {
-  const value = readJsonCache(FAVORITES_STORAGE_KEY, []);
-  return Array.isArray(value) ? [...new Set(value.filter(Boolean))] : [];
+if (initialFavoriteStorage.recovered) {
+  writeFavoriteSlugsToStorage(initialFavoriteStorage.slugs);
+}
+
+function normalizeFavoriteSlugs(slugs) {
+  return [...new Set(slugs.filter((slug) => typeof slug === "string" && slug.trim()).map((slug) => slug.trim()))];
+}
+
+function readStoredFavoriteSlugs(key) {
+  if (typeof window === "undefined") {
+    return { key, status: "missing", slugs: [] };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw === null) {
+      return { key, status: "missing", slugs: [] };
+    }
+
+    const value = JSON.parse(raw);
+    if (!Array.isArray(value)) {
+      return { key, status: "invalid", slugs: [] };
+    }
+
+    return { key, status: "valid", slugs: normalizeFavoriteSlugs(value) };
+  } catch {
+    return { key, status: "invalid", slugs: [] };
+  }
+}
+
+function readFallbackFavoriteSlugs() {
+  const fallbackSources = [
+    () => readStoredFavoriteSlugs(FAVORITES_BACKUP_STORAGE_KEY),
+    readFavoriteSlugsFromBackupCookie,
+    ...FAVORITES_LEGACY_STORAGE_KEYS.map((key) => () => readStoredFavoriteSlugs(key)),
+  ];
+
+  for (const readFallback of fallbackSources) {
+    const result = readFallback();
+    if (result.status === "valid" && result.slugs.length > 0) {
+      return result;
+    }
+  }
+  return null;
+}
+
+function readFavoriteSlugsFromStorage(currentSlugs = []) {
+  const primary = readStoredFavoriteSlugs(FAVORITES_STORAGE_KEY);
+  if (primary.status === "valid") {
+    return { slugs: primary.slugs, healthy: true, recovered: false };
+  }
+
+  const fallback = readFallbackFavoriteSlugs();
+  if (fallback) {
+    return { slugs: fallback.slugs, healthy: true, recovered: true };
+  }
+
+  if (primary.status === "invalid") {
+    return { slugs: normalizeFavoriteSlugs(currentSlugs), healthy: false, recovered: false };
+  }
+
+  return { slugs: [], healthy: true, recovered: false };
+}
+
+function writeFavoriteSlugsToStorage(slugs) {
+  writeJsonCache(FAVORITES_STORAGE_KEY, slugs);
+  writeJsonCache(FAVORITES_BACKUP_STORAGE_KEY, slugs);
+  writeFavoriteSlugsBackupCookie(slugs);
 }
 
 function writeFavoriteMarkerCookie(hasFavorites) {
@@ -23,6 +94,51 @@ function writeFavoriteMarkerCookie(hasFavorites) {
     return;
   }
   document.cookie = `${FAVORITES_MARKER_COOKIE_KEY}=${hasFavorites ? "1" : "0"}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+}
+
+function readCookieValue(name) {
+  if (typeof document === "undefined") {
+    return "";
+  }
+
+  const prefix = `${name}=`;
+  const matched = document.cookie
+    .split(";")
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(prefix));
+
+  return matched ? matched.slice(prefix.length) : "";
+}
+
+function readFavoriteSlugsFromBackupCookie() {
+  const raw = readCookieValue(FAVORITES_BACKUP_COOKIE_KEY);
+  if (!raw) {
+    return { key: FAVORITES_BACKUP_COOKIE_KEY, status: "missing", slugs: [] };
+  }
+
+  try {
+    const value = JSON.parse(decodeURIComponent(raw));
+    if (!Array.isArray(value)) {
+      return { key: FAVORITES_BACKUP_COOKIE_KEY, status: "invalid", slugs: [] };
+    }
+    return { key: FAVORITES_BACKUP_COOKIE_KEY, status: "valid", slugs: normalizeFavoriteSlugs(value) };
+  } catch {
+    return { key: FAVORITES_BACKUP_COOKIE_KEY, status: "invalid", slugs: [] };
+  }
+}
+
+function writeFavoriteSlugsBackupCookie(slugs) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const value = encodeURIComponent(JSON.stringify(slugs));
+  if (value.length > COOKIE_VALUE_MAX_LENGTH) {
+    document.cookie = `${FAVORITES_BACKUP_COOKIE_KEY}=; path=/; max-age=0; SameSite=Lax`;
+    return;
+  }
+
+  document.cookie = `${FAVORITES_BACKUP_COOKIE_KEY}=${value}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
 }
 
 function emitFavoriteChange() {
@@ -38,13 +154,31 @@ function emitFavoriteChange() {
   );
 }
 
+function setFavoriteState(slugs) {
+  state.slugs = normalizeFavoriteSlugs(slugs);
+}
+
 function syncFavoriteState(slugs, emit = true) {
-  state.slugs = [...new Set(slugs.filter(Boolean))];
-  writeJsonCache(FAVORITES_STORAGE_KEY, state.slugs);
+  setFavoriteState(slugs);
+  writeFavoriteSlugsToStorage(state.slugs);
   writeFavoriteMarkerCookie(state.slugs.length > 0);
   if (emit) {
     emitFavoriteChange();
   }
+}
+
+function loadFavoriteStateFromStorage() {
+  const result = readFavoriteSlugsFromStorage(state.slugs);
+  if (!result.healthy && !result.recovered) {
+    writeFavoriteMarkerCookie(state.slugs.length > 0);
+    return;
+  }
+
+  setFavoriteState(result.slugs);
+  if (result.recovered) {
+    writeFavoriteSlugsToStorage(state.slugs);
+  }
+  writeFavoriteMarkerCookie(state.slugs.length > 0);
 }
 
 function ensureFavoriteSyncBinding() {
@@ -54,13 +188,16 @@ function ensureFavoriteSyncBinding() {
 
   const handleStorage = (event) => {
     if (!event.key || event.key === FAVORITES_STORAGE_KEY) {
-      syncFavoriteState(readFavoriteSlugsFromStorage(), false);
+      loadFavoriteStateFromStorage();
     }
   };
 
   const handleFavoriteEvent = (event) => {
-    const nextSlugs = Array.isArray(event.detail?.slugs) ? event.detail.slugs : readFavoriteSlugsFromStorage();
-    syncFavoriteState(nextSlugs, false);
+    if (Array.isArray(event.detail?.slugs)) {
+      syncFavoriteState(event.detail.slugs, false);
+      return;
+    }
+    loadFavoriteStateFromStorage();
   };
 
   window.addEventListener("storage", handleStorage);

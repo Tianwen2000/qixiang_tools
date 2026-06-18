@@ -1,58 +1,38 @@
 # 反馈系统整理
 
-这里整理的是当前项目里和反馈相关的实现、遗留事项以及后续建议接入方式。
+这里整理项目里和反馈相关的实现与现状。
 
-## 当前已经具备的内容
+> 现状（已更新）：反馈**已落库主后端 MySQL**，并配有 root 管理员只读查看页。
+> 完整说明见 [AI 助手与登录系统说明](../AI助手与登录系统说明.md) 第 9 节。
+
+## 当前实现
 
 - 独立反馈页：`/feedback`
 - 独立打赏页：`/support`
-- 前端反馈提交流程
-- `VITE_FEEDBACK_ENDPOINT` 环境变量入口
-- 未配置远端接口时的本地暂存降级
+- 提交流程：前端 `frontend/src/api/feedback.js` → `POST /api/feedback` → 落库 `feedback` 表
+- 匿名即可提交；若已登录则记录提交者账号
+- 提交失败时本地浏览器暂存兜底，不丢内容
+- 管理员查看：`ADMIN_ACCOUNTS` 配置的账号登录后，AI 面板出现「反馈系统」入口，新标签页打开 `/admin` 只读查看反馈与账号活动日志
 
-## 当前实现位置
+## 实现位置
 
 ### 前端
 
-- 页面：`frontend/src/pages/FeedbackPage.vue`
-- API：`frontend/src/api/feedback.js`
-- 提示：Toast + 页面状态区
+- 反馈页：`frontend/src/pages/FeedbackPage.vue`
+- 提交 API：`frontend/src/api/feedback.js`
+- 管理查看页：`frontend/src/components/ai-assistant/AdminConsole.vue`（路由 `/admin`）
 
-### 主后端
+### 后端
 
-当前主后端没有内建复杂反馈存储逻辑。  
-这是刻意的，因为项目目前整体策略仍然是：
+- 提交：`backend/app/api/routes/feedback.py` + `backend/app/services/feedback_service.py`
+- 查看：`backend/app/api/routes/admin.py`（管理员鉴权）
+- 表：`feedback`（反馈）、`logs`（账号活动日志）
 
-- 无数据库
-- 主后端只管工具站主链路
-- 反馈体系尽量外围化
+## 历史方案（已被取代）
 
-## 推荐阅读顺序
+早期为「保持无数据库」设计过一套 **serverless / Worker 落表** 方案，见 [serverless-feedback-plan](./serverless-feedback-plan.md) 与 [反馈遗留事项整理](./反馈遗留事项整理.md)（保留作参考）。项目引入数据库后，已改为主后端落库，更简单可靠。
 
-1. [无数据库反馈方案](./serverless-feedback-plan.md)
-2. [反馈遗留事项整理](./反馈遗留事项整理.md)
+## 仍可后续补强（非必须）
 
-## 当前推荐策略
-
-最适合当前项目的做法是：
-
-1. 保留现有反馈页 UI 不动
-2. 前端通过 `VITE_FEEDBACK_ENDPOINT` 把数据发给 Worker
-3. Worker 落地到 Google Sheets / Airtable / 飞书多维表格
-4. 需要时再补通知
-
-## 为什么不建议直接塞进主后端
-
-因为当前项目的主目标还是：
-
-- 继续扩工具
-- 保持无数据库
-- 保持工具执行链路轻量
-
-如果现在把反馈后台、反馈表、状态流转、后台管理都强塞进主后端，会明显增加维护复杂度。
-
-## 当前这条线的维护原则
-
-- 主站继续专注工具能力
-- 反馈能力当成可插拔外围系统
-- 先落表，再通知，再做反刷和风控
+- 提交通知（邮箱 / 钉钉 / 飞书机器人）
+- 反刷 / 限流（Turnstile 等）

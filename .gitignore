@@ -5,3 +5,5 @@ __pycache__/
 .venv/
 backend/app/temp/
 *.log
+.env
+backend/.env
