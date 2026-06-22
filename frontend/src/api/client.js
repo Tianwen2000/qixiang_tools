@@ -120,7 +120,7 @@ function parseFilename(disposition) {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(buildApiUrl(path), options);
+  const response = await fetch(buildApiUrl(path), { credentials: "include", ...options });
   const contentType = response.headers.get("content-type") || "";
 
   if (contentType.includes("application/json")) {
@@ -142,7 +142,7 @@ async function request(path, options = {}) {
 
 export async function get(path, params = {}) {
   const url = buildApiUrl(path, params);
-  const response = await fetch(url);
+  const response = await fetch(url, { credentials: "include" });
   return parseJsonResponse(response);
 }
 

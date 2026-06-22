@@ -100,6 +100,7 @@ function writeStore(key, value) {
 }
 
 const USER_KEY = "qx-ai-auth-user-v1";
+export const AUTH_STATE_CHANGED_EVENT = "qx-ai-auth-state-changed";
 
 // ---------------------------------------------------------------------------
 // 校验规则：账号 11 位纯数字；密码 8-16 位、任意合法字符但必须同时含字母和数字（区分大小写）。
@@ -123,9 +124,62 @@ const state = reactive({
   user: readStore(USER_KEY, null),
 });
 
-function setUser(user) {
-  state.user = user || null;
-  writeStore(USER_KEY, state.user);
+function getAccount(user) {
+  return user?.account ? String(user.account) : "";
+}
+
+let tabBaseAccount = getAccount(state.user);
+
+function emitAuthStateChanged(previousUser, nextUser, external = false) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(AUTH_STATE_CHANGED_EVENT, {
+      detail: {
+        previousAccount: getAccount(previousUser),
+        account: getAccount(nextUser),
+        external,
+      },
+    }),
+  );
+}
+
+function setUser(user, options = {}) {
+  const previousUser = state.user;
+  const nextUser = user || null;
+  const nextAccount = getAccount(nextUser);
+  const changedFromTabBase = tabBaseAccount !== nextAccount;
+
+  state.user = nextUser;
+  if (options.writeStore !== false) {
+    writeStore(USER_KEY, state.user);
+  }
+
+  if (options.detectExternalChange && changedFromTabBase) {
+    emitAuthStateChanged(previousUser, nextUser, true);
+    return;
+  }
+
+  if (options.updateTabBase !== false) {
+    tabBaseAccount = nextAccount;
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key !== USER_KEY) return;
+    const previousUser = state.user;
+    let nextUser = null;
+    try {
+      nextUser = event.newValue ? JSON.parse(event.newValue) : null;
+    } catch {
+      nextUser = null;
+    }
+    const nextAccount = getAccount(nextUser);
+    state.user = nextUser;
+    if (tabBaseAccount !== nextAccount) {
+      emitAuthStateChanged(previousUser, nextUser, true);
+    }
+  });
 }
 
 export async function register(account, password) {
@@ -154,14 +208,14 @@ export function clearLocalUser() {
   setUser(null);
 }
 
-export async function refreshCurrentUser() {
+export async function refreshCurrentUser(options = {}) {
   try {
     const data = await apiGet("/auth/me");
-    setUser(data?.user || null);
+    setUser(data?.user || null, { detectExternalChange: Boolean(options.notifyOnChange) });
     return state.user;
   } catch {
     // 未登录 / 会话失效 / 服务降级：按未登录处理。
-    setUser(null);
+    setUser(null, { detectExternalChange: Boolean(options.notifyOnChange) });
     return null;
   }
 }

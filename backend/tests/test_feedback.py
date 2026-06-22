@@ -37,6 +37,16 @@ def test_submit_feedback_attaches_account_when_logged_in() -> None:
     assert latest["account"] == account
 
 
+def test_submit_feedback_keeps_account_blank_when_not_logged_in() -> None:
+    client = new_client()
+    resp = client.post("/api/feedback", json={"content": "未登录用户反馈", "feedbackType": "bug"})
+    assert resp.status_code == 200
+
+    latest = feedback_service.recent(limit=10)[0]
+    assert latest["content"] == "未登录用户反馈"
+    assert latest["account"] == ""
+
+
 def test_long_fields_are_truncated_not_rejected() -> None:
     resp = new_client().post(
         "/api/feedback",

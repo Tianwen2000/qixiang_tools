@@ -14,6 +14,7 @@ function fmt(iso) {
 }
 
 const eventLabel = { register: "注册", login: "登录", logout: "退出" };
+const feedbackTypeLabel = { bug: "问题反馈", suggestion: "功能建议", content: "内容纠错", praise: "表扬", other: "其他" };
 
 const feedbackCount = computed(() => feedback.value.length);
 const logsCount = computed(() => logs.value.length);
@@ -66,6 +67,15 @@ onMounted(load);
         <div v-show="tab === 'feedback'" class="qxadmin-table-wrap">
           <p v-if="!loading && !feedback.length" class="qxadmin-empty">暂无反馈</p>
           <table v-else class="qxadmin-table">
+            <colgroup>
+              <col class="qxadmin-col-time" />
+              <col class="qxadmin-col-type" />
+              <col class="qxadmin-col-content" />
+              <col class="qxadmin-col-tool" />
+              <col class="qxadmin-col-contact" />
+              <col class="qxadmin-col-account" />
+              <col class="qxadmin-col-source" />
+            </colgroup>
             <thead>
               <tr>
                 <th>时间</th><th>类型</th><th>内容</th><th>工具</th><th>联系方式</th><th>账号</th><th>来源页</th>
@@ -74,12 +84,22 @@ onMounted(load);
             <tbody>
               <tr v-for="row in feedback" :key="row.id">
                 <td class="nowrap">{{ fmt(row.created_at) }}</td>
-                <td>{{ row.feedback_type || "-" }}</td>
-                <td class="content">{{ row.content }}</td>
-                <td>{{ row.tool_name || row.tool_slug || "-" }}</td>
-                <td>{{ row.contact_type ? `${row.contact_type}：${row.contact_value}` : (row.contact_value || "-") }}</td>
-                <td>{{ row.account || "匿名" }}</td>
-                <td class="dim">{{ row.submitted_page || "-" }}</td>
+                <td>{{ feedbackTypeLabel[row.feedback_type] || row.feedback_type || "-" }}</td>
+                <td class="content">
+                  <div class="qxadmin-cell-scroll">{{ row.content }}</div>
+                </td>
+                <td>
+                  <div class="qxadmin-cell-scroll compact">{{ row.tool_name || row.tool_slug || "-" }}</div>
+                </td>
+                <td>
+                  <div class="qxadmin-cell-scroll compact">
+                    {{ row.contact_type ? `${row.contact_type}：${row.contact_value}` : (row.contact_value || "-") }}
+                  </div>
+                </td>
+                <td>{{ row.account || "" }}</td>
+                <td class="dim">
+                  <div class="qxadmin-cell-scroll url">{{ row.submitted_page || "-" }}</div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -98,7 +118,9 @@ onMounted(load);
                 <td>{{ eventLabel[row.event] || row.event }}</td>
                 <td>{{ row.account || "-" }}</td>
                 <td class="nowrap">{{ row.ip || "-" }}</td>
-                <td class="dim ua">{{ row.user_agent || "-" }}</td>
+                <td class="dim ua">
+                  <div class="qxadmin-cell-scroll ua">{{ row.user_agent || "-" }}</div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -201,6 +223,35 @@ onMounted(load);
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: fixed;
+}
+
+.qxadmin-col-time {
+  width: 156px;
+}
+
+.qxadmin-col-type {
+  width: 62px;
+}
+
+.qxadmin-col-content {
+  width: 25%;
+}
+
+.qxadmin-col-tool {
+  width: 74px;
+}
+
+.qxadmin-col-contact {
+  width: 108px;
+}
+
+.qxadmin-col-account {
+  width: 108px;
+}
+
+.qxadmin-col-source {
+  width: 27%;
 }
 
 .qxadmin-table th,
@@ -220,8 +271,42 @@ onMounted(load);
 .qxadmin-table td.content {
   white-space: pre-wrap;
   word-break: break-word;
-  min-width: 220px;
   color: #20344f;
+}
+
+.qxadmin-cell-scroll {
+  max-height: 112px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.55;
+}
+
+.qxadmin-cell-scroll.compact {
+  max-height: 74px;
+}
+
+.qxadmin-cell-scroll.url,
+.qxadmin-cell-scroll.ua {
+  max-height: 74px;
+  word-break: break-all;
+}
+
+.qxadmin-cell-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.qxadmin-cell-scroll::-webkit-scrollbar-thumb {
+  background: rgba(135, 166, 190, 0.55);
+  border-radius: 999px;
+}
+
+.qxadmin-cell-scroll::-webkit-scrollbar-track {
+  background: rgba(207, 224, 235, 0.36);
+  border-radius: 999px;
 }
 
 .qxadmin-table td.nowrap {
