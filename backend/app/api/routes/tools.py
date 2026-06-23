@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
@@ -18,6 +18,13 @@ from app.utils.validators import validate_tool_supports_mode
 router = APIRouter()
 
 
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else ""
+
+
 def _build_file_response(result_path: Path, request_id: str) -> FileResponse:
     response = FileResponse(
         path=result_path,
@@ -29,7 +36,7 @@ def _build_file_response(result_path: Path, request_id: str) -> FileResponse:
 
 
 @router.post("/tools/{slug}/execute")
-async def execute_tool(slug: str, payload: TextToolExecuteInput) -> dict:
+async def execute_tool(slug: str, payload: TextToolExecuteInput, request: Request) -> dict:
     tool_meta = get_tool_detail(slug)
     validate_tool_supports_mode(tool_meta.input_mode, allowed={"text", "mixed", "form"})
     module = get_tool_module(slug)
@@ -44,6 +51,8 @@ async def execute_tool(slug: str, payload: TextToolExecuteInput) -> dict:
         call_params = dict(payload.params)
         if output_dir is not None:
             call_params["output_dir"] = str(output_dir)
+        if slug == "local-ip-lookup":
+            call_params["client_ip"] = _client_ip(request)
         result = module.run(text=payload.text, **call_params)
     except AppException:
         if request_id:

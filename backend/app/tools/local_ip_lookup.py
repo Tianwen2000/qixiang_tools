@@ -221,31 +221,18 @@ def build_public_summary(results: list[dict[str, Any]], domestic_ip: str, overse
     }
 
 
-def run(text: str = "", **_: Any) -> dict[str, Any]:
+def run(text: str = "", client_ip: str = "", **_: Any) -> dict[str, Any]:
     _ = text
-    local_ip = get_local_ip()
-    special_results = query_group(SPECIAL_SERVICES, max_workers=2)
-    special_by_service = {item["service"]: item for item in special_results}
-    domestic = special_by_service.get("Domestic Real IP", {})
-    overseas = special_by_service.get("Overseas IP", {})
-    domestic_ip = domestic.get("ip", "")
-    overseas_ip = overseas.get("ip", "")
-    split_result = analyze_split_ip(domestic_ip, overseas_ip)
-
-    public_results = query_group(SERVICES, max_workers=6)
-    public_summary = build_public_summary(public_results, domestic_ip, overseas_ip)
-
     return {
-        "local_ip": local_ip,
-        "domestic": domestic,
-        "overseas": overseas,
-        "split_result": split_result,
-        "public_results": public_results,
-        "public_summary": public_summary,
+        "server_seen": {
+            "service": "本站后端看到的访问 IP",
+            "ip": client_ip or "未获取到",
+            "ok": bool(client_ip),
+            "url": "X-Forwarded-For / remote address",
+        },
         "notes": [
-            "myip.ipip.net 更适合看国内视角下的真实出口 IP。",
-            "ifconfig.me 更适合看境外服务看到的出口 IP。",
-            "如果国内与境外结果不一致，通常说明存在 VPN、策略路由、代理或不同站点走不同出口。",
-            "百度等页面型服务可能受 CDN、缓存、反爬影响，仅供参考。",
+            "网页端内网 IP 由浏览器 WebRTC 能力尽力检测，部分浏览器会隐藏真实内网地址。",
+            "公网 IP 由当前浏览器直接请求多个公网服务得到，和服务器后端出口无关。",
+            "本站后端看到的访问 IP 可用于判断访问本站时是否走了另一条代理或分流出口。",
         ],
     }
