@@ -1,10 +1,11 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import { fallbackCategories } from "../data/fallback-meta.js";
 import { useFavoriteTools } from "../utils/favorite-tools.js";
 import { getWallpaperPreviewMode, onWallpaperPreviewModeChange } from "../utils/wallpaper-preview.js";
+import { showToast } from "../utils/toast.js";
 import HeaderQXMarquee from "./HeaderQXMarquee.vue";
 
 const props = defineProps({
@@ -31,15 +32,19 @@ const emit = defineEmits(["update:keyword", "select-category"]);
 const route = useRoute();
 const router = useRouter();
 const searchInput = ref(null);
+const searchModalOpen = ref(false);
 const previewMode = ref(getWallpaperPreviewMode());
 const localKeyword = ref(props.keyword || "");
 const { favoriteCount } = useFavoriteTools();
 
 let removePreviewListener = () => {};
 
+const INVISIBLE_CONTROL_RE =
+  /[\u0000-\u001f\u007f-\u009f\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180e\u200b-\u200f\u2028-\u202f\u205f\u2060-\u206f\u3000\u3164\ufe00-\ufe0f\ufeff\uffa0]/g;
+
 const resolvedCategories = computed(() => (props.categories.length ? props.categories : fallbackCategories));
 const previewActive = computed(() => route.name === "preview" || previewMode.value !== "auto");
-const searchActive = computed(() => localKeyword.value.trim().length > 0);
+const searchActive = computed(() => (props.keyword || "").trim().length > 0);
 const favoriteActive = computed(() => route.name === "favorites" || favoriteCount.value > 0);
 
 watch(
@@ -49,16 +54,40 @@ watch(
   },
 );
 
-watch(localKeyword, (value) => {
-  emit("update:keyword", value);
-});
-
-function focusSearch() {
+async function openSearchModal() {
+  localKeyword.value = props.keyword || "";
+  searchModalOpen.value = true;
+  await nextTick();
   searchInput.value?.focus();
+  searchInput.value?.select();
+}
+
+function closeSearchModal() {
+  searchModalOpen.value = false;
+}
+
+function normalizeSearchKeyword(value) {
+  return String(value || "").replace(INVISIBLE_CONTROL_RE, "").trim();
+}
+
+function hasVisibleSearchContent(value) {
+  return normalizeSearchKeyword(value).replace(/\s/g, "").length > 0;
 }
 
 function handleSearchSubmit() {
-  const trimmed = localKeyword.value.trim();
+  const trimmed = normalizeSearchKeyword(localKeyword.value);
+  if (!hasVisibleSearchContent(localKeyword.value)) {
+    showToast({
+      type: "info",
+      title: "请输入搜索内容",
+      message: "搜索关键词不能为空。",
+      duration: 2200,
+    });
+    searchInput.value?.focus();
+    return;
+  }
+  emit("update:keyword", trimmed);
+  searchModalOpen.value = false;
   if (props.homeMode) {
     router.push({
       name: "home",
@@ -111,7 +140,7 @@ function goToFavorites() {
 function handleGlobalKeydown(event) {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
-    focusSearch();
+    openSearchModal();
   }
 }
 
@@ -179,19 +208,29 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <form
-          class="site-search"
+        <button
+          type="button"
+          class="site-search-trigger"
           :class="{ 'is-active': searchActive }"
-          @submit.prevent="handleSearchSubmit"
-          @click="focusSearch"
+          @click="openSearchModal"
         >
-          <button type="submit" class="site-search-icon-button" aria-label="搜索工具">
-            <span class="site-search-icon">⌕</span>
-          </button>
-          <input ref="searchInput" v-model="localKeyword" type="search" placeholder="搜索工具" />
-          <kbd>Ctrl+K</kbd>
-        </form>
+          <span aria-hidden="true">🔍</span>
+          <span>搜索</span>
+        </button>
       </div>
     </div>
+
+    <teleport to="body">
+      <div v-if="searchModalOpen" class="site-search-modal" @keydown.esc="closeSearchModal">
+        <button type="button" class="site-search-backdrop" aria-label="关闭搜索" @click="closeSearchModal"></button>
+        <form class="site-search-dialog" role="search" @submit.prevent="handleSearchSubmit">
+          <input ref="searchInput" v-model="localKeyword" type="search" placeholder="输入关键词……" />
+          <button type="submit">
+            <span aria-hidden="true">🔍</span>
+            <span>搜索</span>
+          </button>
+        </form>
+      </div>
+    </teleport>
   </header>
 </template>
