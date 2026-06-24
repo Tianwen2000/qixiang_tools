@@ -283,6 +283,8 @@ def test_meta_endpoints() -> None:
     assert "jpg-svg-converter" in format_tool_slugs
     assert "png-svg-converter" in format_tool_slugs
     assert "gif-svg-converter" in format_tool_slugs
+    assert "png-jpg-ico-converter" in format_tool_slugs
+    assert "png-jpg-icns-converter" in format_tool_slugs
     assert "animated-frames-converter" in format_tool_slugs
     assert "svg-animation-converter" in format_tool_slugs
     assert "docx-to-pdf" not in format_tool_slugs
@@ -1875,6 +1877,56 @@ def test_gif_image_conversion_tools_upload() -> None:
     )
     assert jpg_to_gif_response.status_code == 200
     assert jpg_to_gif_response.headers["content-type"].startswith("image/gif")
+
+
+def test_icon_image_conversion_tools_upload() -> None:
+    png_to_ico_response = client.post(
+        "/api/tools/png-jpg-ico-converter/upload",
+        data={"params": json.dumps({"direction": "png_to_ico"})},
+        files={"file": ("demo.png", make_png_bytes(size=(120, 80)), "image/png")},
+    )
+    assert png_to_ico_response.status_code == 200
+    ico_image = Image.open(io.BytesIO(png_to_ico_response.content))
+    assert ico_image.format == "ICO"
+    assert (256, 256) in ico_image.ico.sizes()
+
+    ico_to_jpg_response = client.post(
+        "/api/tools/png-jpg-ico-converter/upload",
+        data={"params": json.dumps({"direction": "ico_to_jpg"})},
+        files={"file": ("demo.ico", png_to_ico_response.content, "image/x-icon")},
+    )
+    assert ico_to_jpg_response.status_code == 200
+    assert ico_to_jpg_response.headers["content-type"].startswith("image/jpeg")
+    jpg_image = Image.open(io.BytesIO(ico_to_jpg_response.content))
+    assert jpg_image.format == "JPEG"
+
+    jpg_to_icns_response = client.post(
+        "/api/tools/png-jpg-icns-converter/upload",
+        data={"params": json.dumps({"direction": "jpg_to_icns"})},
+        files={"file": ("demo.jpg", make_jpg_bytes(size=(96, 128)), "image/jpeg")},
+    )
+    assert jpg_to_icns_response.status_code == 200
+    icns_image = Image.open(io.BytesIO(jpg_to_icns_response.content))
+    assert icns_image.format == "ICNS"
+    assert icns_image.size == (1024, 1024)
+
+    icns_to_png_response = client.post(
+        "/api/tools/png-jpg-icns-converter/upload",
+        data={"params": json.dumps({"direction": "icns_to_png"})},
+        files={"file": ("demo.icns", jpg_to_icns_response.content, "image/icns")},
+    )
+    assert icns_to_png_response.status_code == 200
+    assert icns_to_png_response.headers["content-type"].startswith("image/png")
+    png_image = Image.open(io.BytesIO(icns_to_png_response.content))
+    assert png_image.format == "PNG"
+
+    wrong_format_response = client.post(
+        "/api/tools/png-jpg-ico-converter/upload",
+        data={"params": json.dumps({"direction": "ico_to_png"})},
+        files={"file": ("demo.png", make_png_bytes(), "image/png")},
+    )
+    assert wrong_format_response.status_code == 400
+    assert wrong_format_response.json()["message"] == "当前方向请上传 .ico 文件"
 
 
 def test_svg_image_conversion_tools_upload() -> None:

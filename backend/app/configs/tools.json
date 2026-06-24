@@ -690,8 +690,8 @@
     "module": "local_ip_lookup",
     "name": "本地ip查询",
     "category": "ops",
-    "summary": "查询网页端内网 IP、公网出口 IP，并判断是否存在分流。",
-    "description": "参考命令行 IP 对比脚本实现，由当前浏览器查询公网出口，并结合本站后端看到的访问 IP 交叉验证，适合检查 VPN、代理、策略路由或多出口网络。内网ip一般情况很难在浏览器查询到！查询接口不稳定，可以自己把查询到的ip地址复制粘贴到百度输入框以详细查询目标ip归属地和运营商。常见内网段：10.0.0.0 ~ 10.255.255.255、172.16.0.0 ~ 172.31.255.255、192.168.0.0 ~ 192.168.255.255。",
+    "summary": "查询内网 IP、公网出口 IP，并判断是否存在分流。",
+    "description": "本站服务器当前部署在国内，因此可以比较“境外服务看到的出口 IP”和“本站国内服务看到的出口 IP”，用于辅助判断代理、VPN、分流或策略路由。IPv4 与 IPv6 会分开检测、分开判断；如果同时检测到 IPv4 出口和 IPv6 出口，这通常是蜂窝网络或双栈网络的常见情况，不一定代表代理或分流。内网ip一般情况很难在浏览器查询到！且查询接口不稳定，可以自己把查询到的ip地址复制粘贴到百度输入框以详细查询目标ip归属地和运营商。常见ipv4内网段：10.0.0.0 ~ 10.255.255.255、172.16.0.0 ~ 172.31.255.255、192.168.0.0 ~ 192.168.255.255",
     "input_mode": "form",
     "result_type": "text",
     "component": "ToolLocalIpLookup",
@@ -7637,6 +7637,82 @@
           {
             "label": "JPG 转 GIF",
             "value": "jpg_to_gif"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "png-jpg-ico-converter",
+    "module": "png_jpg_ico_converter",
+    "name": "PNG、JPG 和 ICO 互转",
+    "category": "format",
+    "summary": "PNG/JPG 与 ICO 图标格式互转。",
+    "description": "PNG/JPG 转 ICO 会居中放入正方形透明画布并生成常见图标尺寸；ICO 转 PNG/JPG 会导出为普通图片，JPG 输出会自动铺白底。ICO / ICNS 本质是“多尺寸图标容器”，它通常会同时包含 16x16、32x32、64x64、128x128、256x256、512x512、1024x1024 等尺寸。小尺寸一定会被缩小，所以看起来会糊，这是正常的。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "png_to_ico",
+        "options": [
+          {
+            "label": "PNG 转 ICO",
+            "value": "png_to_ico"
+          },
+          {
+            "label": "JPG 转 ICO",
+            "value": "jpg_to_ico"
+          },
+          {
+            "label": "ICO 转 PNG",
+            "value": "ico_to_png"
+          },
+          {
+            "label": "ICO 转 JPG",
+            "value": "ico_to_jpg"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "png-jpg-icns-converter",
+    "module": "png_jpg_icns_converter",
+    "name": "PNG、JPG 和 ICNS 互转",
+    "category": "format",
+    "summary": "PNG/JPG 与 macOS ICNS 图标格式互转。",
+    "description": "PNG/JPG 转 ICNS 会居中放入正方形透明画布并生成常见 macOS 图标尺寸；ICNS 转 PNG/JPG 会导出为普通图片，JPG 输出会自动铺白底。ICO / ICNS 本质是“多尺寸图标容器”，它通常会同时包含 16x16、32x32、64x64、128x128、256x256、512x512、1024x1024 等尺寸。小尺寸一定会被缩小，所以看起来会糊，这是正常的。",
+    "input_mode": "file",
+    "result_type": "file",
+    "component": "ToolFileForm",
+    "enabled": true,
+    "params": [
+      {
+        "key": "direction",
+        "label": "转换方向",
+        "type": "radio",
+        "default": "png_to_icns",
+        "options": [
+          {
+            "label": "PNG 转 ICNS",
+            "value": "png_to_icns"
+          },
+          {
+            "label": "JPG 转 ICNS",
+            "value": "jpg_to_icns"
+          },
+          {
+            "label": "ICNS 转 PNG",
+            "value": "icns_to_png"
+          },
+          {
+            "label": "ICNS 转 JPG",
+            "value": "icns_to_jpg"
           }
         ]
       }

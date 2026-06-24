@@ -1319,6 +1319,63 @@
   line-height: 1.7;
 }
 
+.ip-version-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.ip-version-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ip-info-card {
+  align-content: start;
+}
+
+.ip-split-card {
+  align-content: stretch;
+}
+
+.ip-split-message {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  justify-content: flex-start;
+  align-items: flex-start;
+  border-radius: 16px;
+  padding: 14px;
+  line-height: 1.65;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.ip-detail-list {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+}
+
+.ip-detail-list div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.ip-detail-list dt {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.ip-detail-list dd {
+  margin: 0;
+  color: var(--ink);
+  word-break: break-word;
+  line-height: 1.45;
+}
+
 .socket-log-list {
   display: grid;
   gap: 12px;
@@ -2300,7 +2357,8 @@
     grid-template-columns: 1fr;
   }
 
-  .insight-grid {
+  .insight-grid,
+  .ip-version-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2424,6 +2482,7 @@
   }
 
   .insight-grid,
+  .ip-version-grid,
   .time-tool-grid,
   .breakpoint-row {
     grid-template-columns: 1fr;
