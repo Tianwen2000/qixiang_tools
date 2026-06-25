@@ -9,6 +9,28 @@ CONFIG_DIR = Path(__file__).resolve().parents[1] / "configs"
 CATEGORIES_PATH = CONFIG_DIR / "categories.json"
 TOOLS_PATH = CONFIG_DIR / "tools.json"
 
+FORMAT_TOOL_ORDER = {
+    "png-jpg-ico-converter": 1,
+    "png-jpg-icns-converter": 2,
+    "animated-frames-converter": 3,
+    "svg-animation-converter": 4,
+    "mp3-flac-converter": 5,
+    "mp3-mp4-converter": 6,
+    "gif-mp4-converter": 7,
+    "mov-mp4-converter": 8,
+    "wav-mp3-converter": 9,
+    "ppt-html-converter": 10,
+    "word-pdf-converter": 11,
+    "image-format-converter": 12,
+}
+
+
+def _format_tool_sort_key(item: ToolMeta) -> tuple[int, int, str]:
+    order = FORMAT_TOOL_ORDER.get(item.slug)
+    if order is not None:
+        return (0, order, item.slug)
+    return (1, 0, item.slug)
+
 
 def _load_json(path: Path) -> list[dict]:
     try:
@@ -45,6 +67,13 @@ def list_tools(category: str | None = None, keyword: str | None = None) -> list[
             or needle in item.summary.lower()
             or needle in item.description.lower()
         ]
+    if category == "format":
+        items = sorted(items, key=_format_tool_sort_key)
+    elif category is None:
+        format_items = [item for item in items if item.category == "format"]
+        ordered_format_items = sorted(format_items, key=_format_tool_sort_key)
+        format_iter = iter(ordered_format_items)
+        items = [next(format_iter) if item.category == "format" else item for item in items]
     return items
 
 

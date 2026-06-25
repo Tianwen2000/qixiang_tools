@@ -3669,8 +3669,7 @@
           }
         ]
       }
-    ],
-    "visible": false
+    ]
   },
   {
     "slug": "jpg-to-pdf",
@@ -3697,6 +3696,7 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
+    "visible": false,
     "params": [
       {
         "key": "title",
@@ -3705,8 +3705,7 @@
         "default": "",
         "placeholder": "可选，默认使用转换后的标题"
       }
-    ],
-    "visible": false
+    ]
   },
   {
     "slug": "epub-to-pdf",
@@ -3719,6 +3718,7 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
+    "visible": false,
     "params": [
       {
         "key": "title",
@@ -3727,8 +3727,7 @@
         "default": "",
         "placeholder": "可选，默认使用电子书标题"
       }
-    ],
-    "visible": false
+    ]
   },
   {
     "slug": "pdf-to-txt",
@@ -3769,6 +3768,7 @@
     "result_type": "file",
     "component": "ToolFileForm",
     "enabled": true,
+    "visible": false,
     "params": [
       {
         "key": "title",
@@ -3777,8 +3777,7 @@
         "default": "",
         "placeholder": "可选，默认使用 TXT 转 Word"
       }
-    ],
-    "visible": false
+    ]
   },
   {
     "slug": "txt-to-pdf",
@@ -7091,10 +7090,10 @@
   {
     "slug": "image-format-converter",
     "module": "image_format_converter",
-    "name": "图片格式互转",
+    "name": "常见图片格式互转",
     "category": "format",
-    "summary": "在 PNG、JPEG、WEBP、BMP、ICO 等格式之间转换。",
-    "description": "适合网页素材转换、图标处理和兼容性导出。",
+    "summary": "在 PNG、JPG、WebP、BMP、TIFF、GIF、SVG 等常见图片格式之间转换。",
+    "description": "普通图片会直接输出目标格式；上传多帧 GIF/WebP 等动图时会逐帧转换并打包 ZIP 下载。ICO/ICNS 图标、音视频请使用对应专用工具。",
     "input_mode": "file",
     "result_type": "file",
     "component": "ToolFileForm",
@@ -7111,7 +7110,7 @@
             "value": "png"
           },
           {
-            "label": "JPEG",
+            "label": "JPG",
             "value": "jpg"
           },
           {
@@ -7123,152 +7122,16 @@
             "value": "bmp"
           },
           {
-            "label": "ICO",
-            "value": "ico"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "jpg-svg-converter",
-    "module": "jpg_svg_converter",
-    "name": "JPG 和 SVG 互转",
-    "category": "format",
-    "summary": "JPG 与 SVG 图片互转。",
-    "description": "JPG 转 SVG 会生成内嵌原图的 SVG 文件；SVG 转 JPG 会渲染为白底位图，适合网页素材和图标预览导出。",
-    "input_mode": "file",
-    "result_type": "file",
-    "component": "ToolFileForm",
-    "enabled": true,
-    "params": [
-      {
-        "key": "direction",
-        "label": "转换方向",
-        "type": "radio",
-        "default": "jpg_to_svg",
-        "options": [
-          {
-            "label": "JPG 转 SVG",
-            "value": "jpg_to_svg"
+            "label": "TIFF",
+            "value": "tiff"
           },
           {
-            "label": "SVG 转 JPG",
-            "value": "svg_to_jpg"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "png-svg-converter",
-    "module": "png_svg_converter",
-    "name": "PNG 和 SVG 互转",
-    "category": "format",
-    "summary": "PNG 与 SVG 图片互转。",
-    "description": "PNG 转 SVG 会生成内嵌原图的 SVG 文件；SVG 转 PNG 会保留透明通道并渲染为位图，适合网页素材和图标预览导出。",
-    "input_mode": "file",
-    "result_type": "file",
-    "component": "ToolFileForm",
-    "enabled": true,
-    "params": [
-      {
-        "key": "direction",
-        "label": "转换方向",
-        "type": "radio",
-        "default": "png_to_svg",
-        "options": [
-          {
-            "label": "PNG 转 SVG",
-            "value": "png_to_svg"
+            "label": "GIF",
+            "value": "gif"
           },
           {
-            "label": "SVG 转 PNG",
-            "value": "svg_to_png"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "gif-svg-converter",
-    "module": "gif_svg_converter",
-    "name": "GIF 和 SVG 互转",
-    "category": "format",
-    "summary": "GIF 与 SVG 图片互转。",
-    "description": "GIF 转 SVG 会生成内嵌原 GIF 的 SVG 文件，保留动图数据；SVG 转 GIF 会把 SVG 渲染为单帧 GIF，适合图标和网页素材导出。",
-    "input_mode": "file",
-    "result_type": "file",
-    "component": "ToolFileForm",
-    "enabled": true,
-    "params": [
-      {
-        "key": "direction",
-        "label": "转换方向",
-        "type": "radio",
-        "default": "gif_to_svg",
-        "options": [
-          {
-            "label": "GIF 转 SVG",
-            "value": "gif_to_svg"
-          },
-          {
-            "label": "SVG 转 GIF",
-            "value": "svg_to_gif"
-          }
-        ]
-      },
-      {
-        "key": "duration_seconds",
-        "label": "动画时长",
-        "type": "select",
-        "default": 2,
-        "showWhen": {
-          "direction": "svg_to_gif"
-        },
-        "options": [
-          {
-            "label": "1 秒",
-            "value": 1
-          },
-          {
-            "label": "2 秒",
-            "value": 2
-          },
-          {
-            "label": "3 秒",
-            "value": 3
-          },
-          {
-            "label": "5 秒",
-            "value": 5
-          }
-        ]
-      },
-      {
-        "key": "fps",
-        "label": "动画帧率",
-        "type": "select",
-        "default": 12,
-        "showWhen": {
-          "direction": "svg_to_gif"
-        },
-        "options": [
-          {
-            "label": "8 FPS",
-            "value": 8
-          },
-          {
-            "label": "12 FPS",
-            "value": 12
-          },
-          {
-            "label": "15 FPS",
-            "value": 15
-          },
-          {
-            "label": "24 FPS",
-            "value": 24
+            "label": "SVG",
+            "value": "svg"
           }
         ]
       }
@@ -7577,66 +7440,6 @@
           {
             "label": "MP4 转 GIF",
             "value": "mp4_to_gif"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "gif-png-converter",
-    "module": "gif_png_converter",
-    "name": "GIF 和 PNG 互转",
-    "category": "format",
-    "summary": "GIF 与 PNG 图片互转。",
-    "description": "GIF 动图转 PNG 会按帧导出并打包为 zip；PNG 转 GIF 会生成单帧 GIF。",
-    "input_mode": "file",
-    "result_type": "file",
-    "component": "ToolFileForm",
-    "enabled": true,
-    "params": [
-      {
-        "key": "direction",
-        "label": "转换方向",
-        "type": "radio",
-        "default": "gif_to_png",
-        "options": [
-          {
-            "label": "GIF 转 PNG",
-            "value": "gif_to_png"
-          },
-          {
-            "label": "PNG 转 GIF",
-            "value": "png_to_gif"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "gif-jpg-converter",
-    "module": "gif_jpg_converter",
-    "name": "GIF 和 JPG 互转",
-    "category": "format",
-    "summary": "GIF 与 JPG 图片互转。",
-    "description": "GIF 动图转 JPG 会按帧导出并打包为 zip；JPG 转 GIF 会生成单帧 GIF。",
-    "input_mode": "file",
-    "result_type": "file",
-    "component": "ToolFileForm",
-    "enabled": true,
-    "params": [
-      {
-        "key": "direction",
-        "label": "转换方向",
-        "type": "radio",
-        "default": "gif_to_jpg",
-        "options": [
-          {
-            "label": "GIF 转 JPG",
-            "value": "gif_to_jpg"
-          },
-          {
-            "label": "JPG 转 GIF",
-            "value": "jpg_to_gif"
           }
         ]
       }

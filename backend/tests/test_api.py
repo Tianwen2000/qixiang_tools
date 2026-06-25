@@ -274,15 +274,46 @@ def test_meta_endpoints() -> None:
 
     format_tools = client.get("/api/tools", params={"category": "format"})
     assert format_tools.status_code == 200
-    format_tool_slugs = [item["slug"] for item in format_tools.json()["data"]]
+    format_tool_items = format_tools.json()["data"]
+    format_tool_slugs = [item["slug"] for item in format_tool_items]
+    expected_format_top_slugs = [
+        "png-jpg-ico-converter",
+        "png-jpg-icns-converter",
+        "animated-frames-converter",
+        "svg-animation-converter",
+        "mp3-flac-converter",
+        "mp3-mp4-converter",
+        "gif-mp4-converter",
+        "mov-mp4-converter",
+        "wav-mp3-converter",
+        "ppt-html-converter",
+        "word-pdf-converter",
+        "image-format-converter",
+    ]
+    assert format_tool_slugs[:12] == expected_format_top_slugs
+    all_tools = client.get("/api/tools")
+    assert all_tools.status_code == 200
+    all_format_tool_slugs = [item["slug"] for item in all_tools.json()["data"] if item["category"] == "format"]
+    assert all_format_tool_slugs[:12] == expected_format_top_slugs
+    image_format_tool = next(item for item in format_tool_items if item["slug"] == "image-format-converter")
+    assert image_format_tool["name"] == "常见图片格式互转"
+    image_format_options = [
+        option["value"]
+        for param in image_format_tool["params"]
+        if param["key"] == "output_format"
+        for option in param["options"]
+    ]
+    assert image_format_options == ["png", "jpg", "webp", "bmp", "tiff", "gif", "svg"]
     assert "word-pdf-converter" in format_tool_slugs
     assert "pdf-html-converter" in format_tool_slugs
     assert "json-xlsx-converter" in format_tool_slugs
     assert "ppt-txt-converter" in format_tool_slugs
     assert "excel-csv-converter" in format_tool_slugs
-    assert "jpg-svg-converter" in format_tool_slugs
-    assert "png-svg-converter" in format_tool_slugs
-    assert "gif-svg-converter" in format_tool_slugs
+    assert "jpg-svg-converter" not in format_tool_slugs
+    assert "png-svg-converter" not in format_tool_slugs
+    assert "gif-svg-converter" not in format_tool_slugs
+    assert "gif-png-converter" not in format_tool_slugs
+    assert "gif-jpg-converter" not in format_tool_slugs
     assert "png-jpg-ico-converter" in format_tool_slugs
     assert "png-jpg-icns-converter" in format_tool_slugs
     assert "animated-frames-converter" in format_tool_slugs
@@ -294,6 +325,15 @@ def test_meta_endpoints() -> None:
     hidden_tool = client.get("/api/tools/docx-to-pdf")
     assert hidden_tool.status_code == 200
     assert hidden_tool.json()["data"]["visible"] is False
+    for removed_slug in [
+        "jpg-svg-converter",
+        "png-svg-converter",
+        "gif-svg-converter",
+        "gif-png-converter",
+        "gif-jpg-converter",
+    ]:
+        removed_tool = client.get(f"/api/tools/{removed_slug}")
+        assert removed_tool.status_code == 404
     assert "today-silver-price" in other_tool_slugs
     assert "today-stock-index" in other_tool_slugs
     assert "today-building-materials" in other_tool_slugs
@@ -1837,48 +1877,6 @@ def test_animated_frames_converter_rejects_unsafe_zip_payloads() -> None:
     assert oversized_response.json()["message"] == "ZIP 解压后体积过大，请减少图片数量或压缩后再上传。"
 
 
-def test_gif_image_conversion_tools_upload() -> None:
-    gif_to_png_response = client.post(
-        "/api/tools/gif-png-converter/upload",
-        data={"params": json.dumps({"direction": "gif_to_png"})},
-        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
-    )
-    assert gif_to_png_response.status_code == 200
-    assert gif_to_png_response.headers["content-type"].startswith("application/zip")
-    with zipfile.ZipFile(io.BytesIO(gif_to_png_response.content)) as archive:
-        names = archive.namelist()
-        assert "frame-001.png" in names
-        assert "frame-002.png" in names
-
-    png_to_gif_response = client.post(
-        "/api/tools/gif-png-converter/upload",
-        data={"params": json.dumps({"direction": "png_to_gif"})},
-        files={"file": ("demo.png", make_png_bytes(), "image/png")},
-    )
-    assert png_to_gif_response.status_code == 200
-    assert png_to_gif_response.headers["content-type"].startswith("image/gif")
-
-    gif_to_jpg_response = client.post(
-        "/api/tools/gif-jpg-converter/upload",
-        data={"params": json.dumps({"direction": "gif_to_jpg"})},
-        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
-    )
-    assert gif_to_jpg_response.status_code == 200
-    assert gif_to_jpg_response.headers["content-type"].startswith("application/zip")
-    with zipfile.ZipFile(io.BytesIO(gif_to_jpg_response.content)) as archive:
-        names = archive.namelist()
-        assert "frame-001.jpg" in names
-        assert "frame-002.jpg" in names
-
-    jpg_to_gif_response = client.post(
-        "/api/tools/gif-jpg-converter/upload",
-        data={"params": json.dumps({"direction": "jpg_to_gif"})},
-        files={"file": ("demo.jpg", make_jpg_bytes(), "image/jpeg")},
-    )
-    assert jpg_to_gif_response.status_code == 200
-    assert jpg_to_gif_response.headers["content-type"].startswith("image/gif")
-
-
 def test_icon_image_conversion_tools_upload() -> None:
     png_to_ico_response = client.post(
         "/api/tools/png-jpg-ico-converter/upload",
@@ -1929,10 +1927,30 @@ def test_icon_image_conversion_tools_upload() -> None:
     assert wrong_format_response.json()["message"] == "当前方向请上传 .ico 文件"
 
 
-def test_svg_image_conversion_tools_upload() -> None:
+def test_static_image_format_converter_upload() -> None:
+    png_to_webp_response = client.post(
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "webp"})},
+        files={"file": ("demo.png", make_png_bytes(), "image/png")},
+    )
+    assert png_to_webp_response.status_code == 200
+    assert png_to_webp_response.headers["content-type"].startswith("image/webp")
+    webp_image = Image.open(io.BytesIO(png_to_webp_response.content))
+    assert webp_image.format == "WEBP"
+
+    png_to_gif_response = client.post(
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "gif"})},
+        files={"file": ("demo.png", make_png_bytes(), "image/png")},
+    )
+    assert png_to_gif_response.status_code == 200
+    assert png_to_gif_response.headers["content-type"].startswith("image/gif")
+    gif_image = Image.open(io.BytesIO(png_to_gif_response.content))
+    assert gif_image.format == "GIF"
+
     jpg_to_svg_response = client.post(
-        "/api/tools/jpg-svg-converter/upload",
-        data={"params": json.dumps({"direction": "jpg_to_svg"})},
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "svg"})},
         files={"file": ("demo.jpg", make_jpg_bytes(), "image/jpeg")},
     )
     assert jpg_to_svg_response.status_code == 200
@@ -1940,86 +1958,73 @@ def test_svg_image_conversion_tools_upload() -> None:
     assert b"data:image/jpeg;base64," in jpg_to_svg_response.content
 
     svg_to_jpg_response = client.post(
-        "/api/tools/jpg-svg-converter/upload",
-        data={"params": json.dumps({"direction": "svg_to_jpg"})},
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "jpg"})},
         files={"file": ("demo.svg", make_styled_svg_bytes(), "image/svg+xml")},
     )
     assert svg_to_jpg_response.status_code == 200
     assert svg_to_jpg_response.headers["content-type"].startswith("image/jpeg")
     jpg_image = Image.open(io.BytesIO(svg_to_jpg_response.content))
     assert jpg_image.size == (48, 32)
-    red, green, blue = jpg_image.convert("RGB").getpixel((8, 26))
-    assert red > 200
-    assert green > 120
-    assert blue < 80
-
-    png_to_svg_response = client.post(
-        "/api/tools/png-svg-converter/upload",
-        data={"params": json.dumps({"direction": "png_to_svg"})},
-        files={"file": ("demo.png", make_png_bytes(), "image/png")},
-    )
-    assert png_to_svg_response.status_code == 200
-    assert "image/svg+xml" in png_to_svg_response.headers["content-type"]
-    assert b"data:image/png;base64," in png_to_svg_response.content
 
     svg_to_png_response = client.post(
-        "/api/tools/png-svg-converter/upload",
-        data={"params": json.dumps({"direction": "svg_to_png"})},
-        files={"file": ("demo.svg", make_styled_svg_bytes(), "image/svg+xml")},
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "png"})},
+        files={"file": ("demo.svg", make_svg_bytes(), "image/svg+xml")},
     )
     assert svg_to_png_response.status_code == 200
     assert svg_to_png_response.headers["content-type"].startswith("image/png")
     png_image = Image.open(io.BytesIO(svg_to_png_response.content))
     assert png_image.size == (48, 32)
-    assert png_image.convert("RGBA").getpixel((8, 26))[:3] == (245, 162, 47)
+    assert png_image.convert("RGBA").getpixel((4, 4))[:3] == (53, 198, 166)
 
-    gif_to_svg_response = client.post(
-        "/api/tools/gif-svg-converter/upload",
-        data={"params": json.dumps({"direction": "gif_to_svg"})},
+    animated_gif_to_png_response = client.post(
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "png"})},
         files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
     )
-    assert gif_to_svg_response.status_code == 200
-    assert "image/svg+xml" in gif_to_svg_response.headers["content-type"]
-    assert b"data:image/gif;base64," in gif_to_svg_response.content
+    assert animated_gif_to_png_response.status_code == 200
+    assert animated_gif_to_png_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(animated_gif_to_png_response.content)) as archive:
+        assert archive.namelist() == ["frame-001.png", "frame-002.png"]
 
-    svg_to_gif_response = client.post(
-        "/api/tools/gif-svg-converter/upload",
-        data={"params": json.dumps({"direction": "svg_to_gif"})},
-        files={"file": ("demo.svg", make_styled_svg_bytes(), "image/svg+xml")},
+    animated_gif_to_jpg_response = client.post(
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "jpg"})},
+        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
     )
-    assert svg_to_gif_response.status_code == 200
-    assert svg_to_gif_response.headers["content-type"].startswith("image/gif")
-    gif_image = Image.open(io.BytesIO(svg_to_gif_response.content))
-    assert gif_image.size == (48, 32)
+    assert animated_gif_to_jpg_response.status_code == 200
+    assert animated_gif_to_jpg_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(animated_gif_to_jpg_response.content)) as archive:
+        assert archive.namelist() == ["frame-001.jpg", "frame-002.jpg"]
+
+    animated_gif_to_svg_response = client.post(
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "svg"})},
+        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
+    )
+    assert animated_gif_to_svg_response.status_code == 200
+    assert animated_gif_to_svg_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(animated_gif_to_svg_response.content)) as archive:
+        assert archive.namelist() == ["frame-001.svg", "frame-002.svg"]
 
 
-def test_animated_svg_to_gif_uses_frame_renderer(monkeypatch) -> None:
-    from app.tools import svg_image_converter
+def test_static_image_format_converter_friendly_error(monkeypatch) -> None:
+    from app.tools import image_format_converter
 
-    captured = {}
+    def fail_save_image(*args, **kwargs):
+        raise OSError("encoder failure detail")
 
-    def fake_render_animated_svg_to_gif(source, target_path, duration_seconds, fps):
-        captured["source"] = source
-        captured["duration_seconds"] = duration_seconds
-        captured["fps"] = fps
-        first = Image.new("RGBA", (48, 32), (245, 162, 47, 255))
-        second = Image.new("RGBA", (48, 32), (53, 198, 166, 255))
-        first.save(target_path, format="GIF", save_all=True, append_images=[second], duration=[100, 100], loop=0)
-        return str(target_path)
-
-    monkeypatch.setattr(svg_image_converter, "_render_animated_svg_to_gif", fake_render_animated_svg_to_gif)
+    monkeypatch.setattr(image_format_converter, "save_image", fail_save_image)
     response = client.post(
-        "/api/tools/gif-svg-converter/upload",
-        data={"params": json.dumps({"direction": "svg_to_gif", "duration_seconds": 3, "fps": 8})},
-        files={"file": ("animated.svg", make_animated_svg_bytes(), "image/svg+xml")},
+        "/api/tools/image-format-converter/upload",
+        data={"params": json.dumps({"output_format": "webp"})},
+        files={"file": ("demo.png", make_png_bytes(), "image/png")},
     )
 
-    assert response.status_code == 200
-    assert response.headers["content-type"].startswith("image/gif")
-    assert captured["duration_seconds"] == 3
-    assert captured["fps"] == 8
-    image = Image.open(io.BytesIO(response.content))
-    assert image.n_frames == 2
+    assert response.status_code == 400
+    assert response.json()["message"] == "图片格式转换失败：当前图片格式与目标格式可能不兼容，请尝试改用 PNG、JPG 或 WebP 输出。"
+    assert "encoder failure detail" not in response.text
 
 
 def test_svg_animation_converter_split_and_compose(monkeypatch) -> None:

@@ -31,6 +31,7 @@ IMAGE_TOOL_SLUGS = {
     "image-resizer",
 }
 IMAGE_COMPRESSOR_EXTRA_SUFFIXES = {"heic", "heif"}
+COMMON_IMAGE_CONVERTER_SUFFIXES = {"jpg", "jpeg", "png", "webp", "bmp", "tif", "tiff", "gif", "svg"}
 ZIP_IMAGE_TOOL_SLUGS = {
     "image-merger",
     "gif-maker",
@@ -116,17 +117,6 @@ ANIMATED_FRAME_TOOL_SUFFIXES = {
     "animated-frames-converter": {"gif", "png", "apng", "webp", "avif", "zip"},
     "svg-animation-converter": {"svg", "zip"},
 }
-GIF_IMAGE_TOOL_SUFFIXES = {
-    "gif-png-converter": {"gif", "png"},
-    "gif-jpg-converter": {"gif", "jpg", "jpeg"},
-}
-SVG_IMAGE_TOOL_SUFFIXES = {
-    "jpg-svg-converter": {"jpg", "jpeg", "svg"},
-    "png-svg-converter": {"png", "svg"},
-    "gif-svg-converter": {"gif", "svg"},
-}
-
-
 def validate_tool_supports_mode(input_mode: str, allowed: set[str]) -> None:
     if input_mode not in allowed:
         raise AppException(message="该工具不支持当前请求方式", code=4001, status_code=400)
@@ -141,11 +131,19 @@ def validate_upload_for_tool(file: UploadFile, tool_slug: str) -> None:
         allowed_suffixes = set(settings.allowed_image_types)
         if tool_slug == "image-compressor":
             allowed_suffixes.update(IMAGE_COMPRESSOR_EXTRA_SUFFIXES)
+        if tool_slug == "image-format-converter":
+            allowed_suffixes = set(COMMON_IMAGE_CONVERTER_SUFFIXES)
 
         if suffix not in allowed_suffixes:
             raise AppException(message="不支持的图片类型", code=4002, status_code=400)
 
         content_type_allowed = not content_type or content_type.startswith("image/")
+        if tool_slug == "image-format-converter" and suffix == "svg" and content_type in {
+            "application/octet-stream",
+            "text/xml",
+            "application/xml",
+        }:
+            content_type_allowed = True
         if (
             tool_slug == "image-compressor"
             and suffix in IMAGE_COMPRESSOR_EXTRA_SUFFIXES
@@ -176,11 +174,3 @@ def validate_upload_for_tool(file: UploadFile, tool_slug: str) -> None:
     elif tool_slug in ANIMATED_FRAME_TOOL_SUFFIXES:
         if suffix not in ANIMATED_FRAME_TOOL_SUFFIXES[tool_slug]:
             raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
-    elif tool_slug in GIF_IMAGE_TOOL_SUFFIXES:
-        if suffix not in GIF_IMAGE_TOOL_SUFFIXES[tool_slug]:
-            raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
-    elif tool_slug in SVG_IMAGE_TOOL_SUFFIXES:
-        if suffix not in SVG_IMAGE_TOOL_SUFFIXES[tool_slug]:
-            raise AppException(message="上传文件类型不正确", code=4002, status_code=400)
-        if content_type and not content_type.startswith("image/"):
-            raise AppException(message="无效的图片文件", code=4002, status_code=400)
