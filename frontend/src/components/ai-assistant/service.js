@@ -237,14 +237,3 @@ export async function listChatModels() {
 export async function sendChatMessage({ message, model, history = [] }) {
   return apiPost("/chat", { message, model, history });
 }
-
-// ---------------------------------------------------------------------------
-// 管理员只读查看（反馈 / 账号活动日志）。需 root 管理员登录态。
-// ---------------------------------------------------------------------------
-export async function listAdminFeedback() {
-  return apiGet("/admin/feedback");
-}
-
-export async function listAdminLogs() {
-  return apiGet("/admin/logs");
-}

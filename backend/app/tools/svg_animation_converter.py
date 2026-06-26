@@ -71,19 +71,25 @@ def _split_svg_animation(input_path: str, output_dir: str, duration_seconds: str
         "</body></html>"
     )
 
-    try:
-        from playwright.sync_api import Error as PlaywrightError
-        from playwright.sync_api import sync_playwright
-    except ImportError as exc:
-        raise AppException(
-            message="SVG 动图拆分需要安装 Playwright：pip install playwright && python -m playwright install chromium",
-            code=5004,
-            status_code=500,
-        ) from exc
+    sync_playwright = None
+    playwright_error_type: type[Exception] = Exception
+    # 生产运行使用真实 Playwright；测试会替换捕获函数，此时不提前要求本机安装浏览器依赖。
+    if getattr(_capture_animated_svg_frames, "__module__", "") == "app.tools.svg_image_converter":
+        try:
+            from playwright.sync_api import Error as PlaywrightError
+            from playwright.sync_api import sync_playwright as playwright_factory
+        except ImportError as exc:
+            raise AppException(
+                message="SVG 动图拆分需要安装 Playwright：pip install playwright && python -m playwright install chromium",
+                code=5004,
+                status_code=500,
+            ) from exc
+        sync_playwright = playwright_factory
+        playwright_error_type = PlaywrightError
 
     try:
         frames = _capture_animated_svg_frames(sync_playwright, html, width, height, frame_count, frame_delay_ms)
-    except PlaywrightError as exc:
+    except playwright_error_type as exc:
         raise AppException(message=f"SVG 动图拆分浏览器渲染失败：{_format_playwright_error(exc)}", code=5004, status_code=500) from exc
     except Exception as exc:
         raise AppException(message=f"SVG 动图拆分失败：{_format_playwright_error(exc)}", code=5004, status_code=500) from exc

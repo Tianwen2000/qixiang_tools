@@ -26,6 +26,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
 from app.main import app
+from app.services.tool_loader import CATEGORY_TOOL_ORDER
 from app.tools.rabbit_cipher import RabbitCipher
 
 
@@ -212,6 +213,7 @@ def test_meta_endpoints() -> None:
     assert "dev" in category_slugs
     assert "ops" in category_slugs
     assert "game" in category_slugs
+    assert set(CATEGORY_TOOL_ORDER) == set(category_slugs)
     assert category_slugs.index("ops") == category_slugs.index("dev") + 1
 
     tools = client.get("/api/tools", params={"keyword": "json"})
@@ -375,6 +377,7 @@ def test_format_file_tools_have_upload_validation_coverage() -> None:
     covered_slugs.update(validators.OFFICE_EXTRACT_TOOL_SUFFIXES)
     covered_slugs.update(validators.DOCUMENT_TOOL_SUFFIXES)
     covered_slugs.update(validators.MEDIA_TOOL_SUFFIXES)
+    covered_slugs.update(validators.ICON_TOOL_SUFFIXES)
     covered_slugs.update(validators.ANIMATED_FRAME_TOOL_SUFFIXES)
     covered_slugs.update(validators.GIF_IMAGE_TOOL_SUFFIXES)
     covered_slugs.update(validators.SVG_IMAGE_TOOL_SUFFIXES)
@@ -1770,11 +1773,28 @@ def test_gif_mp4_conversion_filters_preserve_visual_content() -> None:
 
 
 def test_animated_frames_converter_split_and_compose() -> None:
-    split_response = client.post(
-        "/api/tools/animated-frames-converter/upload",
-        data={"params": json.dumps({"action": "split", "input_format": "gif"})},
-        files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
-    )
+    # 测试只验证后端拆分/合成流程，不要求本机安装真实 ffmpeg。
+    def fake_ffmpeg_run(command, **kwargs):
+        output = Path(command[-1])
+        if "%04d" in output.name:
+            for index, color in enumerate(((255, 0, 0), (0, 0, 255)), start=1):
+                Image.new("RGB", (48, 48), color).save(output.parent / f"frame-{index:04d}.png")
+            return CompletedProcess(command, 0, "", "")
+
+        first = Image.new("RGBA", (48, 48), (255, 0, 0, 255))
+        second = Image.new("RGBA", (48, 48), (0, 0, 255, 255))
+        first.save(output, format="GIF", save_all=True, append_images=[second], duration=[100, 100], loop=0)
+        return CompletedProcess(command, 0, "", "")
+
+    with patch("app.tools.animated_frames_converter._resolve_ffmpeg_path", return_value="/usr/bin/ffmpeg"), patch(
+        "app.tools.animated_frames_converter.subprocess.run",
+        side_effect=fake_ffmpeg_run,
+    ):
+        split_response = client.post(
+            "/api/tools/animated-frames-converter/upload",
+            data={"params": json.dumps({"action": "split", "input_format": "gif"})},
+            files={"file": ("demo.gif", make_gif_bytes(), "image/gif")},
+        )
     assert split_response.status_code == 200
     assert split_response.headers["content-type"].startswith("application/zip")
     with zipfile.ZipFile(io.BytesIO(split_response.content)) as archive:
@@ -1788,11 +1808,15 @@ def test_animated_frames_converter_split_and_compose() -> None:
             "002.png": make_png_bytes((0, 0, 255), (48, 48)),
         }
     )
-    compose_response = client.post(
-        "/api/tools/animated-frames-converter/upload",
-        data={"params": json.dumps({"action": "compose", "output_format": "gif", "fps": "12"})},
-        files={"file": ("frames.zip", image_zip, "application/zip")},
-    )
+    with patch("app.tools.animated_frames_converter._resolve_ffmpeg_path", return_value="/usr/bin/ffmpeg"), patch(
+        "app.tools.animated_frames_converter.subprocess.run",
+        side_effect=fake_ffmpeg_run,
+    ):
+        compose_response = client.post(
+            "/api/tools/animated-frames-converter/upload",
+            data={"params": json.dumps({"action": "compose", "output_format": "gif", "fps": "12"})},
+            files={"file": ("frames.zip", image_zip, "application/zip")},
+        )
     assert compose_response.status_code == 200
     assert compose_response.headers["content-type"].startswith("image/gif")
     with Image.open(io.BytesIO(compose_response.content)) as image:

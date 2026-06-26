@@ -183,9 +183,9 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(20, 38, 66, 0.42);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .qxai-auth-card {

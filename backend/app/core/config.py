@@ -42,9 +42,19 @@ class Settings(BaseSettings):
     session_cookie_name: str = Field(default="qx_session", alias="SESSION_COOKIE_NAME")
     # 生产 HTTPS 下建议设为 true（仅经 https 发送 Cookie）；本地 http 调试保持 false。
     session_cookie_secure: bool = Field(default=False, alias="SESSION_COOKIE_SECURE")
-    # 管理员账号（11 位账号，逗号分隔）。登录后即 root，可看反馈系统。
-    # 用 str 接收，避免 pydantic-settings 把纯数字当 JSON 解析；经 admin_accounts 暴露为列表。
-    admin_accounts_raw: str = Field(default="", alias="ADMIN_ACCOUNTS")
+    # 独立后台管理系统配置。生产环境必须在 .env 中覆盖，不放进前端包。
+    # 格式：账号:密码:角色，多账号用英文逗号分隔；角色支持 admin/viewer。
+    backoffice_accounts: str = Field(default="", alias="BACKOFFICE_ACCOUNTS")
+    # 兼容旧配置：未配置 BACKOFFICE_ACCOUNTS 时仍可使用单账号配置。
+    backoffice_account: str = Field(default="", alias="BACKOFFICE_ACCOUNT")
+    backoffice_password: str = Field(default="", alias="BACKOFFICE_PASSWORD")
+    backoffice_entry_question: str = Field(
+        default="如果时间忘记了名字，它会把前三个音节藏在哪里？",
+        alias="BACKOFFICE_ENTRY_QUESTION",
+    )
+    backoffice_entry_answer: str = Field(default="", alias="BACKOFFICE_ENTRY_ANSWER")
+    backoffice_cookie_name: str = Field(default="qx_backoffice_session", alias="BACKOFFICE_COOKIE_NAME")
+    backoffice_session_hours: int = Field(default=12, alias="BACKOFFICE_SESSION_HOURS")
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -52,10 +62,6 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
-
-    @property
-    def admin_accounts(self) -> list[str]:
-        return [item.strip() for item in self.admin_accounts_raw.split(",") if item.strip()]
 
     @field_validator("allowed_image_types", "allowed_pdf_types", mode="before")
     @classmethod

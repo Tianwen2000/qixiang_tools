@@ -124,12 +124,6 @@ function onLoginFromProfile() {
   emit("need-auth");
 }
 
-function openAdmin() {
-  // 新标签页打开只读管理页（反馈 + 账号活动日志）。
-  showProfile.value = false;
-  window.open("/admin", "_blank");
-}
-
 onMounted(loadModels);
 
 defineExpose({ resumeSend });
@@ -184,9 +178,6 @@ defineExpose({ resumeSend });
                         <div><dt>登录有效期</dt><dd>30 天</dd></div>
                         <div v-if="expiresText"><dt>有效期至</dt><dd>{{ expiresText }}</dd></div>
                       </dl>
-                      <button v-if="user.is_admin" type="button" class="qxai-profile-admin" @click="openAdmin">
-                        反馈系统（管理员）
-                      </button>
                       <button type="button" class="qxai-profile-logout" @click="onLogout">退出登录</button>
                     </template>
                     <template v-else>
@@ -476,24 +467,6 @@ defineExpose({ resumeSend });
   color: #20344f;
   margin: 0;
   font-weight: 600;
-}
-
-.qxai-profile-admin {
-  width: 100%;
-  height: 40px;
-  margin-bottom: 8px;
-  border: 1px solid rgba(63, 140, 255, 0.4);
-  border-radius: 11px;
-  background: rgba(106, 160, 255, 0.12);
-  color: #2f6bff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.16s;
-}
-
-.qxai-profile-admin:hover {
-  background: rgba(106, 160, 255, 0.2);
 }
 
 .qxai-profile-logout {

@@ -9,27 +9,73 @@ CONFIG_DIR = Path(__file__).resolve().parents[1] / "configs"
 CATEGORIES_PATH = CONFIG_DIR / "categories.json"
 TOOLS_PATH = CONFIG_DIR / "tools.json"
 
-FORMAT_TOOL_ORDER = {
-    "png-jpg-ico-converter": 1,
-    "png-jpg-icns-converter": 2,
-    "animated-frames-converter": 3,
-    "svg-animation-converter": 4,
-    "mp3-flac-converter": 5,
-    "mp3-mp4-converter": 6,
-    "gif-mp4-converter": 7,
-    "mov-mp4-converter": 8,
-    "wav-mp3-converter": 9,
-    "ppt-html-converter": 10,
-    "word-pdf-converter": 11,
-    "image-format-converter": 12,
+# 按大类配置工具展示顺序。
+# 把已经在 tools.json 注册过的工具 slug 写到对应大类里，就会优先排在该大类前面。
+# 没写进这里的工具仍然正常可用，并会按 tools.json 原顺序排在已固定工具后面。
+CATEGORY_TOOL_ORDER = {
+    "dev": (),
+    "ops": (),
+    "format": (
+        "png-jpg-ico-converter",
+        "png-jpg-icns-converter",
+        "animated-frames-converter",
+        "svg-animation-converter",
+        "mp3-flac-converter",
+        "mp3-mp4-converter",
+        "gif-mp4-converter",
+        "mov-mp4-converter",
+        "wav-mp3-converter",
+        "ppt-html-converter",
+        "word-pdf-converter",
+        "image-format-converter",
+    ),
+    "text": (),
+    "encode": (),
+    "image": (),
+    "chart": (),
+    "time": (),
+    "game": (),
+    "other": (),
+}
+
+CATEGORY_TOOL_ORDER_INDEX = {
+    category: {slug: index for index, slug in enumerate(slugs)}
+    for category, slugs in CATEGORY_TOOL_ORDER.items()
 }
 
 
-def _format_tool_sort_key(item: ToolMeta) -> tuple[int, int, str]:
-    order = FORMAT_TOOL_ORDER.get(item.slug)
-    if order is not None:
-        return (0, order, item.slug)
-    return (1, 0, item.slug)
+def _sort_tools_by_category_order(items: list[ToolMeta], category: str) -> list[ToolMeta]:
+    order_index = CATEGORY_TOOL_ORDER_INDEX.get(category, {})
+    if not order_index:
+        return items
+
+    indexed_items = list(enumerate(items))
+    sorted_items = sorted(
+        indexed_items,
+        key=lambda pair: (
+            0,
+            order_index[pair[1].slug],
+            pair[0],
+        )
+        if pair[1].slug in order_index
+        else (
+            1,
+            pair[0],
+            pair[0],
+        ),
+    )
+    return [item for _, item in sorted_items]
+
+
+def _sort_all_tools_by_category_order(items: list[ToolMeta]) -> list[ToolMeta]:
+    category_iters = {
+        category: iter(_sort_tools_by_category_order([item for item in items if item.category == category], category))
+        for category, order_index in CATEGORY_TOOL_ORDER_INDEX.items()
+        if order_index
+    }
+    if not category_iters:
+        return items
+    return [next(category_iters[item.category]) if item.category in category_iters else item for item in items]
 
 
 def _load_json(path: Path) -> list[dict]:
@@ -67,13 +113,10 @@ def list_tools(category: str | None = None, keyword: str | None = None) -> list[
             or needle in item.summary.lower()
             or needle in item.description.lower()
         ]
-    if category == "format":
-        items = sorted(items, key=_format_tool_sort_key)
+    if category:
+        items = _sort_tools_by_category_order(items, category)
     elif category is None:
-        format_items = [item for item in items if item.category == "format"]
-        ordered_format_items = sorted(format_items, key=_format_tool_sort_key)
-        format_iter = iter(ordered_format_items)
-        items = [next(format_iter) if item.category == "format" else item for item in items]
+        items = _sort_all_tools_by_category_order(items)
     return items
 
 

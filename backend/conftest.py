@@ -14,4 +14,3 @@ if _TEST_DB.exists():
 
 os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DB.as_posix()}"
 os.environ["SESSION_EXPIRE_DAYS"] = "30"
-os.environ["ADMIN_ACCOUNTS"] = "13900000000"

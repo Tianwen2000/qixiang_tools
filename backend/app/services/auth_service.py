@@ -48,10 +48,6 @@ def cookie_max_age() -> int:
     return get_settings().session_expire_days * 86400
 
 
-def is_admin(account: str | None) -> bool:
-    return bool(account) and account in get_settings().admin_accounts
-
-
 def _ensure_ready() -> None:
     """首次访问时懒建表；失败兜成 503，不拖垮其它接口。"""
     global _schema_ready
@@ -138,7 +134,6 @@ def register(account: str, password: str) -> dict:
                     "id": user.id,
                     "account": user.account,
                     "expires_at": expires_at.isoformat(),
-                    "is_admin": is_admin(user.account),
                 },
             }
 
@@ -164,7 +159,6 @@ def login(account: str, password: str) -> dict:
                     "id": user.id,
                     "account": user.account,
                     "expires_at": expires_at.isoformat(),
-                    "is_admin": is_admin(user.account),
                 },
             }
 
@@ -192,7 +186,6 @@ def resolve_session(token: str | None) -> dict:
                 "id": row.user_id,
                 "account": row.account,
                 "expires_at": row.expires_at.isoformat(),
-                "is_admin": is_admin(row.account),
             }
 
     result = _safe_db_call(_do)

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import FeedbackPage from "../pages/FeedbackPage.vue";
 import FavoritesPage from "../pages/FavoritesPage.vue";
+import BackofficePage from "../pages/BackofficePage.vue";
 import Home from "../pages/Home.vue";
 import PreviewPage from "../pages/PreviewPage.vue";
 import SupportPage from "../pages/SupportPage.vue";
@@ -16,12 +17,7 @@ const router = createRouter({
     { path: "/preview", name: "preview", component: PreviewPage, meta: { wallpaperMode: "seasonal" } },
     { path: "/feedback", name: "feedback", component: FeedbackPage, meta: { wallpaperMode: "seasonal" } },
     { path: "/support", name: "support", component: SupportPage, meta: { wallpaperMode: "seasonal" } },
-    {
-      path: "/admin",
-      name: "admin",
-      component: () => import("../components/ai-assistant/AdminConsole.vue"),
-      meta: { wallpaperMode: "seasonal" },
-    },
+    { path: "/qx-backoffice/:ticket?", name: "backoffice", component: BackofficePage, meta: { backoffice: true } },
     { path: "/:pathMatch(.*)*", redirect: { name: "home" } },
   ],
 });
