@@ -41,6 +41,15 @@ const isLoggedIn = computed(() => Boolean(user.value));
 const isAdmin = computed(() => user.value?.role === "admin");
 const feedbackCount = computed(() => feedback.value.length);
 const logsCount = computed(() => logs.value.length);
+const activePanelTitle = computed(() => {
+  if (activePanel.value === "logs") {
+    return "账号活动日志";
+  }
+  if (activePanel.value === "config") {
+    return "后台配置管理";
+  }
+  return "反馈系统";
+});
 
 function fmt(iso) {
   return iso ? String(iso).replace("T", " ").slice(0, 19) : "";
@@ -105,6 +114,9 @@ function writeGate() {
 }
 
 async function loadData() {
+  if (dataLoading.value) {
+    return;
+  }
   dataLoading.value = true;
   errorMsg.value = "";
   try {
@@ -296,6 +308,11 @@ onBeforeUnmount(() => {
           <span>账号活动日志</span>
           <em>{{ logsCount }}</em>
         </button>
+
+        <button v-if="isAdmin" type="button" :class="{ active: activePanel === 'config' }" @click="activePanel = 'config'">
+          <span>后台配置管理</span>
+          <em>研究中</em>
+        </button>
       </nav>
 
         <button type="button" class="backoffice-logout" @click="logout">退出后台</button>
@@ -305,17 +322,26 @@ onBeforeUnmount(() => {
         <header class="backoffice-main-head">
           <div>
             <p class="backoffice-kicker">MANAGEMENT</p>
-            <h1>{{ activePanel === "feedback" ? "反馈系统" : "账号活动日志" }}</h1>
+            <h1>{{ activePanelTitle }}</h1>
           </div>
-          <button type="button" class="backoffice-refresh" :disabled="dataLoading" @click="loadData">
-            {{ dataLoading ? "刷新中…" : "刷新" }}
+          <button
+            v-if="activePanel !== 'config'"
+            type="button"
+            class="backoffice-refresh"
+            :class="{ 'is-loading': dataLoading }"
+            :disabled="dataLoading"
+            :aria-busy="dataLoading"
+            @click="loadData"
+          >
+            
+            <span>刷新</span>
           </button>
         </header>
 
         <p v-if="errorMsg" class="backoffice-error">{{ errorMsg }}</p>
 
-        <div v-show="activePanel === 'feedback'" class="backoffice-table-wrap">
-          <p v-if="!dataLoading && !feedback.length" class="backoffice-empty">暂无反馈</p>
+        <div v-show="activePanel === 'feedback'" class="backoffice-table-wrap" :class="{ 'is-refreshing': dataLoading }">
+          <p v-if="!feedback.length" class="backoffice-empty">{{ dataLoading ? "正在刷新…" : "暂无反馈" }}</p>
           <table v-else class="backoffice-table">
             <thead>
               <tr>
@@ -340,8 +366,8 @@ onBeforeUnmount(() => {
           </table>
         </div>
 
-        <div v-show="activePanel === 'logs'" class="backoffice-table-wrap">
-          <p v-if="!dataLoading && !logs.length" class="backoffice-empty">暂无日志</p>
+        <div v-show="activePanel === 'logs'" class="backoffice-table-wrap" :class="{ 'is-refreshing': dataLoading }">
+          <p v-if="!logs.length" class="backoffice-empty">{{ dataLoading ? "正在刷新…" : "暂无日志" }}</p>
           <table v-else class="backoffice-table">
             <thead>
               <tr><th>时间</th><th>事件</th><th>账号</th><th>IP</th><th>UA</th></tr>
@@ -357,6 +383,32 @@ onBeforeUnmount(() => {
             </tbody>
           </table>
         </div>
+
+        <section v-show="activePanel === 'config'" class="backoffice-config-card">
+          <p class="backoffice-kicker">ROADMAP</p>
+          <h2>此功能是未来研究开发功能</h2>
+          <p>
+            后续可以把工具分类、排序、标题、标签、说明文案等可配置内容逐步迁移到 MySQL，
+            由后台维护并发布，前台读取已发布配置。
+          </p>
+          <div class="config-roadmap-grid">
+            <article>
+              <strong>配置入库</strong>
+              <span>把当前 JSON/代码内配置拆成分类表、工具表、版本表，支持发布、回滚和导出备份。</span>
+            </article>
+            <article>
+              <strong>Redis 缓存</strong>
+              <span>前台优先读取 Redis 中的最新发布配置，缓存未命中再查 MySQL，降低数据库压力。</span>
+            </article>
+            <article>
+              <strong>后台治理</strong>
+              <span>管理员在后台编辑配置草稿，发布时记录操作日志；后续可扩展反馈通知和数据看板。</span>
+            </article>
+          </div>
+          <p class="config-doc-note">
+            详细方向可参考文档：<span>docs/后续项目扩展研究点.md</span>
+          </p>
+        </section>
       </section>
     </section>
   </main>
@@ -742,24 +794,27 @@ onBeforeUnmount(() => {
 }
 
 .backoffice-layout {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   background: #f6f9ff;
+  overflow: hidden;
 }
 
 .backoffice-sidebar {
-  position: sticky;
-  top: 0;
-  min-height: 100vh;
-  background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
-  color: #e9eef6;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 22% 8%, rgba(89, 164, 255, 0.22), transparent 26%),
+    radial-gradient(circle at 86% 32%, rgba(82, 220, 255, 0.13), transparent 30%),
+    linear-gradient(180deg, rgba(248, 252, 255, 0.98), rgba(226, 242, 255, 0.94));
+  color: #1b3356;
   padding: 24px 18px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 14px 0 42px rgba(15, 23, 42, 0.08);
+  border-right: 1px solid rgba(150, 196, 235, 0.55);
+  box-shadow: 14px 0 42px rgba(71, 119, 171, 0.1);
 }
 
 .backoffice-account {
@@ -768,9 +823,9 @@ onBeforeUnmount(() => {
   gap: 12px;
   padding: 15px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.075);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(232, 246, 255, 0.78));
+  border: 1px solid rgba(152, 198, 239, 0.58);
+  box-shadow: 0 18px 42px rgba(80, 132, 185, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .backoffice-avatar {
@@ -791,7 +846,7 @@ onBeforeUnmount(() => {
 
 .backoffice-account small {
   margin-top: 3px;
-  color: #9aa8bd;
+  color: #647f9f;
 }
 
 .backoffice-menu {
@@ -814,7 +869,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   background: transparent;
-  color: #cdd7e6;
+  color: #2f4b6f;
   text-align: left;
 }
 
@@ -826,14 +881,15 @@ onBeforeUnmount(() => {
 
 
 .backoffice-menu button:hover {
-  background: rgba(96, 165, 250, 0.12);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.64);
+  color: #1d5fc0;
+  box-shadow: inset 0 0 0 1px rgba(114, 177, 235, 0.24);
 }
 
 .backoffice-menu button.active {
-  background: rgba(59, 130, 246, 0.2);
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.16);
+  background: linear-gradient(135deg, rgba(65, 139, 255, 0.18), rgba(76, 211, 255, 0.13));
+  color: #174a9b;
+  box-shadow: inset 0 0 0 1px rgba(85, 155, 237, 0.38), 0 12px 28px rgba(75, 139, 213, 0.13);
 }
 
 .backoffice-menu em {
@@ -844,54 +900,141 @@ onBeforeUnmount(() => {
   place-items: center;
   padding: 0 8px;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.14);
-  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.82);
+  color: #4774a9;
   font-size: 12px;
+  box-shadow: inset 0 0 0 1px rgba(142, 186, 226, 0.36);
 }
 
 .backoffice-logout {
   margin-top: auto;
-  background: rgba(255, 255, 255, 0.07);
-  color: #ffc4bd;
+  background: rgba(255, 255, 255, 0.72);
+  color: #b05252;
+  box-shadow: inset 0 0 0 1px rgba(246, 176, 176, 0.34);
 }
 
 .backoffice-logout:hover {
-  background: rgba(248, 113, 113, 0.14);
-  color: #fff;
+  background: rgba(255, 242, 242, 0.92);
+  color: #9f3030;
 }
 
 .backoffice-main {
   min-width: 0;
+  height: 100vh;
   padding: 34px;
   background:
     radial-gradient(circle at 80% 0%, rgba(124, 169, 255, 0.13), transparent 28%),
     #f6f9ff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .backoffice-main-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 18px;
   margin-bottom: 22px;
+  padding-bottom: 14px;
+  background:
+    radial-gradient(circle at 80% 0%, rgba(124, 169, 255, 0.13), transparent 28%),
+    #f6f9ff;
 }
 
 .backoffice-refresh {
-  width: auto;
-  min-width: 92px;
+  width: 94px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 7px;
   padding: 0 18px;
   border-radius: 12px;
 }
 
+.backoffice-refresh:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
+
+
 .backoffice-table-wrap {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   border-radius: 18px;
   background: #fff;
   border: 1px solid #e2eaf5;
   box-shadow: 0 18px 50px rgba(37, 49, 68, 0.07);
+}
+
+.backoffice-table-wrap.is-refreshing {
+  box-shadow: 0 18px 50px rgba(37, 49, 68, 0.07), inset 0 2px 0 rgba(76, 156, 255, 0.18);
+}
+
+.backoffice-config-card {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border-radius: 18px;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 90% 6%, rgba(91, 163, 255, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(237, 248, 255, 0.88));
+  border: 1px solid #dce9f6;
+  box-shadow: 0 18px 50px rgba(37, 49, 68, 0.07);
+}
+
+.backoffice-config-card h2 {
+  margin: 0 0 12px;
+  color: #14223b;
+  font-size: 24px;
+}
+
+.backoffice-config-card p {
+  max-width: 780px;
+  margin: 0;
+  color: #52657e;
+  line-height: 1.7;
+}
+
+.config-roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.config-roadmap-grid article {
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(164, 204, 239, 0.58);
+  box-shadow: 0 14px 30px rgba(84, 136, 190, 0.08);
+}
+
+.config-roadmap-grid strong,
+.config-roadmap-grid span {
+  display: block;
+}
+
+.config-roadmap-grid strong {
+  margin-bottom: 8px;
+  color: #174a9b;
+}
+
+.config-roadmap-grid span {
+  color: #5d7089;
+  line-height: 1.65;
+}
+
+.config-doc-note span {
+  color: #245fb7;
+  font-weight: 700;
 }
 
 .backoffice-empty {
@@ -936,6 +1079,8 @@ onBeforeUnmount(() => {
 .backoffice-table tbody tr:hover {
   background: #f8fbff;
 }
+
+
 
 .backoffice-table .wide {
   width: 28%;
@@ -1033,11 +1178,15 @@ onBeforeUnmount(() => {
   }
 
   .backoffice-layout {
+    height: auto;
+    min-height: 100vh;
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 
   .backoffice-sidebar {
     position: static;
+    height: auto;
     min-height: auto;
     padding: 16px;
     gap: 14px;
@@ -1059,16 +1208,24 @@ onBeforeUnmount(() => {
   }
 
   .backoffice-main {
+    height: auto;
+    min-height: 0;
     padding: 20px 16px 28px;
+    overflow: visible;
   }
 
   .backoffice-main-head {
+    position: static;
     align-items: flex-start;
     flex-direction: column;
   }
 
   .backoffice-refresh {
     width: 100%;
+  }
+
+  .config-roadmap-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

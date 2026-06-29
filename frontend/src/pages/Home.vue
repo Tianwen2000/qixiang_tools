@@ -10,7 +10,7 @@ import ToolDateTimeCard from "../components/ToolDateTimeCard.vue";
 import { readJsonCache, writeJsonCache } from "../utils/page-cache.js";
 
 const route = useRoute();
-const META_CACHE_KEY = "tw-meta-cache-v1";
+const META_CACHE_KEY = "tw-meta-cache-v2";
 const HOME_STATE_CACHE_KEY = "tw-home-state-v1";
 const categories = ref([]);
 const tools = ref([]);
@@ -18,6 +18,31 @@ const activeCategory = ref("");
 const keyword = ref("");
 const loading = ref(true);
 const error = ref("");
+const CATEGORY_TOOL_ORDER = {
+  ops: [
+    "text-format-cleaner",
+    "invisible-control-chars",
+    "character-count-slice",
+    "free-translate",
+    "local-ip-lookup",
+  ],
+};
+
+function sortToolsForCategory(items, category) {
+  const order = CATEGORY_TOOL_ORDER[category];
+  if (!order?.length) {
+    return items;
+  }
+  const orderIndex = new Map(order.map((slug, index) => [slug, index]));
+  return [...items].sort((left, right) => {
+    const leftOrder = orderIndex.has(left.slug) ? orderIndex.get(left.slug) : Number.POSITIVE_INFINITY;
+    const rightOrder = orderIndex.has(right.slug) ? orderIndex.get(right.slug) : Number.POSITIVE_INFINITY;
+    if (leftOrder !== rightOrder) {
+      return leftOrder - rightOrder;
+    }
+    return 0;
+  });
+}
 
 const filteredTools = computed(() =>
   tools.value.filter((tool) => {
@@ -38,7 +63,10 @@ const displayTools = computed(() => {
   if (keyword.value) {
     return filteredTools.value;
   }
-  return tools.value.filter((tool) => tool.category === activeCategory.value);
+  return sortToolsForCategory(
+    tools.value.filter((tool) => tool.category === activeCategory.value),
+    activeCategory.value,
+  );
 });
 
 const displayTitle = computed(() => {

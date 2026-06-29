@@ -31,7 +31,14 @@ const compactInputToolSlugs = new Set([
   "today-stock-index",
   "today-building-materials",
 ]);
+const mediumTextareaToolSlugs = new Set([
+  "free-translate",
+  "text-format-cleaner",
+  "invisible-control-chars",
+  "character-count-slice",
+]);
 const isCompactInputTool = computed(() => compactInputToolSlugs.has(props.tool.slug));
+const isMediumTextareaTool = computed(() => mediumTextareaToolSlugs.has(props.tool.slug));
 const inputPlaceholder = computed(() => props.tool.description || "请输入内容");
 const visibleParams = computed(() =>
   (props.tool.params || []).filter((item) => {
@@ -93,7 +100,13 @@ function clearOutput() {
 </script>
 
 <template>
-  <section class="tool-form" :class="{ 'tool-form--compact-input': isCompactInputTool }">
+  <section
+    class="tool-form"
+    :class="{
+      'tool-form--compact-input': isCompactInputTool,
+      'tool-form--medium-textarea': isMediumTextareaTool,
+    }"
+  >
     <input
       v-if="isCompactInputTool"
       v-model="text"
@@ -101,7 +114,7 @@ function clearOutput() {
       :placeholder="inputPlaceholder"
       @keydown.enter.prevent="submit"
     />
-    <textarea v-else v-model="text" rows="14" :placeholder="inputPlaceholder"></textarea>
+    <textarea v-else v-model="text" :rows="isMediumTextareaTool ? 6 : 14" :placeholder="inputPlaceholder"></textarea>
 
     <div v-if="visibleParams.length" class="param-row">
       <label v-for="item in visibleParams" :key="item.key">

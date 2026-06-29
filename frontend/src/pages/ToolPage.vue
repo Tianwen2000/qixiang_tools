@@ -18,6 +18,7 @@ import ToolImageInspector from "../components/ToolImageInspector.vue";
 import ToolKeyboardTester from "../components/ToolKeyboardTester.vue";
 import ToolLocalIpLookup from "../components/ToolLocalIpLookup.vue";
 import ToolMarketQuote from "../components/ToolMarketQuote.vue";
+import ToolMiniGame from "../components/ToolMiniGame.vue";
 import ToolOffWorkCountdown from "../components/ToolOffWorkCountdown.vue";
 import ToolOnlineCalendar from "../components/ToolOnlineCalendar.vue";
 import ToolResponsiveCheck from "../components/ToolResponsiveCheck.vue";
@@ -65,6 +66,7 @@ const formComponent = computed(() => {
     ToolKeyboardTester,
     ToolLocalIpLookup,
     ToolMarketQuote,
+    ToolMiniGame,
     ToolOffWorkCountdown,
     ToolOnlineCalendar,
     ToolScheduleMemo,

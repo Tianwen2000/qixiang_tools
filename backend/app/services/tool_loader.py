@@ -14,7 +14,13 @@ TOOLS_PATH = CONFIG_DIR / "tools.json"
 # 没写进这里的工具仍然正常可用，并会按 tools.json 原顺序排在已固定工具后面。
 CATEGORY_TOOL_ORDER = {
     "dev": (),
-    "ops": (),
+    "ops": (
+        "text-format-cleaner",
+        "invisible-control-chars",
+        "character-count-slice",
+        "free-translate",
+        "local-ip-lookup",
+    ),
     "format": (
         "png-jpg-ico-converter",
         "png-jpg-icns-converter",

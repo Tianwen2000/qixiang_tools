@@ -1,4 +1,5 @@
 import base64
+import os
 import threading
 from io import BytesIO
 from pathlib import Path
@@ -205,7 +206,11 @@ def _capture_animated_svg_frames(
         frames: list[Image.Image] = []
         try:
             with sync_playwright() as playwright:
-                browser = playwright.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+                executable_path = _resolve_playwright_chromium_executable()
+                launch_options = {"args": ["--no-sandbox", "--disable-dev-shm-usage"]}
+                if executable_path:
+                    launch_options["executable_path"] = executable_path
+                browser = playwright.chromium.launch(**launch_options)
                 page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=1)
                 page.set_content(html, wait_until="load")
                 for index in range(frame_count):
@@ -237,9 +242,51 @@ def _capture_animated_svg_frames(
     return frames
 
 
+def _resolve_playwright_chromium_executable() -> str | None:
+    candidate_bases: list[Path] = []
+    env_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "").strip()
+    if env_path and env_path not in {"0", "false", "False"}:
+        candidate_bases.append(Path(env_path).expanduser())
+
+    home = Path.home()
+    candidate_bases.extend(
+        [
+            home / ".cache" / "ms-playwright",
+            Path.cwd() / ".playwright-browsers",
+        ]
+    )
+
+    executable_patterns = (
+        "chromium-*/chrome-linux/chrome",
+        "chromium_headless_shell-*/chrome-linux/headless_shell",
+        "chromium-*/chrome-linux/headless_shell",
+    )
+    for base in candidate_bases:
+        if not base.exists():
+            continue
+        for pattern in executable_patterns:
+            matches = sorted(base.glob(pattern), reverse=True)
+            for executable in matches:
+                if executable.is_file() and os.access(executable, os.X_OK):
+                    return str(executable)
+    return None
+
+
 def _format_playwright_error(exc: Exception) -> str:
     detail = str(exc).strip() or exc.__class__.__name__
     detail = " ".join(detail.split())
+    lowered = detail.lower()
+    if "executable doesn't exist" in lowered or "please run the following command" in lowered:
+        env_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "").strip()
+        if env_path:
+            return (
+                "未找到 Playwright Chromium 浏览器内核。"
+                f"当前服务配置的 PLAYWRIGHT_BROWSERS_PATH 为 {env_path}，但该目录下没有可执行浏览器。"
+                "请在服务器项目目录执行："
+                f"PLAYWRIGHT_BROWSERS_PATH={env_path} ./backend/.server-venv/bin/python -m playwright install chromium，"
+                "然后重启后端服务。"
+            )
+        return "未找到 Playwright Chromium 浏览器内核，请执行 python -m playwright install chromium 后重启后端服务。"
     if len(detail) > 500:
         detail = f"{detail[:500]}..."
     return detail
