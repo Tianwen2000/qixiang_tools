@@ -1,3 +1,5 @@
+"""文件说明：实现「Git 常用命令」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "git-command-search",
     "name": "Git 常用命令",

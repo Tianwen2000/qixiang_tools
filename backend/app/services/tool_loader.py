@@ -1,3 +1,5 @@
+"""文件说明：加载工具分类和工具元信息，并按配置处理展示顺序。"""
+
 import json
 from pathlib import Path
 

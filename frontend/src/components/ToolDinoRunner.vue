@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolDinoRunner 前端组件。
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 
 const props = defineProps({

@@ -1,3 +1,4 @@
+// 文件说明：提供 ui mapping 前端静态数据或映射配置。
 export const toolComponentMapping = {
   text: "ToolTextForm",
   file: "ToolFileForm",

@@ -1,3 +1,5 @@
+"""文件说明：实现「图片识别文字」工具的后端逻辑。"""
+
 from functools import lru_cache
 
 from app.core.exceptions import AppException

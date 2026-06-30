@@ -1,3 +1,5 @@
+"""文件说明：实现「ADB 命令大全」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "adb-command-search",
     "name": "ADB 命令大全",

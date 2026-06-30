@@ -1,3 +1,5 @@
+"""文件说明：实现「图片滤镜处理」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from PIL import ImageFilter, ImageOps

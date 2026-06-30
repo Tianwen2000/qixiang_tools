@@ -1,3 +1,5 @@
+"""文件说明：读取环境变量并集中管理后端运行配置。"""
+
 from functools import lru_cache
 from pathlib import Path
 

@@ -1,3 +1,5 @@
+"""文件说明：实现「免费翻译」工具的后端逻辑。"""
+
 import json
 import urllib.error
 import urllib.parse

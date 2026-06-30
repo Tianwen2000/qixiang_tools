@@ -1,3 +1,5 @@
+"""文件说明：实现「字数统计」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "text-statistics",
     "name": "字数统计",

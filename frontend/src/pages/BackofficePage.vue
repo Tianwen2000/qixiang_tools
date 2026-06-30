@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 BackofficePage 页面组件。
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
@@ -378,7 +379,7 @@ onBeforeUnmount(() => {
                 <td><span class="status-tag" :class="`event-${row.event || 'other'}`">{{ eventLabel[row.event] || row.event }}</span></td>
                 <td>{{ row.account || "-" }}</td>
                 <td class="nowrap"><span class="ip-tag">{{ row.ip || "-" }}</span></td>
-                <td class="dim wide"><div class="ua-ellipsis" :title="row.user_agent || '-'">{{ row.user_agent || "-" }}</div></td>
+                <td class="dim wide"><div class="cell-scroll ua" :title="row.user_agent || '-'">{{ row.user_agent || "-" }}</div></td>
               </tr>
             </tbody>
           </table>
@@ -972,6 +973,29 @@ onBeforeUnmount(() => {
   box-shadow: 0 18px 50px rgba(37, 49, 68, 0.07);
 }
 
+.backoffice-table-wrap::-webkit-scrollbar,
+.cell-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.backoffice-table-wrap::-webkit-scrollbar-thumb,
+.cell-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(123, 166, 190, 0.58);
+}
+
+.backoffice-table-wrap::-webkit-scrollbar-track,
+.cell-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.backoffice-table-wrap,
+.cell-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(123, 166, 190, 0.58) transparent;
+}
+
 .backoffice-table-wrap.is-refreshing {
   box-shadow: 0 18px 50px rgba(37, 49, 68, 0.07), inset 0 2px 0 rgba(76, 156, 255, 0.18);
 }
@@ -1144,13 +1168,6 @@ onBeforeUnmount(() => {
   border: 1px solid #e2e8f0;
 }
 
-.ua-ellipsis {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .cell-scroll {
   max-height: 112px;
   overflow: auto;
@@ -1163,7 +1180,7 @@ onBeforeUnmount(() => {
 .cell-scroll.compact,
 .cell-scroll.url,
 .cell-scroll.ua {
-  max-height: 78px;
+  max-height: 72px;
   word-break: break-all;
 }
 

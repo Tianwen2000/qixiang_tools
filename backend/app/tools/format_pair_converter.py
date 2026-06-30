@@ -1,3 +1,5 @@
+"""文件说明：实现 format pair converter 工具的后端逻辑。"""
+
 import csv
 from io import StringIO
 from pathlib import Path

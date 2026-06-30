@@ -1,3 +1,5 @@
+"""文件说明：实现「文本加前后缀」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "prefix-suffix-adder",
     "name": "文本加前后缀",

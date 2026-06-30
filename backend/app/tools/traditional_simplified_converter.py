@@ -1,3 +1,5 @@
+"""文件说明：实现「简繁体转换」工具的后端逻辑。"""
+
 from functools import lru_cache
 
 from opencc import OpenCC

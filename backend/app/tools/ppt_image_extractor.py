@@ -1,3 +1,5 @@
+"""文件说明：实现「PPT 提取图片」工具的后端逻辑。"""
+
 from app.utils.image_utils import extract_office_media
 
 

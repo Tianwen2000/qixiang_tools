@@ -1,3 +1,4 @@
+// 文件说明：提供 page cache 前端工具函数。
 export function readJsonCache(key, fallback = null) {
   if (typeof window === "undefined") {
     return fallback;

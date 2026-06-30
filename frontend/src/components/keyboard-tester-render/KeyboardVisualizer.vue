@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义键盘测试可视化的 KeyboardVisualizer 子组件。
 import KeyboardKeyCap from "./KeyboardKeyCap.vue";
 import KeyboardRow from "./KeyboardRow.vue";
 import KeyboardStatusBar from "./KeyboardStatusBar.vue";

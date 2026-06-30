@@ -1,3 +1,5 @@
+"""文件说明：实现「JSON 和 XLSX 互转」工具的后端逻辑。"""
+
 import json
 from pathlib import Path
 

@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolPage 页面组件。
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 

@@ -1,3 +1,5 @@
+"""文件说明：实现「艺术二维码生成」工具的后端逻辑。"""
+
 from pathlib import Path
 
 import qrcode

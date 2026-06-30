@@ -1,3 +1,4 @@
+<!-- 文件说明：定义 HeaderQXMarquee 前端组件。 -->
 <template>
   <div class="header-qx-flight" aria-hidden="true">
     <div class="header-qx-flight-lane lane-primary">

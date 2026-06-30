@@ -1,3 +1,5 @@
+"""文件说明：实现「GIF 图片制作」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from app.core.exceptions import AppException

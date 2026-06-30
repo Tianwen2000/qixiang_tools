@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 Home 页面组件。
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
@@ -18,6 +19,7 @@ const activeCategory = ref("");
 const keyword = ref("");
 const loading = ref(true);
 const error = ref("");
+// 前端再保留一层分类排序兜底，避免旧缓存或接口返回顺序差异影响首页展示。
 const CATEGORY_TOOL_ORDER = {
   ops: [
     "text-format-cleaner",

@@ -1,3 +1,5 @@
+"""文件说明：实现「抖音 UID / sec_uid 提取」工具的后端逻辑。"""
+
 import json
 import re
 from urllib.parse import parse_qs, unquote, urlsplit

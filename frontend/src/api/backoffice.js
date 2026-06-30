@@ -1,3 +1,4 @@
+// 文件说明：封装独立后台入口、登录、反馈和日志接口。
 import { get, post } from "./client.js";
 
 export function getBackofficeChallenge() {

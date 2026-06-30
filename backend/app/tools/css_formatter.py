@@ -1,3 +1,5 @@
+"""文件说明：实现「CSS 格式化/压缩」工具的后端逻辑。"""
+
 import cssbeautifier
 from rcssmin import cssmin
 

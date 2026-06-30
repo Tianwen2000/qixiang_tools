@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolAbstractAppliance 前端组件。
 import { computed, onBeforeUnmount, ref } from "vue";
 
 import { showToast } from "../utils/toast.js";

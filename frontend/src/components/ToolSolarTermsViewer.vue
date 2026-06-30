@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolSolarTermsViewer 前端组件。
 import { computed } from "vue";
 
 import { solarTerms2026 } from "../utils/time-datasets.js";

@@ -1,3 +1,5 @@
+"""文件说明：实现「TXT 转 HTML」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from app.utils.document_utils import build_html_from_sections, read_plain_text

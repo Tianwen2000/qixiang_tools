@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 FeedbackPage 页面组件。
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 

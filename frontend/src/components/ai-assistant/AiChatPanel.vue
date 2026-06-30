@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 AI 助手的 AiChatPanel 组件或辅助逻辑。
 import { computed, nextTick, onMounted, ref } from "vue";
 
 import AiRobotLogo from "./AiRobotLogo.vue";

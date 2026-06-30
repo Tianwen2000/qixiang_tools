@@ -1,3 +1,5 @@
+"""文件说明：实现「文本差异对比」工具的后端逻辑。"""
+
 import difflib
 
 from app.core.exceptions import AppException

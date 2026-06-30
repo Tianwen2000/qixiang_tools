@@ -1,3 +1,5 @@
+"""文件说明：实现「Crontab 执行时间计算」工具的后端逻辑。"""
+
 from datetime import datetime
 
 from croniter import croniter

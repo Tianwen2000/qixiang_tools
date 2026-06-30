@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolWorldTimeClock 前端组件。
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 import { formatZoneDate, formatZoneTime, getZoneOffsetLabel, worldClockZones } from "../utils/time-tools.js";

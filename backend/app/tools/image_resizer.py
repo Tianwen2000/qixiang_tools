@@ -1,3 +1,5 @@
+"""文件说明：实现「图片像素比调整」工具的后端逻辑。"""
+
 import re
 from pathlib import Path
 

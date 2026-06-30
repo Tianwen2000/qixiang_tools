@@ -1,3 +1,5 @@
+"""文件说明：实现「JSONPath 解析器」工具的后端逻辑。"""
+
 import json
 
 from app.core.exceptions import AppException

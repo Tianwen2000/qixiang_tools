@@ -1,3 +1,5 @@
+"""文件说明：实现「中英文标点转换」工具的后端逻辑。"""
+
 from app.core.exceptions import AppException
 
 

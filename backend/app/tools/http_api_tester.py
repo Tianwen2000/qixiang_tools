@@ -1,3 +1,5 @@
+"""文件说明：实现「Http 接口测试」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "http-api-tester",
     "name": "Http 接口测试",

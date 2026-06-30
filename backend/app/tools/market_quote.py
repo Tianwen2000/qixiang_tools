@@ -1,3 +1,5 @@
+"""文件说明：实现「股票基金实时行情」工具的后端逻辑。"""
+
 import json
 import re
 import urllib.parse

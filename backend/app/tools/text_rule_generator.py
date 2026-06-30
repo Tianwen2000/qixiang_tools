@@ -1,3 +1,5 @@
+"""文件说明：实现「文本规则生成器」工具的后端逻辑。"""
+
 import re
 
 from app.core.exceptions import AppException

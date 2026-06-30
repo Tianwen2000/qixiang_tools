@@ -1,3 +1,5 @@
+"""文件说明：提供图片读取、转换、压缩和格式处理公共函数。"""
+
 import io
 import zipfile
 from pathlib import Path

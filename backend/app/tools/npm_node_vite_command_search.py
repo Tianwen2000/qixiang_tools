@@ -1,3 +1,5 @@
+"""文件说明：实现「npm、node等包管理工具命令集合」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "npm-node-vite-command-search",
     "name": "npm、node等包管理工具命令集合",

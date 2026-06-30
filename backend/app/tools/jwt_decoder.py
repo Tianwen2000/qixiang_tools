@@ -1,3 +1,5 @@
+"""文件说明：实现「JWT 解码」工具的后端逻辑。"""
+
 import base64
 import json
 from datetime import datetime, timezone

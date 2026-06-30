@@ -1,3 +1,5 @@
+"""文件说明：FastAPI 后端应用入口，负责创建应用、注册路由、中间件和启动清理任务。"""
+
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path

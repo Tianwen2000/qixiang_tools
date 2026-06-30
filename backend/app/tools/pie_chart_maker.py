@@ -1,3 +1,5 @@
+"""文件说明：实现 pie chart maker 工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "pie-chart-maker",
     "name": "饼图制作",

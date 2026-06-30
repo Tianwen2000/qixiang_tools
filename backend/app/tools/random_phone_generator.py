@@ -1,3 +1,5 @@
+"""文件说明：实现「随机手机号生成器」工具的后端逻辑。"""
+
 import secrets
 
 from app.core.exceptions import AppException

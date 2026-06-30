@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 AI 助手的 AiAssistantWidget 组件或辅助逻辑。
 import { nextTick, onMounted, onUnmounted, ref } from "vue";
 
 import AiChatPanel from "./AiChatPanel.vue";

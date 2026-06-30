@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义键盘测试可视化的 KeyboardKeyCap 子组件。
 import { computed } from "vue";
 
 const props = defineProps({

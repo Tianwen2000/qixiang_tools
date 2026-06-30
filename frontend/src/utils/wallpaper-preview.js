@@ -1,3 +1,4 @@
+// 文件说明：提供 wallpaper preview 前端工具函数。
 const WALLPAPER_PREVIEW_STORAGE_KEY = "tw-wallpaper-preview-v1";
 const WALLPAPER_PREVIEW_EVENT = "tw-wallpaper-preview-change";
 const VALID_PREVIEW_MODES = new Set(["auto", "spring", "summer", "autumn", "winter"]);

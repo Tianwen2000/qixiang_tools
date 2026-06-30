@@ -1,3 +1,5 @@
+"""文件说明：实现「AES 加密/解密」工具的后端逻辑。"""
+
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad

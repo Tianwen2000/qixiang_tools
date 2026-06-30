@@ -1,3 +1,5 @@
+"""文件说明：实现「图片颜色分析」工具的后端逻辑。"""
+
 from collections import Counter
 
 from app.utils.image_utils import load_image

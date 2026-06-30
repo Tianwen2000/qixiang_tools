@@ -1,3 +1,5 @@
+"""文件说明：封装日期、时间、农历等计算和展示逻辑。"""
+
 from datetime import datetime
 from zoneinfo import ZoneInfo
 

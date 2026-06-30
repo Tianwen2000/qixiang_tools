@@ -1,3 +1,4 @@
+// 文件说明：提供 fallback meta 前端静态数据或映射配置。
 import rawCategories from "../../../backend/app/configs/categories.json";
 import rawTools from "../../../backend/app/configs/tools.json";
 

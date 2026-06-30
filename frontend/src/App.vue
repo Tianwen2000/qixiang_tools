@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：前端根组件，负责承载路由页面。
 import SiteWallpaper from "./components/SiteWallpaper.vue";
 import ToastViewport from "./components/ToastViewport.vue";
 import AiAssistantWidget from "./components/ai-assistant/AiAssistantWidget.vue";

@@ -1,3 +1,5 @@
+"""文件说明：提供摘要、加密、编码类工具的公共辅助函数。"""
+
 import base64
 
 from app.core.exceptions import AppException

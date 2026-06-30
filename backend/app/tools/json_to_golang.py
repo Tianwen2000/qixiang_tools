@@ -1,3 +1,5 @@
+"""文件说明：实现「JSON 转 Golang 结构体」工具的后端逻辑。"""
+
 from app.utils.codegen_utils import ensure_object_schema, load_json_value, pascal_case
 
 

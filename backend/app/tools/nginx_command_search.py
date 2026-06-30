@@ -1,3 +1,5 @@
+"""文件说明：实现「Nginx 常用命令」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "nginx-command-search",
     "name": "Nginx 常用命令",

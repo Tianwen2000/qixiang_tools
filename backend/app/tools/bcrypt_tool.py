@@ -1,3 +1,5 @@
+"""文件说明：实现「Bcrypt 加密/校验」工具的后端逻辑。"""
+
 import json
 
 import bcrypt

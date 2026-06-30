@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolHttpTester 前端组件。
 import { reactive, ref } from "vue";
 
 import GlassSelect from "./GlassSelect.vue";

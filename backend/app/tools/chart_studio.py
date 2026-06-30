@@ -1,3 +1,5 @@
+"""文件说明：实现「K 线图制作」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "chart-studio",
     "name": "图表工作台",

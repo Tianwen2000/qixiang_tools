@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolHolidaySchedule2026 前端组件。
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 import { holidaySchedulesByYear } from "../utils/time-datasets.js";

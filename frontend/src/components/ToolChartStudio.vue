@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolChartStudio 前端组件。
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 

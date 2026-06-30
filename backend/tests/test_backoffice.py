@@ -1,3 +1,5 @@
+"""文件说明：测试 test backoffice 相关后端接口或服务逻辑。"""
+
 from fastapi.testclient import TestClient
 
 from app.core.config import get_settings

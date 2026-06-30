@@ -1,3 +1,5 @@
+"""文件说明：实现「PPT 和 HTML 互转」工具的后端逻辑。"""
+
 from app.tools.format_pair_converter import PPT_HTML_HANDLERS, dispatch_pair
 
 

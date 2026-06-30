@@ -1,3 +1,5 @@
+"""文件说明：实现「本地ip查询」工具的后端逻辑。"""
+
 import ipaddress
 import re
 import socket

@@ -1,3 +1,5 @@
+"""文件说明：实现「今日股票指数」工具的后端逻辑。"""
+
 from app.tools.price_snapshot import run_stock_index
 
 

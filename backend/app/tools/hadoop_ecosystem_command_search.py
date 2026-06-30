@@ -1,3 +1,5 @@
+"""文件说明：实现「大数据 Hadoop 生态命令」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "hadoop-ecosystem-command-search",
     "name": "大数据 Hadoop 生态命令",

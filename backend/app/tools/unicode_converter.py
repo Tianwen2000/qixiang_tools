@@ -1,3 +1,5 @@
+"""文件说明：实现「字符与unicode码点进制互转」工具的后端逻辑。"""
+
 import re
 
 from app.core.exceptions import AppException

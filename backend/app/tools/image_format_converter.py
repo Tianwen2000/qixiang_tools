@@ -1,3 +1,5 @@
+"""文件说明：实现「常见图片格式互转」工具的后端逻辑。"""
+
 import base64
 import shutil
 from io import BytesIO

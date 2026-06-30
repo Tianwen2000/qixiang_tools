@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolBabyHundredDaysCalculator 前端组件。
 import { computed, ref } from "vue";
 
 import { addDays, addYears, computeCalendarDiff, formatReadableDate, parseDateInputValue, toDateInputValue } from "../utils/time-tools.js";

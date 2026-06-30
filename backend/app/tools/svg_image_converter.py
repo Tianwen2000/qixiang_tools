@@ -1,3 +1,5 @@
+"""文件说明：实现 svg image converter 工具的后端逻辑。"""
+
 import base64
 import os
 import threading
@@ -243,6 +245,7 @@ def _capture_animated_svg_frames(
 
 
 def _resolve_playwright_chromium_executable() -> str | None:
+    # 服务器可能把 Playwright 浏览器装在项目目录或用户缓存目录，这里按常见位置兜底查找。
     candidate_bases: list[Path] = []
     env_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "").strip()
     if env_path and env_path not in {"0", "false", "False"}:

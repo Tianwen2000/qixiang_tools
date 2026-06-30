@@ -1,3 +1,5 @@
+"""文件说明：实现「Docker 命令大全」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "docker-command-search",
     "name": "Docker 命令大全",

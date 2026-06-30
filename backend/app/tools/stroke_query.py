@@ -1,3 +1,5 @@
+"""文件说明：实现「汉字笔画查询」工具的后端逻辑。"""
+
 from functools import lru_cache
 
 from cnradical import Radical, RunOption

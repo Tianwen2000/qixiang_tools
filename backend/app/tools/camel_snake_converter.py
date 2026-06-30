@@ -1,3 +1,5 @@
+"""文件说明：实现「驼峰下划线互转」工具的后端逻辑。"""
+
 import re
 
 from app.core.exceptions import AppException

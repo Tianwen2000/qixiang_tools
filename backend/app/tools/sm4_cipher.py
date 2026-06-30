@@ -1,3 +1,5 @@
+"""文件说明：实现「国密 SM4 加密/解密」工具的后端逻辑。"""
+
 from Crypto.Random import get_random_bytes
 from gmssl import sm4
 

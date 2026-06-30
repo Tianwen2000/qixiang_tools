@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolMiniGame 前端组件。
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const props = defineProps({
@@ -8,6 +9,7 @@ const props = defineProps({
   },
 });
 
+// 五个纯前端小游戏共用这一套组件，通过工具 slug 切换玩法，并把进度保存到当前浏览器 localStorage。
 const difficulty = ref("normal");
 const difficultyOpen = ref(false);
 const status = ref("");

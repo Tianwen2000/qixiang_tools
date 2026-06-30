@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 AI 助手的 AiRobotLogo 组件或辅助逻辑。
 import { computed } from "vue";
 
 const props = defineProps({

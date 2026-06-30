@@ -1,3 +1,5 @@
+"""文件说明：实现 media converter 工具的后端逻辑。"""
+
 import shutil
 import subprocess
 from pathlib import Path

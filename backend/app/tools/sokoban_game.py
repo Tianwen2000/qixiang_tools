@@ -1,3 +1,5 @@
+"""文件说明：实现「推箱子」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "sokoban-game",
     "name": "推箱子",

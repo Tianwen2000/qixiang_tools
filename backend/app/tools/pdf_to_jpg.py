@@ -1,3 +1,5 @@
+"""文件说明：实现「PDF 转 JPG」工具的后端逻辑。"""
+
 from app.utils.document_utils import render_pdf_pages_to_jpg
 
 

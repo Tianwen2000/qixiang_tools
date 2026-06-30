@@ -1,3 +1,5 @@
+"""文件说明：提供健康检查接口。"""
+
 from fastapi import APIRouter
 
 from app.core.response import success_response

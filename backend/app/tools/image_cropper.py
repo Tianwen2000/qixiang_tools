@@ -1,3 +1,5 @@
+"""文件说明：实现「图片裁剪」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from app.core.exceptions import AppException

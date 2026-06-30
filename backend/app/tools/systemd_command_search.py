@@ -1,3 +1,5 @@
+"""文件说明：实现「Systemd 服务命令」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "systemd-command-search",
     "name": "Systemd 服务命令",

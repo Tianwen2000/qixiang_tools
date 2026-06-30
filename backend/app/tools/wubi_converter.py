@@ -1,3 +1,5 @@
+"""文件说明：实现「汉字转五笔码」工具的后端逻辑。"""
+
 from pywubi import conbin_wubi, single_wubi, wubi
 
 from app.core.exceptions import AppException

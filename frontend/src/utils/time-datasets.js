@@ -1,3 +1,4 @@
+// 文件说明：提供 time datasets 前端工具函数。
 export const holidaySchedule2026 = [
   {
     name: "元旦",

@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolAgeCalculator 前端组件。
 import { computed, ref } from "vue";
 
 import {

@@ -1,3 +1,5 @@
+"""文件说明：实现「Keccak 加密」工具的后端逻辑。"""
+
 from Crypto.Hash import keccak
 
 from app.core.exceptions import AppException

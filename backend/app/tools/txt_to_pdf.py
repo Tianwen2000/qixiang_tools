@@ -1,3 +1,5 @@
+"""文件说明：实现「TXT 转 PDF」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from app.utils.document_utils import read_plain_text, write_text_pdf

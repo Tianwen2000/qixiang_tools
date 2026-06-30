@@ -1,3 +1,5 @@
+"""文件说明：实现「JPG 转 PDF」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from app.utils.document_utils import image_to_pdf

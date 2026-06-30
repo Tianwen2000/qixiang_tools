@@ -1,3 +1,5 @@
+"""文件说明：提供文本清理、格式化、分割等公共处理函数。"""
+
 from collections.abc import Iterable
 
 

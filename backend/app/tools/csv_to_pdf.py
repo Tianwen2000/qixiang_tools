@@ -1,3 +1,5 @@
+"""文件说明：实现「CSV 转 PDF」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from app.utils.document_utils import extract_csv_rows, tables_to_sections, write_text_pdf

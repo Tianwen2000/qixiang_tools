@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolLocalIpLookup 前端组件。
 import { ref } from "vue";
 
 import { executeTextTool } from "../api/tools.js";
@@ -15,7 +16,7 @@ const loading = ref(false);
 const result = ref(null);
 const outputVisible = ref(true);
 
-const UNSUPPORTED_TEXT = "暂不支持此处检测";
+const UNSUPPORTED_TEXT = "此处暂不支持检测";
 
 const PUBLIC_SERVICES = [
   {
@@ -272,7 +273,7 @@ function analyzeVersion(version, publicIp, serverIp) {
       status: "unknown",
       label: "暂不判断",
       tone: "danger",
-      message: `${label} 缺少浏览器公网结果或本站服务视角结果，暂不支持此处检测。`,
+      message: `${label} 缺少浏览器公网结果或本站服务视角结果，此处暂不支持检测。`,
     };
   }
   if (publicIp === serverIp) {

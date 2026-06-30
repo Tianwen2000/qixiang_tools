@@ -1,3 +1,5 @@
+"""文件说明：提供日期、农历和时间卡片相关接口。"""
+
 from fastapi import APIRouter
 
 from app.core.response import success_response

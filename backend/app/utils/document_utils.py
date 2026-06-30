@@ -1,3 +1,5 @@
+"""文件说明：提供 Word、PDF、PPT、Excel 等文档处理公共函数。"""
+
 import csv
 import re
 from functools import lru_cache

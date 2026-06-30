@@ -1,3 +1,5 @@
+"""文件说明：实现「图片详情查看」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "image-inspector",
     "name": "图片详情查看",

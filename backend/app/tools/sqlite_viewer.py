@@ -1,3 +1,5 @@
+"""文件说明：实现「SQLite 查看器」工具的后端逻辑。"""
+
 import json
 import sqlite3
 from pathlib import Path

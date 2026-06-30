@@ -1,3 +1,5 @@
+"""文件说明：实现「JSON 转 Java 实体类」工具的后端逻辑。"""
+
 from app.utils.codegen_utils import camel_case, ensure_object_schema, load_json_value, pascal_case
 
 

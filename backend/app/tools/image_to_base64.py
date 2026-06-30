@@ -1,3 +1,5 @@
+"""文件说明：实现「图片转 Base64」工具的后端逻辑。"""
+
 import base64
 import mimetypes
 from pathlib import Path

@@ -1,3 +1,5 @@
+"""文件说明：定义后端业务异常，供路由和服务层统一抛错。"""
+
 from dataclasses import dataclass
 
 from fastapi import FastAPI, Request

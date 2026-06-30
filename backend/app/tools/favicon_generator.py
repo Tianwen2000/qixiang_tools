@@ -1,3 +1,5 @@
+"""文件说明：实现「在线生成 Favicon.ico」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from app.utils.image_utils import load_image

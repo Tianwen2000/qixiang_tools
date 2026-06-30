@@ -1,3 +1,5 @@
+"""文件说明：定义 time 相关接口的数据结构。"""
+
 from pydantic import BaseModel
 
 

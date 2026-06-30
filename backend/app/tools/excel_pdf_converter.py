@@ -1,3 +1,5 @@
+"""文件说明：实现「Excel 和 PDF 互转」工具的后端逻辑。"""
+
 from app.tools.format_pair_converter import EXCEL_PDF_HANDLERS, dispatch_pair
 
 

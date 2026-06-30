@@ -1,3 +1,5 @@
+"""文件说明：提供 AI 助手用户注册、登录、退出和当前用户接口。"""
+
 from fastapi import APIRouter, Request, Response
 
 from app.core.config import get_settings

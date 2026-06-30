@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolStopwatchTimer 前端组件。
 import { computed, onBeforeUnmount, ref } from "vue";
 
 import { formatDurationParts } from "../utils/time-tools.js";

@@ -1,3 +1,5 @@
+"""文件说明：实现「进制转换」工具的后端逻辑。"""
+
 import string
 
 from app.core.exceptions import AppException

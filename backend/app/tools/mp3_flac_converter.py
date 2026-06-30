@@ -1,3 +1,5 @@
+"""文件说明：实现「MP3 和 FLAC 互转」工具的后端逻辑。"""
+
 from app.tools.media_converter import convert_media
 
 

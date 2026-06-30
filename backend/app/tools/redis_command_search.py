@@ -1,3 +1,5 @@
+"""文件说明：实现「Redis 常用命令」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "redis-command-search",
     "name": "Redis 常用命令",

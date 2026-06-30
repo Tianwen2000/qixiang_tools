@@ -1,3 +1,5 @@
+"""文件说明：实现「字符统计截取输出」工具的后端逻辑。"""
+
 from collections import Counter
 import unicodedata
 

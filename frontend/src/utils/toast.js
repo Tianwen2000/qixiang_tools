@@ -1,3 +1,4 @@
+// 文件说明：提供 toast 前端工具函数。
 import { reactive, readonly } from "vue";
 
 const state = reactive({

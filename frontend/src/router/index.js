@@ -1,3 +1,4 @@
+// 文件说明：Vue Router 路由配置，定义首页、工具页、后台等页面路径。
 import { createRouter, createWebHistory } from "vue-router";
 
 import FeedbackPage from "../pages/FeedbackPage.vue";

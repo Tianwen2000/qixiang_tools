@@ -1,3 +1,5 @@
+"""文件说明：定期清理过期临时文件，避免上传输出目录膨胀。"""
+
 from datetime import datetime, timedelta, timezone
 
 from app.core.config import get_settings

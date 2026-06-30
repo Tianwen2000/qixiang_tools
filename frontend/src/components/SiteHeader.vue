@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 SiteHeader 前端组件。
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 

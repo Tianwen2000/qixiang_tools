@@ -1,3 +1,4 @@
+// 文件说明：提供 favorite tools 前端工具函数。
 import { computed, reactive, readonly } from "vue";
 
 import { writeJsonCache } from "./page-cache.js";

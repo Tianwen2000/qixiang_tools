@@ -1,3 +1,5 @@
+"""文件说明：实现「Javascript 混淆加密」工具的后端逻辑。"""
+
 import base64
 
 from rjsmin import jsmin

@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolDetailActions 前端组件。
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 

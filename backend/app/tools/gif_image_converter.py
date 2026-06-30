@@ -1,3 +1,5 @@
+"""文件说明：实现 gif image converter 工具的后端逻辑。"""
+
 from pathlib import Path
 
 from PIL import ImageSequence

@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ErrorMessage 前端组件。
 defineProps({
   message: {
     type: String,

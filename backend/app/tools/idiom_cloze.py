@@ -1,3 +1,5 @@
+"""文件说明：实现「成语填空」工具的后端逻辑。"""
+
 import json
 from pathlib import Path
 

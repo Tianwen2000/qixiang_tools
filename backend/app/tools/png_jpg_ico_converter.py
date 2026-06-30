@@ -1,3 +1,5 @@
+"""文件说明：实现「PNG、JPG 和 ICO 互转」工具的后端逻辑。"""
+
 from app.tools.icon_image_converter import convert_icon_image
 
 

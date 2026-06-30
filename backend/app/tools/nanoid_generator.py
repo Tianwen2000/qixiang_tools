@@ -1,3 +1,5 @@
+"""文件说明：实现「Nano ID 生成器」工具的后端逻辑。"""
+
 import secrets
 import string
 

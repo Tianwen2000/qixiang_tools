@@ -1,3 +1,5 @@
+"""文件说明：实现「印章生成器」工具的后端逻辑。"""
+
 import math
 from pathlib import Path
 

@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToastViewport 前端组件。
 import { useToast } from "../utils/toast.js";
 
 const { toasts, dismissToast } = useToast();

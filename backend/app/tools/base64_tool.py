@@ -1,3 +1,5 @@
+"""文件说明：实现「Base64 编码/解码」工具的后端逻辑。"""
+
 import base64
 
 from app.core.exceptions import AppException

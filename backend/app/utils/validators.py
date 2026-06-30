@@ -1,3 +1,5 @@
+"""文件说明：提供上传文件类型、大小和参数合法性校验函数。"""
+
 from pathlib import Path
 
 from fastapi import UploadFile
@@ -32,6 +34,10 @@ IMAGE_TOOL_SLUGS = {
 }
 IMAGE_COMPRESSOR_EXTRA_SUFFIXES = {"heic", "heif"}
 COMMON_IMAGE_CONVERTER_SUFFIXES = {"jpg", "jpeg", "png", "webp", "bmp", "tif", "tiff", "gif", "svg"}
+IMAGE_TOOL_SUFFIX_OVERRIDES = {
+    "gif-splitter": {"gif"},
+    "gif-scaler": {"gif"},
+}
 ZIP_IMAGE_TOOL_SLUGS = {
     "image-merger",
     "gif-maker",
@@ -138,6 +144,8 @@ def validate_upload_for_tool(file: UploadFile, tool_slug: str) -> None:
 
     if tool_slug in IMAGE_TOOL_SLUGS:
         allowed_suffixes = set(settings.allowed_image_types)
+        if tool_slug in IMAGE_TOOL_SUFFIX_OVERRIDES:
+            allowed_suffixes = set(IMAGE_TOOL_SUFFIX_OVERRIDES[tool_slug])
         if tool_slug == "image-compressor":
             allowed_suffixes.update(IMAGE_COMPRESSOR_EXTRA_SUFFIXES)
         if tool_slug == "image-format-converter":

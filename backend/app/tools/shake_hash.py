@@ -1,3 +1,5 @@
+"""文件说明：实现「Shake 加密」工具的后端逻辑。"""
+
 import hashlib
 
 from app.core.exceptions import AppException

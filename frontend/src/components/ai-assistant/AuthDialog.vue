@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 AI 助手的 AuthDialog 组件或辅助逻辑。
 import { computed, onMounted, ref, watch } from "vue";
 
 import {

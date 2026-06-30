@@ -1,3 +1,5 @@
+"""文件说明：实现「JSON 转 TypeScript」工具的后端逻辑。"""
+
 from app.utils.codegen_utils import load_json_value, pascal_case, safe_ts_property_name
 
 

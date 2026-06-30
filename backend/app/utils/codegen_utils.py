@@ -1,3 +1,5 @@
+"""文件说明：提供 JSON 转代码结构等代码生成辅助函数。"""
+
 import json
 import re
 

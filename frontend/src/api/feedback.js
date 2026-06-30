@@ -1,3 +1,4 @@
+// 文件说明：封装用户反馈提交接口。
 import { post } from "./client.js";
 import { readJsonCache, writeJsonCache } from "../utils/page-cache.js";
 

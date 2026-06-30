@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 SeasonalForestScene 前端组件。
 import { computed } from "vue";
 
 const props = defineProps({

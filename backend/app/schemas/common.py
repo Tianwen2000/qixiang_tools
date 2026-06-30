@@ -1,3 +1,5 @@
+"""文件说明：定义 common 相关接口的数据结构。"""
+
 from typing import Any
 
 from pydantic import BaseModel

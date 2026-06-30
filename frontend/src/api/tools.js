@@ -1,3 +1,4 @@
+// 文件说明：封装工具分类、工具列表、执行、上传和下载接口。
 import { get, post, postForm } from "./client.js";
 import { fallbackCategories, fallbackTools, getFallbackTool } from "../data/fallback-meta.js";
 

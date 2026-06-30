@@ -1,3 +1,5 @@
+"""文件说明：实现「扫雷」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "minesweeper-game",
     "name": "扫雷",

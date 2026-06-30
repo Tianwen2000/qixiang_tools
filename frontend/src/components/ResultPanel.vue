@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ResultPanel 前端组件。
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 
 import { writeClipboardText } from "../utils/clipboard.js";

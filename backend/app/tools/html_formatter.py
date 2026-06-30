@@ -1,3 +1,5 @@
+"""文件说明：实现「HTML 格式化/压缩」工具的后端逻辑。"""
+
 import re
 from html.parser import HTMLParser
 

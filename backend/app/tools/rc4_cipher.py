@@ -1,3 +1,5 @@
+"""文件说明：实现「RC4 加密/解密」工具的后端逻辑。"""
+
 from Crypto.Cipher import ARC4
 
 from app.core.exceptions import AppException

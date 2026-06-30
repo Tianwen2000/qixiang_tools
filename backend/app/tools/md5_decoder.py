@@ -1,3 +1,5 @@
+"""文件说明：实现「MD5 加密/解密」工具的后端逻辑。"""
+
 import hashlib
 import json
 

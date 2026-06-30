@@ -1,3 +1,5 @@
+"""文件说明：实现「图片 EXIF 读取」工具的后端逻辑。"""
+
 import json
 from pathlib import Path
 

@@ -1,3 +1,5 @@
+"""文件说明：实现「二维码解析」工具的后端逻辑。"""
+
 import cv2
 
 from app.core.exceptions import AppException

@@ -1,3 +1,4 @@
+// 文件说明：前端 HTTP 请求基础封装，统一处理接口响应和错误。
 function isBrowser() {
   return typeof window !== "undefined";
 }

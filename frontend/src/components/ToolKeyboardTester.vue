@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolKeyboardTester 前端组件。
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import KeyboardVisualizer from "./keyboard-tester-render/KeyboardVisualizer.vue";
 

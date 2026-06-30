@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolCard 前端组件。
 import { computed } from "vue";
 
 import { getCategoryTheme, getToolModeLabel } from "../data/ui-mapping.js";

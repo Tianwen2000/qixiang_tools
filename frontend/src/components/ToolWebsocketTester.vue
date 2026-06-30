@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolWebsocketTester 前端组件。
 import { onBeforeUnmount, reactive, ref } from "vue";
 
 import { showToast, updateToast } from "../utils/toast.js";

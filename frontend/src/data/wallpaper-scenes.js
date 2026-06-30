@@ -1,3 +1,4 @@
+// 文件说明：提供 wallpaper scenes 前端静态数据或映射配置。
 function orb(id, kind, style) {
   return { id, kind, style };
 }

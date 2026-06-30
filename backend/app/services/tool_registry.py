@@ -1,3 +1,5 @@
+"""文件说明：按 tools.json 动态导入工具模块并执行对应处理函数。"""
+
 from functools import lru_cache
 from importlib import import_module
 from types import ModuleType

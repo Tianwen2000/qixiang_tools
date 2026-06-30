@@ -1,3 +1,5 @@
+"""文件说明：实现「今日猪肉/鸡蛋/蔬菜价格」工具的后端逻辑。"""
+
 from app.tools.price_snapshot import run_food_price
 
 

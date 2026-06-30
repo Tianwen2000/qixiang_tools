@@ -1,3 +1,4 @@
+// 文件说明：提供 clipboard 前端工具函数。
 export async function writeClipboardText(text) {
   if (typeof text !== "string") {
     throw new TypeError("只能复制文本内容。");

@@ -1,3 +1,5 @@
+"""文件说明：实现「HTML 提取文字」工具的后端逻辑。"""
+
 from html.parser import HTMLParser
 
 from app.core.exceptions import AppException

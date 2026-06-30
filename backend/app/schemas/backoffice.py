@@ -1,3 +1,5 @@
+"""文件说明：定义 backoffice 相关接口的数据结构。"""
+
 """独立后台管理系统请求体。"""
 
 from pydantic import BaseModel, Field

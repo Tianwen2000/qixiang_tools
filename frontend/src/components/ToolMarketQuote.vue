@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolMarketQuote 前端组件。
 import { computed, reactive, ref } from "vue";
 
 import { executeTextTool } from "../api/tools.js";

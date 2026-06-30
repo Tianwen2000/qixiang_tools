@@ -1,3 +1,5 @@
+"""文件说明：实现「CSV 和 Word 互转」工具的后端逻辑。"""
+
 from app.tools.format_pair_converter import CSV_WORD_HANDLERS, dispatch_pair
 
 

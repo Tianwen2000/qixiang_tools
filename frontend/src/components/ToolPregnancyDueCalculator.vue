@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolPregnancyDueCalculator 前端组件。
 import { computed, ref } from "vue";
 
 import { addDays, formatReadableDate, parseDateInputValue, toDateInputValue } from "../utils/time-tools.js";

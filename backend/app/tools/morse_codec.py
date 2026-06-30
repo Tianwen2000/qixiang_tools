@@ -1,3 +1,5 @@
+"""文件说明：实现「摩斯密码加密/解密」工具的后端逻辑。"""
+
 from app.core.exceptions import AppException
 
 

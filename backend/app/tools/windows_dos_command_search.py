@@ -1,3 +1,5 @@
+"""文件说明：实现「Windows 的 DOS 常用命令」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "windows-dos-command-search",
     "name": "Windows 的 DOS 常用命令",

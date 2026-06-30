@@ -1,3 +1,5 @@
+"""文件说明：实现「图片增大」工具的后端逻辑。"""
+
 import shutil
 from pathlib import Path
 

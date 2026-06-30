@@ -1,3 +1,5 @@
+"""文件说明：实现「GIF、WebP 等动图拆分合成」工具的后端逻辑。"""
+
 import subprocess
 import zipfile
 from pathlib import Path

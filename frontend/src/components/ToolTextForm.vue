@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolTextForm 前端组件。
 import { computed, reactive, ref, watch } from "vue";
 
 import { executeTextTool } from "../api/tools.js";

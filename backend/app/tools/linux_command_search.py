@@ -1,3 +1,5 @@
+"""文件说明：实现「Linux 常用命令」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "linux-command-search",
     "name": "Linux 常用命令",

@@ -1,3 +1,5 @@
+"""文件说明：实现「文本提取链接」工具的后端逻辑。"""
+
 import re
 
 from app.utils.text_utils import unique_preserve_order

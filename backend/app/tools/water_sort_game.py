@@ -1,3 +1,5 @@
+"""文件说明：实现「颜色排序」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "water-sort-game",
     "name": "颜色排序",

@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolDateTimeCard 前端组件。
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 import { getBeijingTime } from "../api/tools.js";

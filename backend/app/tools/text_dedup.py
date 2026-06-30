@@ -1,3 +1,5 @@
+"""文件说明：实现「文本去重」工具的后端逻辑。"""
+
 from app.utils.text_utils import deduplicate_lines
 
 

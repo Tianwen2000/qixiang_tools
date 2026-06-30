@@ -1,3 +1,4 @@
+// 文件说明：提供 command catalogs 前端静态数据或映射配置。
 export const commandCatalogs = {
   "adb-command-search": [
     { command: "adb devices", summary: "查看已连接设备，排查设备是否被 adb 正常识别", tags: ["设备", "连接", "device"] },

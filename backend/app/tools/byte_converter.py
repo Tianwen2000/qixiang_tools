@@ -1,3 +1,5 @@
+"""文件说明：实现「字节转换」工具的后端逻辑。"""
+
 from decimal import Decimal, InvalidOperation
 
 from app.core.exceptions import AppException

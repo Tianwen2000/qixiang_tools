@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolCommandCatalog 前端组件。
 import { computed, ref } from "vue";
 
 import { getCommandCatalog } from "../data/command-catalogs.js";
@@ -14,6 +15,7 @@ const keyword = ref("");
 const sqlExamplesOpen = ref(false);
 const commands = computed(() => getCommandCatalog(props.tool.slug));
 const isMysqlCatalog = computed(() => props.tool.slug === "mysql-command-search");
+// MySQL 增删改查示例只在 MySQL 命令工具里展示，避免给其它命令集合增加无关按钮。
 const mysqlSqlExamples = `-- 建表示例
 CREATE TABLE users (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,

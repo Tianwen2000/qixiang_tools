@@ -1,3 +1,5 @@
+"""文件说明：实现「Excel 转 EPUB」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from app.utils.document_utils import build_epub_from_sections, extract_spreadsheet_sheets, tables_to_sections

@@ -1,3 +1,4 @@
+// 文件说明：Vite 构建配置，负责开发服务器、代理和前端构建参数。
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 

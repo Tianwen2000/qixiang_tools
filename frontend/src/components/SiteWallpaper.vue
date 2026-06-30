@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 SiteWallpaper 前端组件。
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { WALLPAPER_EXCEPTION_STARS, WALLPAPER_SCENES } from "../data/wallpaper-scenes.js";

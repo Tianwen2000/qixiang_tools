@@ -1,3 +1,4 @@
+// 文件说明：提供 wallpaper theme 前端工具函数。
 const beijingFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Shanghai",
   year: "numeric",

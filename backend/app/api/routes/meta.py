@@ -1,3 +1,5 @@
+"""文件说明：提供工具分类和工具元信息接口。"""
+
 from fastapi import APIRouter, Query
 
 from app.core.response import success_response

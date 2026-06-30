@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 AI 助手的 ModelSelect 组件或辅助逻辑。
 // 自包含的模型选择下拉：每行「模型名 + 右侧倍率徽标」，选中带 ✓ 高亮。
 // 仅依赖 vue，保持 AI 模块独立。
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";

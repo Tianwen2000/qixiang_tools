@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolCountdownTimer 前端组件。
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
 import { addDays, formatDurationParts, formatReadableDate, parseDateTimeValue, toDateTimeInputValue } from "../utils/time-tools.js";

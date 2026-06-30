@@ -1,3 +1,5 @@
+"""文件说明：实现「URL 编码/解码」工具的后端逻辑。"""
+
 from urllib.parse import quote, unquote
 
 from app.core.exceptions import AppException

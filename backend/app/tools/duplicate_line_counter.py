@@ -1,3 +1,5 @@
+"""文件说明：实现「重复行统计」工具的后端逻辑。"""
+
 from collections import Counter
 
 

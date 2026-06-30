@@ -1,3 +1,5 @@
+"""文件说明：实现 price snapshot 工具的后端逻辑。"""
+
 import csv
 import json
 import re

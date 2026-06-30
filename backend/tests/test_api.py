@@ -1,3 +1,5 @@
+"""文件说明：测试 test api 相关后端接口或服务逻辑。"""
+
 import base64
 import hashlib
 import io
@@ -224,11 +226,12 @@ def test_meta_endpoints() -> None:
     assert ops_tools.status_code == 200
     ops_tool_items = ops_tools.json()["data"]
     ops_tool_slugs = [item["slug"] for item in ops_tool_items]
-    assert ops_tool_slugs[:4] == [
-        "adb-command-search",
-        "linux-command-search",
-        "git-command-search",
-        "docker-command-search",
+    assert ops_tool_slugs[:5] == [
+        "text-format-cleaner",
+        "invisible-control-chars",
+        "character-count-slice",
+        "free-translate",
+        "local-ip-lookup",
     ]
     assert "text-format-cleaner" in ops_tool_slugs
     assert "invisible-control-chars" in ops_tool_slugs

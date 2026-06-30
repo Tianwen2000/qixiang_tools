@@ -1,3 +1,5 @@
+"""文件说明：实现「16进制转字符串」工具的后端逻辑。"""
+
 from app.core.exceptions import AppException
 
 

@@ -1,3 +1,5 @@
+"""文件说明：实现「Websocket 接口测试」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "websocket-tester",
     "name": "Websocket 接口测试",

@@ -1,3 +1,5 @@
+"""文件说明：实现「PDF 和 JPG 互转」工具的后端逻辑。"""
+
 from app.tools.format_pair_converter import PDF_JPG_HANDLERS, dispatch_pair
 
 

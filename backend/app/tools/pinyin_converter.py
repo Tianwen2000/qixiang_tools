@@ -1,3 +1,5 @@
+"""文件说明：实现「汉字转拼音」工具的后端逻辑。"""
+
 from functools import lru_cache
 
 from pypinyin import Style, lazy_pinyin

@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolChineseHistoryTable 前端组件。
 import { computed, ref } from "vue";
 
 import { dynastyTimeline } from "../utils/time-datasets.js";

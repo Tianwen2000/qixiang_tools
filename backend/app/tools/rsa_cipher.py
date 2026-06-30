@@ -1,3 +1,5 @@
+"""文件说明：实现「RSA 加密/解密」工具的后端逻辑。"""
+
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 

@@ -1,3 +1,4 @@
+// 文件说明：提供 time tools 前端工具函数。
 export const worldClockZones = [
   { city: "北京", note: "中国标准时间", zone: "Asia/Shanghai" },
   { city: "东京", note: "亚洲协作", zone: "Asia/Tokyo" },

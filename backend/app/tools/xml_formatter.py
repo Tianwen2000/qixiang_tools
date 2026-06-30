@@ -1,3 +1,5 @@
+"""文件说明：实现「XML 格式化/压缩」工具的后端逻辑。"""
+
 import xml.etree.ElementTree as ET
 
 from app.core.exceptions import AppException

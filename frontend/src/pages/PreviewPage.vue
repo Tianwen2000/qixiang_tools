@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 PreviewPage 页面组件。
 import { ref } from "vue";
 
 import SiteHeader from "../components/SiteHeader.vue";

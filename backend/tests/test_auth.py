@@ -1,3 +1,5 @@
+"""文件说明：测试 test auth 相关后端接口或服务逻辑。"""
+
 from fastapi.testclient import TestClient
 
 from app.main import app

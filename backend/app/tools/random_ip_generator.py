@@ -1,3 +1,5 @@
+"""文件说明：实现「随机 IP 地址生成器」工具的后端逻辑。"""
+
 import ipaddress
 import secrets
 

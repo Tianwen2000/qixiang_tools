@@ -1,3 +1,5 @@
+"""文件说明：实现「响应式布局检测」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "responsive-layout-checker",
     "name": "响应式布局检测",

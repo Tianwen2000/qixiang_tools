@@ -1,3 +1,5 @@
+"""文件说明：实现「键盘测试」工具的后端逻辑。"""
+
 TOOL_META = {
     "slug": "keyboard-tester",
     "name": "键盘测试",

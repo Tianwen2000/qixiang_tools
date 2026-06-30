@@ -1,3 +1,5 @@
+"""文件说明：实现「文件 Hash 计算」工具的后端逻辑。"""
+
 import hashlib
 from pathlib import Path
 

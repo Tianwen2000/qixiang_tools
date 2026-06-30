@@ -1,3 +1,5 @@
+"""文件说明：实现「SVG 动图拆分和合成」工具的后端逻辑。"""
+
 import base64
 from pathlib import Path
 

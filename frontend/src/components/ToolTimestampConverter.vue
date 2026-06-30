@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolTimestampConverter 前端组件。
 import { computed, ref } from "vue";
 
 import { beijingDateTimeFormatter, formatZoneDateTime, utcDateTimeFormatter } from "../utils/time-tools.js";

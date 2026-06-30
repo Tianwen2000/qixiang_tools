@@ -1,3 +1,5 @@
+"""文件说明：实现「Markdown 编辑器」工具的后端逻辑。"""
+
 import markdown
 
 

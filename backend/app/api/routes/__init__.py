@@ -1,3 +1,5 @@
+"""文件说明：后端路由包标记文件。"""
+
 from fastapi import APIRouter
 
 from app.api.routes import auth, backoffice, chat, feedback, health, meta, time, tools

@@ -1,3 +1,5 @@
+"""文件说明：实现「图片取色器」工具的后端逻辑。"""
+
 from app.core.exceptions import AppException
 from app.utils.image_utils import load_image
 

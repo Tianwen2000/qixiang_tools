@@ -1,3 +1,5 @@
+"""文件说明：实现「在线手写签名」工具的后端逻辑。"""
+
 from pathlib import Path
 
 from PIL import Image, ImageDraw

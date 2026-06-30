@@ -1,4 +1,5 @@
 <script setup>
+// 文件说明：定义 ToolSolarLunarViewer 前端组件。
 import { computed, ref, watch } from "vue";
 
 import {
