@@ -34,6 +34,12 @@ let idleTimer = null;
 let returnTimer = null;
 let attentionTimer = null;
 let watchingTimer = null;
+const tableDrag = {
+  active: false,
+  element: null,
+  startX: 0,
+  scrollLeft: 0,
+};
 
 const eventLabel = { register: "注册", login: "登录", logout: "退出" };
 const feedbackTypeLabel = { bug: "问题反馈", suggestion: "功能建议", content: "内容纠错", praise: "表扬", other: "其他" };
@@ -90,6 +96,38 @@ function activateLoginAnimation() {
       animationState.value = "idle";
     }, 620);
   }, 3000);
+}
+
+function stopTableDrag() {
+  if (!tableDrag.active) {
+    return;
+  }
+  tableDrag.active = false;
+  tableDrag.element?.classList.remove("is-dragging");
+  tableDrag.element = null;
+  window.removeEventListener("mousemove", moveTableDrag);
+  window.removeEventListener("mouseup", stopTableDrag);
+}
+
+function moveTableDrag(event) {
+  if (!tableDrag.active || !tableDrag.element) {
+    return;
+  }
+  const delta = event.clientX - tableDrag.startX;
+  tableDrag.element.scrollLeft = tableDrag.scrollLeft - delta;
+}
+
+function startTableDrag(event) {
+  if (event.button !== 0 || event.target.closest("button, a, input, textarea, select, .cell-scroll")) {
+    return;
+  }
+  tableDrag.active = true;
+  tableDrag.element = event.currentTarget;
+  tableDrag.startX = event.clientX;
+  tableDrag.scrollLeft = event.currentTarget.scrollLeft;
+  event.currentTarget.classList.add("is-dragging");
+  window.addEventListener("mousemove", moveTableDrag);
+  window.addEventListener("mouseup", stopTableDrag);
 }
 
 function hasValidGate() {
@@ -215,6 +253,7 @@ onMounted(boot);
 
 onBeforeUnmount(() => {
   clearAnimationTimers();
+  stopTableDrag();
 });
 </script>
 
@@ -341,12 +380,12 @@ onBeforeUnmount(() => {
 
         <p v-if="errorMsg" class="backoffice-error">{{ errorMsg }}</p>
 
-        <div v-show="activePanel === 'feedback'" class="backoffice-table-wrap" :class="{ 'is-refreshing': dataLoading }">
+        <div v-show="activePanel === 'feedback'" class="backoffice-table-wrap" :class="{ 'is-refreshing': dataLoading }" @mousedown="startTableDrag">
           <p v-if="!feedback.length" class="backoffice-empty">{{ dataLoading ? "正在刷新…" : "暂无反馈" }}</p>
-          <table v-else class="backoffice-table">
+          <table v-else class="backoffice-table feedback-table">
             <thead>
               <tr>
-                <th>时间</th><th>类型</th><th>账号</th><th>工具</th><th>内容</th><th>联系方式</th><th>来源页</th>
+                <th>时间</th><th>类型</th><th>账号</th><th>设备ID</th><th>IP</th><th>工具</th><th>内容</th><th>联系方式</th><th>UA</th><th>来源页</th>
               </tr>
             </thead>
             <tbody>
@@ -354,6 +393,8 @@ onBeforeUnmount(() => {
                 <td class="nowrap">{{ fmt(row.created_at) }}</td>
                 <td><span class="status-tag tag-neutral">{{ feedbackTypeLabel[row.feedback_type] || row.feedback_type || "-" }}</span></td>
                 <td>{{ row.account || "" }}</td>
+                <td><div class="cell-scroll compact">{{ row.device_id || "" }}</div></td>
+                <td class="nowrap"><span class="ip-tag">{{ row.ip || "-" }}</span></td>
                 <td><div class="cell-scroll compact">{{ row.tool_name || row.tool_slug || "-" }}</div></td>
                 <td class="wide"><div class="cell-scroll">{{ row.content }}</div></td>
                 <td>
@@ -361,23 +402,25 @@ onBeforeUnmount(() => {
                     {{ row.contact_type ? `${row.contact_type}：${row.contact_value}` : (row.contact_value || "-") }}
                   </div>
                 </td>
+                <td class="dim"><div class="cell-scroll ua" :title="row.user_agent || '-'">{{ row.user_agent || "-" }}</div></td>
                 <td class="dim"><div class="cell-scroll url">{{ row.submitted_page || "-" }}</div></td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div v-show="activePanel === 'logs'" class="backoffice-table-wrap" :class="{ 'is-refreshing': dataLoading }">
+        <div v-show="activePanel === 'logs'" class="backoffice-table-wrap" :class="{ 'is-refreshing': dataLoading }" @mousedown="startTableDrag">
           <p v-if="!logs.length" class="backoffice-empty">{{ dataLoading ? "正在刷新…" : "暂无日志" }}</p>
-          <table v-else class="backoffice-table">
+          <table v-else class="backoffice-table logs-table">
             <thead>
-              <tr><th>时间</th><th>事件</th><th>账号</th><th>IP</th><th>UA</th></tr>
+              <tr><th>时间</th><th>事件</th><th>账号</th><th>设备ID</th><th>IP</th><th>UA</th></tr>
             </thead>
             <tbody>
               <tr v-for="row in logs" :key="row.id">
                 <td class="nowrap">{{ fmt(row.created_at) }}</td>
                 <td><span class="status-tag" :class="`event-${row.event || 'other'}`">{{ eventLabel[row.event] || row.event }}</span></td>
                 <td>{{ row.account || "-" }}</td>
+                <td><div class="cell-scroll compact">{{ row.device_id || "" }}</div></td>
                 <td class="nowrap"><span class="ip-tag">{{ row.ip || "-" }}</span></td>
                 <td class="dim wide"><div class="cell-scroll ua" :title="row.user_agent || '-'">{{ row.user_agent || "-" }}</div></td>
               </tr>
@@ -404,6 +447,10 @@ onBeforeUnmount(() => {
             <article>
               <strong>后台治理</strong>
               <span>管理员在后台编辑配置草稿，发布时记录操作日志；后续可扩展反馈通知和数据看板。</span>
+            </article>
+            <article>
+              <strong>历史分页</strong>
+              <span>反馈和账号活动日志目前只展示最近数据；后续可按页读取 MySQL 历史记录，并支持时间、账号、工具筛选。</span>
             </article>
           </div>
           <p class="config-doc-note">
@@ -967,16 +1014,22 @@ onBeforeUnmount(() => {
   flex: 1;
   min-height: 0;
   overflow: auto;
+  cursor: grab;
   border-radius: 18px;
   background: #fff;
   border: 1px solid #e2eaf5;
   box-shadow: 0 18px 50px rgba(37, 49, 68, 0.07);
 }
 
+.backoffice-table-wrap.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
 .backoffice-table-wrap::-webkit-scrollbar,
 .cell-scroll::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 .backoffice-table-wrap::-webkit-scrollbar-thumb,
@@ -1075,8 +1128,15 @@ onBeforeUnmount(() => {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  min-width: 980px;
   font-size: 13px;
+}
+
+.feedback-table {
+  min-width: 1280px;
+}
+
+.logs-table {
+  min-width: 860px;
 }
 
 .backoffice-table th,
@@ -1108,6 +1168,86 @@ onBeforeUnmount(() => {
 
 .backoffice-table .wide {
   width: 28%;
+}
+
+.feedback-table th:nth-child(1),
+.feedback-table td:nth-child(1) {
+  width: 162px;
+}
+
+.feedback-table th:nth-child(2),
+.feedback-table td:nth-child(2) {
+  width: 116px;
+}
+
+.feedback-table th:nth-child(3),
+.feedback-table td:nth-child(3) {
+  width: 126px;
+}
+
+.feedback-table th:nth-child(4),
+.feedback-table td:nth-child(4) {
+  width: 150px;
+}
+
+.feedback-table th:nth-child(5),
+.feedback-table td:nth-child(5) {
+  width: 130px;
+}
+
+.feedback-table th:nth-child(6),
+.feedback-table td:nth-child(6) {
+  width: 130px;
+}
+
+.feedback-table th:nth-child(7),
+.feedback-table td:nth-child(7) {
+  width: 196px;
+}
+
+.feedback-table th:nth-child(8),
+.feedback-table td:nth-child(8) {
+  width: 160px;
+}
+
+.feedback-table th:nth-child(9),
+.feedback-table td:nth-child(9) {
+  width: 230px;
+}
+
+.feedback-table th:nth-child(10),
+.feedback-table td:nth-child(10) {
+  width: 230px;
+}
+
+.logs-table th:nth-child(1),
+.logs-table td:nth-child(1) {
+  width: 170px;
+}
+
+.logs-table th:nth-child(2),
+.logs-table td:nth-child(2) {
+  width: 100px;
+}
+
+.logs-table th:nth-child(3),
+.logs-table td:nth-child(3) {
+  width: 140px;
+}
+
+.logs-table th:nth-child(4),
+.logs-table td:nth-child(4) {
+  width: 150px;
+}
+
+.logs-table th:nth-child(5),
+.logs-table td:nth-child(5) {
+  width: 130px;
+}
+
+.logs-table th:nth-child(6),
+.logs-table td:nth-child(6) {
+  width: 270px;
 }
 
 .nowrap {
@@ -1166,10 +1306,12 @@ onBeforeUnmount(() => {
   color: #475569;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
+  max-width: none;
+  width: max-content;
 }
 
 .cell-scroll {
-  max-height: 112px;
+  max-height: 72px;
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
@@ -1177,10 +1319,12 @@ onBeforeUnmount(() => {
   padding-right: 4px;
 }
 
-.cell-scroll.compact,
+.cell-scroll.compact {
+  max-height: 58px;
+}
+
 .cell-scroll.url,
 .cell-scroll.ua {
-  max-height: 72px;
   word-break: break-all;
 }
 

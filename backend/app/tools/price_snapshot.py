@@ -6,6 +6,7 @@ import re
 import urllib.parse
 import urllib.request
 from datetime import datetime
+from email.utils import parsedate_to_datetime
 from html import unescape
 from typing import Any
 
@@ -25,8 +26,10 @@ SINA_HEADERS = {
 }
 
 XXAPI_OIL_URL = "https://v2.xxapi.cn/api/oilPrice"
+XIAOXIONG_OIL_URL = "https://www.xiaoxiongyouhao.com/fprice/"
 SINA_HQ_URL = "https://hq.sinajs.cn/list="
 FRANKFURTER_URL = "https://api.frankfurter.app/latest"
+ER_API_URL = "https://open.er-api.com/v6/latest/"
 MOA_LIST_URL = "https://scs.moa.gov.cn/jcyj/"
 MYSTEEL_MOBILE_URL = "https://gc.m.mysteel.com/"
 MYSTEEL_SAND_STONE_URLS = [
@@ -203,24 +206,24 @@ def _extract_currency_codes(text: str) -> list[str]:
     return codes
 
 
-def run_domestic_oil(text: str = "", **_: dict) -> str:
-    region = (text or "北京").strip().replace("省", "").replace("市", "")
-    payload = _request_json(XXAPI_OIL_URL)
-    rows = payload.get("data") if isinstance(payload, dict) else None
-    if not isinstance(rows, list):
-        raise AppException(message="油价接口未返回有效数据", code=5001, status_code=502)
+def _normalize_region(value: str) -> str:
+    return (value or "").strip().replace("省", "").replace("市", "").replace("自治区", "").replace("特别行政区", "")
 
-    target = None
-    for item in rows:
-        name = str(item.get("regionName") or "")
-        if region in name or name.replace("省", "").replace("市", "") == region:
-            target = item
-            break
-    if target is None:
-        target = rows[0] if rows else None
-    if not isinstance(target, dict):
-        raise AppException(message="未查询到油价数据", code=4001, status_code=400)
 
+def _parse_date_value(value: str) -> datetime | None:
+    match = re.search(r"(\d{4})[-年/](\d{1,2})[-月/](\d{1,2})", value or "")
+    if match:
+        try:
+            return datetime(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+        except ValueError:
+            return None
+    try:
+        return parsedate_to_datetime(value).replace(tzinfo=None)
+    except (TypeError, ValueError):
+        return None
+
+
+def _oil_snapshot_from_target(target: dict[str, Any], region: str, source: str, notes: list[str] | None = None) -> str:
     area = str(target.get("regionName") or region)
     rows_out = [
         ("89号汽油", target.get("n89"), " 元/升"),
@@ -232,10 +235,85 @@ def run_domestic_oil(text: str = "", **_: dict) -> str:
     return _format_snapshot(
         f"今日油价 - {area}",
         rows_out,
-        "XXAPI 今日油价公开接口",
+        source,
         str(target.get("date") or ""),
-        ["输入省份可切换地区，例如：广东、上海、四川。"],
+        ["输入省份可切换地区，例如：广东、上海、四川。", *(notes or [])],
     )
+
+
+def _fetch_xiaoxiong_oil(region: str) -> dict[str, Any]:
+    html = _request_text(XIAOXIONG_OIL_URL, headers=DEFAULT_HEADERS)
+    date_match = re.search(r"今日油价[（(](\d{4}-\d{1,2}-\d{1,2})[）)]", html)
+    updated_at = date_match.group(1) if date_match else ""
+    row_pattern = re.compile(
+        r'<tr>\s*<td class="region-name">.*?>([^<>]+)</a></td>\s*'
+        r'<td[^>]*>([\d.\\-]+)</td>\s*'
+        r'<td[^>]*>([\d.\\-]+)</td>\s*'
+        r'<td[^>]*>([\d.\\-]+)</td>',
+        flags=re.S,
+    )
+    rows = []
+    for name, n92, n95, n0 in row_pattern.findall(html):
+        rows.append(
+            {
+                "regionName": _clean_text(name),
+                "n89": None,
+                "n92": n92,
+                "n95": n95,
+                "n98": None,
+                "n0": n0,
+                "date": updated_at,
+            }
+        )
+    if not rows:
+        raise AppException(message="油价兜底页面未解析到有效数据", code=5001, status_code=502)
+
+    normalized = _normalize_region(region)
+    for item in rows:
+        if normalized and normalized in _normalize_region(str(item.get("regionName") or "")):
+            return item
+    return rows[0]
+
+
+def run_domestic_oil(text: str = "", **_: dict) -> str:
+    region = _normalize_region(text or "北京")
+    primary_target = None
+    primary_error: Exception | None = None
+    try:
+        payload = _request_json(XXAPI_OIL_URL)
+        rows = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(rows, list):
+            raise AppException(message="油价接口未返回有效数据", code=5001, status_code=502)
+        for item in rows:
+            name = str(item.get("regionName") or "")
+            if region in _normalize_region(name) or _normalize_region(name) == region:
+                primary_target = item
+                break
+        if primary_target is None:
+            primary_target = rows[0] if rows else None
+        if not isinstance(primary_target, dict):
+            raise AppException(message="未查询到油价数据", code=4001, status_code=400)
+    except Exception as exc:
+        primary_error = exc
+
+    try:
+        fallback_target = _fetch_xiaoxiong_oil(region)
+        primary_date = _parse_date_value(str(primary_target.get("date") if primary_target else ""))
+        fallback_date = _parse_date_value(str(fallback_target.get("date") or ""))
+        if primary_target is None or (fallback_date and (not primary_date or fallback_date >= primary_date)):
+            return _oil_snapshot_from_target(
+                fallback_target,
+                region,
+                "小熊油耗全国油价页（兜底）",
+                ["兜底页面暂不提供 89/98 号汽油价格时会显示 --。"],
+            )
+    except Exception:
+        if primary_target is None and primary_error:
+            raise primary_error
+
+    if primary_target is None:
+        raise AppException(message="未查询到油价数据", code=4001, status_code=400)
+    return _oil_snapshot_from_target(primary_target, region, "XXAPI 今日油价公开接口")
 
 
 def run_international_crude(text: str = "", **_: dict) -> str:
@@ -321,8 +399,36 @@ def run_exchange_rate(text: str = "", **_: dict) -> str:
     if not targets:
         raise AppException(message="换算币种不能和基准币种相同", code=4001, status_code=400)
 
-    payload = _request_json(FRANKFURTER_URL, params={"from": base, "to": ",".join(targets)})
-    rates = payload.get("rates") if isinstance(payload, dict) else None
+    payload: dict[str, Any] = {}
+    rates: dict[str, Any] | None = None
+    source = "Frankfurter 汇率公开接口"
+    primary_error: Exception | None = None
+    try:
+        payload = _request_json(FRANKFURTER_URL, params={"from": base, "to": ",".join(targets)})
+        rates = payload.get("rates") if isinstance(payload, dict) else None
+        if not isinstance(rates, dict):
+            raise AppException(message="汇率接口未返回有效数据", code=5001, status_code=502)
+    except Exception as exc:
+        primary_error = exc
+
+    try:
+        fallback_payload = _request_json(f"{ER_API_URL}{base}")
+        fallback_rates_raw = fallback_payload.get("rates") if isinstance(fallback_payload, dict) else None
+        if not isinstance(fallback_rates_raw, dict):
+            raise AppException(message="汇率兜底接口未返回有效数据", code=5001, status_code=502)
+        fallback_rates = {code: fallback_rates_raw.get(code) for code in targets if code in fallback_rates_raw}
+        if len(fallback_rates) == len(targets):
+            fallback_date = str(fallback_payload.get("time_last_update_utc") or fallback_payload.get("time_last_update_iso") or "")
+            primary_date = _parse_date_value(str(payload.get("date") or ""))
+            fallback_date_value = _parse_date_value(fallback_date)
+            if rates is None or (fallback_date_value and (not primary_date or fallback_date_value >= primary_date)):
+                payload = {"date": fallback_date}
+                rates = fallback_rates
+                source = "ExchangeRate-API 免费公开接口（兜底）"
+    except Exception:
+        if rates is None and primary_error:
+            raise primary_error
+
     if not isinstance(rates, dict):
         raise AppException(message="汇率接口未返回有效数据", code=5001, status_code=502)
 
@@ -332,7 +438,7 @@ def run_exchange_rate(text: str = "", **_: dict) -> str:
     else:
         rows = [(f"{base}/{code}", value, "") for code, value in rates.items()]
         title = f"今日汇率 - 1 {base}"
-    return _format_snapshot(title, rows, "Frankfurter 汇率公开接口", str(payload.get("date") or ""))
+    return _format_snapshot(title, rows, source, str(payload.get("date") or ""))
 
 
 def _latest_moa_article() -> tuple[str, str]:

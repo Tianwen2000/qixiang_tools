@@ -8,7 +8,34 @@
 
 from app.db.models import Base
 from app.db.session import get_engine
+from sqlalchemy import inspect, text
+
+
+COMPAT_COLUMNS = {
+    "feedback": {
+        "ip": "VARCHAR(64) NOT NULL DEFAULT ''",
+        "device_id": "VARCHAR(128) NOT NULL DEFAULT ''",
+    },
+    "logs": {
+        "device_id": "VARCHAR(128) NOT NULL DEFAULT ''",
+    },
+}
+
+
+def _ensure_compat_columns() -> None:
+    engine = get_engine()
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    with engine.begin() as connection:
+        for table_name, columns in COMPAT_COLUMNS.items():
+            if table_name not in table_names:
+                continue
+            existing = {column["name"] for column in inspector.get_columns(table_name)}
+            for column_name, column_sql in columns.items():
+                if column_name not in existing:
+                    connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_sql}"))
 
 
 def ensure_schema() -> None:
     Base.metadata.create_all(bind=get_engine())
+    _ensure_compat_columns()

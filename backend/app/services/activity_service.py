@@ -35,7 +35,7 @@ def _ensure_ready() -> None:
         _schema_ready = True
 
 
-def record(event: str, account: str = "", ip: str = "", user_agent: str = "") -> None:
+def record(event: str, account: str = "", ip: str = "", user_agent: str = "", device_id: str = "") -> None:
     """记录一条账号活动日志；失败仅告警，不抛错。"""
     try:
         _ensure_ready()
@@ -44,6 +44,7 @@ def record(event: str, account: str = "", ip: str = "", user_agent: str = "") ->
                 ActivityLog(
                     event=event[:16],
                     account=(account or "")[:11],
+                    device_id=(device_id or "")[:128],
                     ip=(ip or "")[:64],
                     user_agent=(user_agent or "")[:512],
                     created_at=utcnow(),
@@ -63,6 +64,7 @@ def recent(limit: int = 200) -> list[dict]:
                     "id": r.id,
                     "event": r.event,
                     "account": r.account,
+                    "device_id": r.device_id,
                     "ip": r.ip,
                     "user_agent": r.user_agent,
                     "created_at": r.created_at.isoformat(),

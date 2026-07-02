@@ -19,3 +19,4 @@ class FeedbackInput(BaseModel):
     contactValue: str = Field(default="")
     submittedPage: str = Field(default="")
     userAgent: str = Field(default="")
+    deviceId: str = Field(default="")

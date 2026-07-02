@@ -43,7 +43,7 @@ def _clip(value: str, limit: int) -> str:
     return (value or "").strip()[:limit]
 
 
-def submit(payload: dict, account: str | None = None) -> dict:
+def submit(payload: dict, account: str | None = None, ip: str = "") -> dict:
     content = (payload.get("content") or "").strip()
     if not content:
         raise AppException(message="请先填写反馈内容", code=4001, status_code=400)
@@ -59,6 +59,8 @@ def submit(payload: dict, account: str | None = None) -> dict:
         contact_value=_clip(payload.get("contactValue", ""), 256),
         submitted_page=_clip(payload.get("submittedPage", ""), 512),
         user_agent=_clip(payload.get("userAgent", ""), 512),
+        ip=_clip(ip, 64),
+        device_id=_clip(payload.get("deviceId", ""), 128),
         account=(account or None),
         created_at=utcnow(),
     )
@@ -91,6 +93,8 @@ def recent(limit: int = 200) -> list[dict]:
                     "contact_value": r.contact_value,
                     "submitted_page": r.submitted_page,
                     "user_agent": r.user_agent,
+                    "ip": r.ip,
+                    "device_id": r.device_id,
                     "account": r.account or "",
                     "created_at": r.created_at.isoformat(),
                 }

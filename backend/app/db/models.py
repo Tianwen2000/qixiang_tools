@@ -65,6 +65,8 @@ class Feedback(Base):
     contact_value: Mapped[str] = mapped_column(String(256), nullable=False, default="")
     submitted_page: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     user_agent: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    ip: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    device_id: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     # 提交时如已登录，记录账号；匿名则为空。
     account: Mapped[str | None] = mapped_column(String(11), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utcnow, index=True)
@@ -76,6 +78,7 @@ class ActivityLog(Base):
     id: Mapped[int] = _pk()
     event: Mapped[str] = mapped_column(String(16), nullable=False, index=True)  # register / login / logout
     account: Mapped[str] = mapped_column(String(11), nullable=False, default="", index=True)
+    device_id: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     ip: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     user_agent: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utcnow, index=True)

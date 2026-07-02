@@ -17,6 +17,7 @@ const feedbackType = ref("bug");
 const content = ref("");
 const contactType = ref("email");
 const contactValue = ref("");
+const FEEDBACK_DEVICE_ID_KEY = "tw-feedback-device-id-v1";
 
 const feedbackTypeOptions = [
   { value: "bug", label: "问题反馈" },
@@ -58,6 +59,27 @@ function getContactPlaceholder() {
   return placeholderMap[contactType.value] || "请输入联系方式";
 }
 
+function getFeedbackDeviceId() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  const randomPart =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const deviceId = `web-${randomPart}`;
+  try {
+    const existing = window.localStorage.getItem(FEEDBACK_DEVICE_ID_KEY);
+    if (existing) {
+      return existing;
+    }
+    window.localStorage.setItem(FEEDBACK_DEVICE_ID_KEY, deviceId);
+  } catch {
+    return deviceId;
+  }
+  return deviceId;
+}
+
 async function handleSubmit() {
   if (!content.value.trim()) {
     submitStatus.value = { type: "error", message: "请先写一点反馈内容。" };
@@ -94,6 +116,7 @@ async function handleSubmit() {
       contactValue: contactValue.value.trim(),
       submittedPage: typeof window === "undefined" ? route.fullPath : window.location.href,
       userAgent: typeof navigator === "undefined" ? "" : navigator.userAgent,
+      deviceId: getFeedbackDeviceId(),
     });
 
     submitStatus.value = {
