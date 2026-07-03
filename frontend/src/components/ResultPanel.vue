@@ -16,7 +16,7 @@ const props = defineProps({
     default: "text",
   },
 });
-const emit = defineEmits(["clear"]);
+const emit = defineEmits(["clear", "copy"]);
 
 const copied = ref(false);
 const previewUrl = ref("");
@@ -54,6 +54,7 @@ async function copyResult() {
   }
   try {
     await writeClipboardText(props.result);
+    emit("copy", { outputLength: props.result.length });
     copied.value = true;
     showToast({
       type: "success",

@@ -3,6 +3,7 @@
 import { computed, reactive, ref, watch } from "vue";
 
 import { uploadFileTool } from "../api/tools.js";
+import { buildToolUsageBase, reportToolUsageLog } from "../api/tool-usage.js";
 import GlassSelect from "./GlassSelect.vue";
 import ResultPanel from "./ResultPanel.vue";
 import { showToast, updateToast } from "../utils/toast.js";
@@ -41,7 +42,7 @@ const visibleParams = computed(() =>
 watch(
   () => props.tool,
   (nextTool) => {
-    clearInput();
+    clearInput(true);
     result.value = "";
     Object.keys(params).forEach((key) => delete params[key]);
     Object.assign(params, buildInitialParams(nextTool));
@@ -49,7 +50,19 @@ watch(
 );
 
 async function submit() {
+  reportToolUsageLog({
+    ...buildToolUsageBase(props.tool),
+    action: "click",
+    success: true,
+    inputLength: file.value?.size || 0,
+  });
   if (!file.value) {
+    reportToolUsageLog({
+      ...buildToolUsageBase(props.tool),
+      action: "convert",
+      success: false,
+      errorMessage: "请先选择文件",
+    });
     showToast({
       type: "error",
       title: "操作失败",
@@ -68,9 +81,18 @@ async function submit() {
     message: `${props.tool.name} 处理中...`,
     duration: 0,
   });
+  const startedAt = performance.now();
   try {
     const data = await uploadFileTool(props.tool.slug, file.value, { ...params });
     result.value = data.kind === "file" ? data : data.result;
+    reportToolUsageLog({
+      ...buildToolUsageBase(props.tool),
+      action: "convert",
+      success: true,
+      durationMs: performance.now() - startedAt,
+      inputLength: file.value?.size || 0,
+      outputLength: typeof result.value === "string" ? result.value.length : result.value?.blob?.size || 0,
+    });
     updateToast(toastId, {
       type: "success",
       title: "处理完成",
@@ -78,6 +100,15 @@ async function submit() {
       duration: 2400,
     });
   } catch (err) {
+    reportToolUsageLog({
+      ...buildToolUsageBase(props.tool),
+      action: "convert",
+      success: false,
+      durationMs: performance.now() - startedAt,
+      inputLength: file.value?.size || 0,
+      outputLength: 0,
+      errorMessage: err.message || "上传失败",
+    });
     updateToast(toastId, {
       type: "error",
       title: "操作失败",
@@ -94,14 +125,37 @@ function toolResultMessage(resultType) {
 }
 
 function clearOutput() {
+  reportToolUsageLog({
+    ...buildToolUsageBase(props.tool),
+    action: "clear",
+    success: true,
+    outputLength: typeof result.value === "string" ? result.value.length : result.value?.blob?.size || 0,
+  });
   result.value = "";
 }
 
-function clearInput() {
+function clearInput(silent = false) {
+  if (!silent) {
+    reportToolUsageLog({
+      ...buildToolUsageBase(props.tool),
+      action: "clear",
+      success: true,
+      inputLength: file.value?.size || 0,
+    });
+  }
   file.value = null;
   if (fileInputRef.value) {
     fileInputRef.value.value = "";
   }
+}
+
+function reportCopy(event) {
+  reportToolUsageLog({
+    ...buildToolUsageBase(props.tool),
+    action: "copy",
+    success: true,
+    outputLength: event?.outputLength || 0,
+  });
 }
 </script>
 
@@ -146,9 +200,9 @@ function clearInput() {
       <button type="button" :disabled="loading" @click="submit">
         {{ loading ? "处理中..." : "上传并执行" }}
       </button>
-      <button type="button" class="secondary-button" @click="clearInput">清空输入</button>
+      <button type="button" class="secondary-button" @click="clearInput()">清空输入</button>
     </div>
 
-    <ResultPanel v-if="result" :result="result" :result-type="tool.result_type" @clear="clearOutput" />
+    <ResultPanel v-if="result" :result="result" :result-type="tool.result_type" @copy="reportCopy" @clear="clearOutput" />
   </section>
 </template>

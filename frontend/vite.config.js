@@ -13,7 +13,8 @@ export default defineConfig({
     ],
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:8000",
+        target: "http://127.0.0.1:8000", //浏览器请求 localhost:5173/api/xxx
+                                         // Vite 内部转发到 127.0.0.1:8000/api/xxx
         changeOrigin: true,
       },
     },

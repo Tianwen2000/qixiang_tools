@@ -89,6 +89,9 @@ export function getToolModeLabel(tool) {
     return "本地测试";
   }
   if (tool?.input_mode === "local" && tool?.category === "ops") {
+    if (tool?.component === "ToolKvHeadersToJson" || tool?.component === "ToolJsonBodyFormatter") {
+      return "本地处理";
+    }
     return "命令速查";
   }
   if (tool?.input_mode === "form" && tool?.category === "ops") {

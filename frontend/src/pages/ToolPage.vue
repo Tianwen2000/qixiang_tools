@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 import { getTool } from "../api/tools.js";
+import { buildToolUsageBase, reportToolUsageLog } from "../api/tool-usage.js";
 import LoadingState from "../components/LoadingState.vue";
 import SiteHeader from "../components/SiteHeader.vue";
 import ToolAbstractAppliance from "../components/ToolAbstractAppliance.vue";
@@ -17,6 +18,8 @@ import ToolFileForm from "../components/ToolFileForm.vue";
 import ToolHttpTester from "../components/ToolHttpTester.vue";
 import ToolImageInspector from "../components/ToolImageInspector.vue";
 import ToolKeyboardTester from "../components/ToolKeyboardTester.vue";
+import ToolJsonBodyFormatter from "../components/ToolJsonBodyFormatter.vue";
+import ToolKvHeadersToJson from "../components/ToolKvHeadersToJson.vue";
 import ToolLocalIpLookup from "../components/ToolLocalIpLookup.vue";
 import ToolMarketQuote from "../components/ToolMarketQuote.vue";
 import ToolMiniGame from "../components/ToolMiniGame.vue";
@@ -65,6 +68,8 @@ const formComponent = computed(() => {
     ToolHttpTester,
     ToolImageInspector,
     ToolKeyboardTester,
+    ToolJsonBodyFormatter,
+    ToolKvHeadersToJson,
     ToolLocalIpLookup,
     ToolMarketQuote,
     ToolMiniGame,
@@ -146,6 +151,11 @@ async function fetchTool() {
     const latestTool = await getTool(slug);
     tool.value = latestTool;
     writeJsonCache(getToolCacheKey(slug), latestTool);
+    reportToolUsageLog({
+      ...buildToolUsageBase(latestTool),
+      action: "view",
+      success: true,
+    });
   } catch (err) {
     if (!tool.value) {
       error.value = err.message || "工具加载失败";

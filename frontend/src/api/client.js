@@ -104,10 +104,15 @@ function buildApiUrl(path, params = {}) {
 async function parseJsonResponse(response) {
   const payload = await response.json().catch(() => null);
   if (!payload) {
-    throw new Error("服务端返回的不是有效 JSON 数据");
+    const error = new Error("服务端返回的不是有效 JSON 数据");
+    error.status = response.status;
+    throw error;
   }
   if (!response.ok || payload.code !== 0) {
-    throw new Error(payload.message || "请求失败");
+    const error = new Error(payload.message || "请求失败");
+    error.status = response.status;
+    error.code = payload.code;
+    throw error;
   }
   return payload.data;
 }

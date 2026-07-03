@@ -1,7 +1,7 @@
 # AI 助手与登录系统说明
 
 > 本文以当前仓库真实实现为准，记录“悬浮 AI 助手 + 登录/注册体系”的架构、接口、配置、上线步骤与后续扩展点。
-> 这是项目里**第一个引入数据库**的功能；其余 200+ 工具仍不依赖数据库、互不影响。
+> 数据库最初为登录体系引入；当前登录、反馈、后台日志和工具使用日志使用 MySQL，大多数普通工具仍不依赖数据库、互不影响。
 
 ## 1. 这套东西是什么
 
@@ -139,7 +139,7 @@ BACKOFFICE_SESSION_HOURS=12
 
 ## 8. 上线步骤（接现有部署架构）
 
-服务器：Ubuntu，`/home/ubuntu/qixiang_tools`，nginx 托管 `frontend/dist` 并反代 `/api`，后端 systemd `qixiang-backend`（venv `backend/.server-venv`）。详见 [部署与更新指南](./部署与更新指南.md)。
+服务器：Ubuntu，`/home/ubuntu/qixiang_tools`，nginx 托管 `frontend/dist` 并反代 `/api`，后端 systemd `qixiang-backend`（venv `backend/.server-venv`）。详见 [部署与更新指南](../git和服务器部署/部署与更新指南.md)。
 
 1. **装 MySQL**：`sudo apt install mysql-server`，建库建账号：
    ```sql
@@ -152,7 +152,7 @@ BACKOFFICE_SESSION_HOURS=12
 3. **写 `backend/.env`**：填真实 `DATABASE_URL`；站点是 HTTPS 就设 `SESSION_COOKIE_SECURE=true`。
 4. **前端**：本地先 `cd frontend && npm run build`，上传 `frontend/dist`（**含 `public` 里的机器人 png/gif**，构建后已在 `dist/`）。
 5. **重启后端**：`sudo systemctl restart qixiang-backend`。表会在首次登录时自动建。
-6. 注意 [部署与更新指南](./部署与更新指南.md) 里的**文件权限修正**（Mac 上传文件常带 600，nginx 读不了会 403）。
+6. 注意 [部署与更新指南](../git和服务器部署/部署与更新指南.md) 里的**文件权限修正**（Mac 上传文件常带 600，nginx 读不了会 403）。
 
 ## 9. 反馈系统（落库）与独立后台查看
 

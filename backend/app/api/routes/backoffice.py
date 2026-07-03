@@ -5,12 +5,12 @@
 这组接口使用后台专用 Cookie，不复用 AI 登录态，也不依赖旧的 AI 管理员配置。
 """
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Query, Request, Response
 
 from app.core.config import get_settings
 from app.core.response import success_response
 from app.schemas.backoffice import BackofficeEntryInput, BackofficeLoginInput, BackofficeTicketInput
-from app.services import activity_service, backoffice_service, feedback_service
+from app.services import activity_service, backoffice_service, feedback_service, tool_usage_service
 
 
 router = APIRouter()
@@ -89,3 +89,35 @@ async def backoffice_logs(request: Request) -> dict:
     user = _require_backoffice(request)
     backoffice_service.require_admin(user)
     return success_response({"items": activity_service.recent(limit=500)})
+
+
+@router.get("/backoffice/tool-usage-logs")
+async def backoffice_tool_usage_logs(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=30, ge=1, le=100),
+    start_time: str = "",
+    end_time: str = "",
+    tool_name: str = "",
+    category: str = "",
+    action: str = "",
+    success: str = "",
+    account: str = "",
+    ip: str = "",
+) -> dict:
+    user = _require_backoffice(request)
+    backoffice_service.require_admin(user)
+    return success_response(
+        tool_usage_service.query(
+            page=page,
+            page_size=page_size,
+            start_time=start_time,
+            end_time=end_time,
+            tool_name=tool_name,
+            category=category,
+            action=action,
+            success=success,
+            account=account,
+            ip=ip,
+        )
+    )

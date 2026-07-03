@@ -22,6 +22,8 @@ CATEGORY_TOOL_ORDER = {
         "character-count-slice",
         "free-translate",
         "local-ip-lookup",
+        "kv-headers-to-json",
+        "json-body-formatter",
     ),
     "format": (
         "png-jpg-ico-converter",

@@ -82,3 +82,25 @@ class ActivityLog(Base):
     ip: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     user_agent: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utcnow, index=True)
+
+
+class ToolUsageLog(Base):
+    __tablename__ = "tool_usage_logs"
+
+    id: Mapped[int] = _pk()
+    account: Mapped[str] = mapped_column(String(11), nullable=False, default="", index=True)
+    device_id: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    ip: Mapped[str] = mapped_column(String(64), nullable=False, default="", index=True)
+    user_agent: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    source_page: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    tool_id: Mapped[str] = mapped_column(String(128), nullable=False, default="", index=True)
+    tool_name: Mapped[str] = mapped_column(String(128), nullable=False, default="", index=True)
+    category: Mapped[str] = mapped_column(String(64), nullable=False, default="", index=True)
+    action: Mapped[str] = mapped_column(String(32), nullable=False, default="", index=True)
+    success: Mapped[str] = mapped_column(String(8), nullable=False, default="", index=True)
+    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    input_length: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    output_length: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    error_code: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    error_message: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utcnow, index=True)

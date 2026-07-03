@@ -790,6 +790,32 @@
     "params": []
   },
   {
+    "slug": "kv-headers-to-json",
+    "module": "kv_headers_to_json",
+    "name": "kv键值对请求信息和JSON互转",
+    "category": "ops",
+    "summary": "把 key: value 请求信息和 JSON 对象在浏览器本地互转。",
+    "description": "在浏览器本地按行解析 key: value 内容，或把 JSON 对象转回 key: value；只按第一个冒号拆分，自动忽略空行，重复 key 使用最后一次出现的值，不上传到后端。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolKvHeadersToJson",
+    "enabled": true,
+    "params": []
+  },
+  {
+    "slug": "json-body-formatter",
+    "module": "json_body_formatter",
+    "name": "请求响应数据格式美化(json)",
+    "category": "ops",
+    "summary": "在浏览器本地实现 JSON 压缩文本和格式化文本互转。",
+    "description": "在浏览器本地处理 JSON 请求体或响应体，Raw 原始内容不 trim、不压缩、不排序；可输出 2 空格缩进格式，也可压缩为一行 JSON。",
+    "input_mode": "local",
+    "result_type": "text",
+    "component": "ToolJsonBodyFormatter",
+    "enabled": true,
+    "params": []
+  },
+  {
     "slug": "random-password-generator",
     "module": "random_password_generator",
     "name": "随机密码生成器",

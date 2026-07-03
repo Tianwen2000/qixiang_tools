@@ -35,7 +35,8 @@ function resolveApiBase() {
     }
     return "/api";
   }
-  return envBase || "http://127.0.0.1:8000/api";
+  // return envBase || "http://127.0.0.1:8000/api"; // 这样容易造成跨域请求失败loclhost和127.0.0.1
+  return envBase || "/api";
 }
 
 const API_BASE = resolveApiBase();

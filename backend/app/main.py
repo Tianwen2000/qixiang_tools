@@ -1,6 +1,7 @@
 """文件说明：FastAPI 后端应用入口，负责创建应用、注册路由、中间件和启动清理任务。"""
 
 import sys
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -24,6 +25,7 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     configure_logging()
+    logging.getLogger(__name__).info("后端服务启动完成")
     startup_cleanup()
     yield
 

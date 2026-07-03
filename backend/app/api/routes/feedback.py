@@ -19,6 +19,7 @@ router = APIRouter()
 
 
 def _client_ip(request: Request) -> str:
+    """优先取公网 IPv4；本地开发时允许记录 127.0.0.1 或内网 IPv4。"""
     candidates: list[str] = []
     for header in ("cf-connecting-ip", "true-client-ip", "x-real-ip", "x-forwarded-for"):
         value = request.headers.get(header, "")
@@ -28,14 +29,19 @@ def _client_ip(request: Request) -> str:
     if request.client and request.client.host:
         candidates.append(request.client.host)
 
+    fallback_ipv4 = ""
     for candidate in candidates:
         try:
             parsed = ip_address(candidate)
         except ValueError:
             continue
-        if parsed.version == 4 and not parsed.is_private and not parsed.is_loopback:
+        if parsed.version != 4:
+            continue
+        if not fallback_ipv4:
+            fallback_ipv4 = str(parsed)
+        if not parsed.is_private and not parsed.is_loopback:
             return str(parsed)
-    return ""
+    return fallback_ipv4
 
 
 @router.post("/feedback")

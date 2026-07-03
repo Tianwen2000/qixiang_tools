@@ -3,6 +3,7 @@
 import { computed, reactive, ref, watch } from "vue";
 
 import { executeTextTool } from "../api/tools.js";
+import { buildToolUsageBase, reportToolUsageLog } from "../api/tool-usage.js";
 import GlassSelect from "./GlassSelect.vue";
 import ResultPanel from "./ResultPanel.vue";
 import { showToast, updateToast } from "../utils/toast.js";
@@ -67,6 +68,12 @@ async function submit() {
   if (loading.value) {
     return;
   }
+  reportToolUsageLog({
+    ...buildToolUsageBase(props.tool),
+    action: "click",
+    success: true,
+    inputLength: text.value.length,
+  });
   loading.value = true;
   const toastId = showToast({
     type: "loading",
@@ -74,9 +81,18 @@ async function submit() {
     message: `${props.tool.name} 处理中...`,
     duration: 0,
   });
+  const startedAt = performance.now();
   try {
     const data = await executeTextTool(props.tool.slug, { text: text.value, params: { ...params } });
     result.value = data.kind === "file" ? data : data.result;
+    reportToolUsageLog({
+      ...buildToolUsageBase(props.tool),
+      action: "convert",
+      success: true,
+      durationMs: performance.now() - startedAt,
+      inputLength: text.value.length,
+      outputLength: typeof result.value === "string" ? result.value.length : result.value?.blob?.size || 0,
+    });
     updateToast(toastId, {
       type: "success",
       title: "执行完成",
@@ -84,6 +100,15 @@ async function submit() {
       duration: 2200,
     });
   } catch (err) {
+    reportToolUsageLog({
+      ...buildToolUsageBase(props.tool),
+      action: "convert",
+      success: false,
+      durationMs: performance.now() - startedAt,
+      inputLength: text.value.length,
+      outputLength: 0,
+      errorMessage: err.message || "执行失败",
+    });
     updateToast(toastId, {
       type: "error",
       title: "操作失败",
@@ -96,7 +121,22 @@ async function submit() {
 }
 
 function clearOutput() {
+  reportToolUsageLog({
+    ...buildToolUsageBase(props.tool),
+    action: "clear",
+    success: true,
+    outputLength: typeof result.value === "string" ? result.value.length : result.value?.blob?.size || 0,
+  });
   result.value = "";
+}
+
+function reportCopy(event) {
+  reportToolUsageLog({
+    ...buildToolUsageBase(props.tool),
+    action: "copy",
+    success: true,
+    outputLength: event?.outputLength || 0,
+  });
 }
 </script>
 
@@ -154,6 +194,6 @@ function clearOutput() {
       <button type="button" class="secondary-button" @click="text = ''">清空输入</button>
     </div>
 
-    <ResultPanel v-if="result" :result="result" result-type="text" @clear="clearOutput" />
+    <ResultPanel v-if="result" :result="result" result-type="text" @copy="reportCopy" @clear="clearOutput" />
   </section>
 </template>

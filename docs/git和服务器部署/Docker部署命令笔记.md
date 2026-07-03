@@ -334,5 +334,5 @@ docker compose up -d --build
 - Docker 方式不需要在服务器手动 `npm run build`，前端构建会在 `frontend/Dockerfile` 里完成。
 - 音视频互转工具依赖 `ffmpeg`，所以后端镜像里必须安装 `ffmpeg`。
 - 中文图片、水印、证书等工具可能用到中文字体，所以后端镜像里安装 `fonts-noto-cjk`。
-- 登录/AI 模块需要 MySQL：可连宿主机已装的 MySQL，或在 `docker-compose.yml` 里新增 `mysql` 服务，并给后端配 `DATABASE_URL` 等环境变量（见 [AI 助手与登录系统说明](./AI助手与登录系统说明.md)）；其余工具不需要数据库。
+- 登录、反馈、后台日志和工具使用日志需要 MySQL：可连宿主机已装的 MySQL，或在 `docker-compose.yml` 里新增 `mysql` 服务，并给后端配 `DATABASE_URL` 等环境变量（见 [AI 助手与登录系统说明](../技术架构和代码功能说明/AI助手与登录系统说明.md) 与 [数据库和数据表说明](../数据库和数据表说明.md)）；其余普通工具大多不需要数据库。
 - 如果以后还要缓存等能力，再按需新增 `redis` 服务。

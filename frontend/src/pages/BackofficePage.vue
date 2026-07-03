@@ -8,9 +8,11 @@ import {
   getBackofficeMe,
   listBackofficeFeedback,
   listBackofficeLogs,
+  listBackofficeToolUsageLogs,
   loginBackoffice,
   logoutBackoffice,
 } from "../api/backoffice.js";
+import GlassSelect from "../components/GlassSelect.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -21,6 +23,18 @@ const password = ref("");
 const activePanel = ref("feedback");
 const feedback = ref([]);
 const logs = ref([]);
+const toolUsageLogs = ref([]);
+const toolUsagePagination = ref({ page: 1, pageSize: 30, total: 0 });
+const toolUsageFilters = ref({
+  startTime: "",
+  endTime: "",
+  toolName: "",
+  category: "",
+  action: "",
+  success: "",
+  account: "",
+  ip: "",
+});
 const loading = ref(true);
 const loggingIn = ref(false);
 const dataLoading = ref(false);
@@ -43,23 +57,67 @@ const tableDrag = {
 
 const eventLabel = { register: "注册", login: "登录", logout: "退出" };
 const feedbackTypeLabel = { bug: "问题反馈", suggestion: "功能建议", content: "内容纠错", praise: "表扬", other: "其他" };
+const BACKOFFICE_AUTH_MESSAGES = ["请先登录后台", "后台登录状态无效", "后台入口已失效"];
+const toolUsageActionOptions = [
+  { value: "", label: "全部" },
+  { value: "view", label: "查看工具" },
+  { value: "click", label: "点击按钮" },
+  { value: "convert", label: "执行转换" },
+  { value: "copy", label: "复制结果" },
+  { value: "clear", label: "清空内容" },
+];
+const toolUsageResultOptions = [
+  { value: "", label: "全部" },
+  { value: "success", label: "成功" },
+  { value: "fail", label: "失败" },
+];
+const toolUsageCategoryOptions = [
+  { value: "", label: "全部" },
+  { value: "dev", label: "开发" },
+  { value: "ops", label: "测试运维" },
+  { value: "format", label: "格式转换" },
+  { value: "text", label: "文本" },
+  { value: "encode", label: "编码" },
+  { value: "image", label: "图片" },
+  { value: "chart", label: "图表" },
+  { value: "time", label: "时间" },
+  { value: "game", label: "益智游戏" },
+  { value: "other", label: "其他" },
+];
+const toolUsageActionLabel = Object.fromEntries(toolUsageActionOptions.map((item) => [item.value, item.label]));
+const toolUsageResultLabel = Object.fromEntries(toolUsageResultOptions.map((item) => [item.value, item.label]));
+const toolUsageCategoryLabel = Object.fromEntries(toolUsageCategoryOptions.map((item) => [item.value, item.label]));
 
 const isLoggedIn = computed(() => Boolean(user.value));
 const isAdmin = computed(() => user.value?.role === "admin");
 const feedbackCount = computed(() => feedback.value.length);
 const logsCount = computed(() => logs.value.length);
+const toolUsageCount = computed(() => toolUsagePagination.value.total || toolUsageLogs.value.length);
+const toolUsagePageCount = computed(() =>
+  Math.max(1, Math.ceil((toolUsagePagination.value.total || 0) / toolUsagePagination.value.pageSize)),
+);
 const activePanelTitle = computed(() => {
+  if (activePanel.value === "toolUsage") {
+    return "用户工具使用日志";
+  }
   if (activePanel.value === "logs") {
-    return "账号活动日志";
+    return "天问AI账号活动日志";
   }
   if (activePanel.value === "config") {
     return "后台配置管理";
   }
-  return "反馈系统";
+  return "用户反馈";
 });
 
 function fmt(iso) {
   return iso ? String(iso).replace("T", " ").slice(0, 19) : "";
+}
+
+function labelFromMap(map, value) {
+  if (!value && value !== false) {
+    return "-";
+  }
+  return map[value] || value || "-";
 }
 
 function clearAnimationTimers() {
@@ -145,6 +203,22 @@ function hasValidGate() {
   }
 }
 
+function isBackofficeAuthError(error) {
+  const message = error?.message || "";
+  return error?.status === 401 || error?.status === 403 || BACKOFFICE_AUTH_MESSAGES.some((text) => message.includes(text));
+}
+
+function clearBackofficeSession(message = "后台登录已失效，请重新登录。") {
+  user.value = null;
+  feedback.value = [];
+  logs.value = [];
+  toolUsageLogs.value = [];
+  toolUsagePagination.value = { ...toolUsagePagination.value, total: 0 };
+  activePanel.value = "feedback";
+  gateOpen.value = true;
+  errorMsg.value = message;
+}
+
 function writeGate() {
   window.localStorage.setItem(
     BACKOFFICE_GATE_KEY,
@@ -162,6 +236,7 @@ async function loadData() {
     const requests = [listBackofficeFeedback()];
     if (isAdmin.value) {
       requests.push(listBackofficeLogs());
+      requests.push(loadToolUsageLogs({ silent: true }));
     }
     const [fb, lg] = await Promise.all(requests);
     feedback.value = fb?.items || [];
@@ -170,10 +245,90 @@ async function loadData() {
       activePanel.value = "feedback";
     }
   } catch (error) {
-    errorMsg.value = error?.message || "加载失败";
+    if (isBackofficeAuthError(error)) {
+      clearBackofficeSession(error?.message || "后台登录已失效，请重新登录。");
+    } else {
+      errorMsg.value = error?.message || "加载失败";
+    }
   } finally {
     dataLoading.value = false;
   }
+}
+
+function toolUsageQuery(overrides = {}) {
+  const filters = toolUsageFilters.value;
+  return {
+    page: overrides.page || toolUsagePagination.value.page,
+    page_size: overrides.pageSize || toolUsagePagination.value.pageSize,
+    start_time: filters.startTime,
+    end_time: filters.endTime,
+    tool_name: filters.toolName,
+    category: filters.category,
+    action: filters.action,
+    success: filters.success,
+    account: filters.account,
+    ip: filters.ip,
+  };
+}
+
+async function loadToolUsageLogs(options = {}) {
+  if (!isAdmin.value) {
+    return null;
+  }
+  if (!options.silent) {
+    dataLoading.value = true;
+    errorMsg.value = "";
+  }
+  try {
+    const data = await listBackofficeToolUsageLogs(toolUsageQuery(options));
+    toolUsageLogs.value = data?.items || [];
+    toolUsagePagination.value = {
+      page: data?.page || toolUsageQuery(options).page,
+      pageSize: data?.page_size || toolUsageQuery(options).page_size,
+      total: data?.total || 0,
+    };
+    return data;
+  } catch (error) {
+    if (isBackofficeAuthError(error)) {
+      clearBackofficeSession(error?.message || "后台登录已失效，请重新登录。");
+    }
+    if (!options.silent) {
+      errorMsg.value = error?.message || "加载失败";
+    }
+    throw error;
+  } finally {
+    if (!options.silent) {
+      dataLoading.value = false;
+    }
+  }
+}
+
+function applyToolUsageFilters() {
+  toolUsagePagination.value = { ...toolUsagePagination.value, page: 1 };
+  loadToolUsageLogs();
+}
+
+function resetToolUsageFilters() {
+  toolUsageFilters.value = {
+    startTime: "",
+    endTime: "",
+    toolName: "",
+    category: "",
+    action: "",
+    success: "",
+    account: "",
+    ip: "",
+  };
+  applyToolUsageFilters();
+}
+
+function changeToolUsagePage(delta) {
+  const nextPage = Math.min(toolUsagePageCount.value, Math.max(1, toolUsagePagination.value.page + delta));
+  if (nextPage === toolUsagePagination.value.page) {
+    return;
+  }
+  toolUsagePagination.value = { ...toolUsagePagination.value, page: nextPage };
+  loadToolUsageLogs();
 }
 
 async function refreshMe() {
@@ -210,6 +365,7 @@ async function logout() {
   user.value = null;
   feedback.value = [];
   logs.value = [];
+  toolUsageLogs.value = [];
 }
 
 async function boot() {
@@ -340,13 +496,18 @@ onBeforeUnmount(() => {
 
       <nav class="backoffice-menu" aria-label="后台导航">
         <button type="button" :class="{ active: activePanel === 'feedback' }" @click="activePanel = 'feedback'">
-          <span>反馈系统</span>
+          <span>用户反馈</span>
           <em>{{ feedbackCount }}</em>
         </button>
 
         <button v-if="isAdmin" type="button" :class="{ active: activePanel === 'logs' }" @click="activePanel = 'logs'">
-          <span>账号活动日志</span>
+          <span>天问AI账号活动日志</span>
           <em>{{ logsCount }}</em>
+        </button>
+
+        <button v-if="isAdmin" type="button" :class="{ active: activePanel === 'toolUsage' }" @click="activePanel = 'toolUsage'">
+          <span>用户工具使用日志</span>
+          <em>{{ toolUsageCount }}</em>
         </button>
 
         <button v-if="isAdmin" type="button" :class="{ active: activePanel === 'config' }" @click="activePanel = 'config'">
@@ -371,7 +532,7 @@ onBeforeUnmount(() => {
             :class="{ 'is-loading': dataLoading }"
             :disabled="dataLoading"
             :aria-busy="dataLoading"
-            @click="loadData"
+            @click="activePanel === 'toolUsage' ? loadToolUsageLogs() : loadData()"
           >
             
             <span>刷新</span>
@@ -428,6 +589,90 @@ onBeforeUnmount(() => {
           </table>
         </div>
 
+        <section v-show="activePanel === 'toolUsage'" class="usage-log-panel">
+          <form class="usage-filter-bar" @submit.prevent="applyToolUsageFilters">
+            <label>
+              <span>开始时间</span>
+              <input v-model="toolUsageFilters.startTime" type="datetime-local" />
+            </label>
+            <label>
+              <span>结束时间</span>
+              <input v-model="toolUsageFilters.endTime" type="datetime-local" />
+            </label>
+            <label>
+              <span>工具名称</span>
+              <input v-model="toolUsageFilters.toolName" type="text" placeholder="模糊搜索" />
+            </label>
+            <label>
+              <span>工具分类</span>
+              <GlassSelect v-model="toolUsageFilters.category" class="backoffice-filter-select" :options="toolUsageCategoryOptions" />
+            </label>
+            <label>
+              <span>操作</span>
+              <GlassSelect v-model="toolUsageFilters.action" class="backoffice-filter-select" :options="toolUsageActionOptions" />
+            </label>
+            <label>
+              <span>结果</span>
+              <GlassSelect v-model="toolUsageFilters.success" class="backoffice-filter-select" :options="toolUsageResultOptions" />
+            </label>
+            <label>
+              <span>账号</span>
+              <input v-model="toolUsageFilters.account" type="text" placeholder="账号" />
+            </label>
+            <label>
+              <span>IP</span>
+              <input v-model="toolUsageFilters.ip" type="text" placeholder="IPv4" />
+            </label>
+            <div class="usage-filter-actions">
+              <button type="submit">筛选</button>
+              <button type="button" class="secondary-button" @click="resetToolUsageFilters">重置</button>
+            </div>
+          </form>
+
+          <div class="backoffice-table-wrap usage-table-wrap" :class="{ 'is-refreshing': dataLoading }" @mousedown="startTableDrag">
+            <p v-if="!toolUsageLogs.length" class="backoffice-empty">{{ dataLoading ? "正在刷新…" : "暂无工具使用日志" }}</p>
+            <table v-else class="backoffice-table usage-table">
+              <thead>
+                <tr>
+                  <th>时间</th><th>账号</th><th>设备ID</th><th>IP</th><th>工具</th><th>工具分类</th><th>操作</th><th>结果</th><th>耗时</th><th>输入长度</th><th>输出长度</th><th>错误码</th><th>错误信息</th><th>来源页</th><th>UA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in toolUsageLogs" :key="row.id">
+                  <td class="nowrap">{{ fmt(row.created_at) }}</td>
+                  <td>{{ row.account || "" }}</td>
+                  <td><div class="cell-scroll compact">{{ row.device_id || "" }}</div></td>
+                  <td class="nowrap"><span class="ip-tag">{{ row.ip || "-" }}</span></td>
+                  <td><div class="cell-scroll compact">{{ row.tool_name || row.tool_id || "-" }}</div></td>
+                  <td>{{ labelFromMap(toolUsageCategoryLabel, row.category) }}</td>
+                  <td><span class="status-tag tag-neutral">{{ labelFromMap(toolUsageActionLabel, row.action) }}</span></td>
+                  <td><span class="status-tag" :class="row.success === 'success' ? 'event-login' : row.success === 'fail' ? 'event-logout' : 'tag-neutral'">{{ labelFromMap(toolUsageResultLabel, row.success) }}</span></td>
+                  <td>{{ row.duration_ms || 0 }} ms</td>
+                  <td>{{ row.input_length || 0 }}</td>
+                  <td>{{ row.output_length || 0 }}</td>
+                  <td>{{ row.error_code || "" }}</td>
+                  <td>
+                    <details v-if="row.error_message" class="error-detail">
+                      <summary>查看</summary>
+                      <div class="cell-scroll compact">{{ row.error_message }}</div>
+                    </details>
+                  </td>
+                  <td class="dim"><div class="cell-scroll url">{{ row.source_page || "-" }}</div></td>
+                  <td class="dim"><div class="cell-scroll ua" :title="row.user_agent || '-'">{{ row.user_agent || "-" }}</div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <footer class="usage-pagination">
+            <span>共 {{ toolUsagePagination.total }} 条，第 {{ toolUsagePagination.page }} / {{ toolUsagePageCount }} 页</span>
+            <div>
+              <button type="button" :disabled="dataLoading || toolUsagePagination.page <= 1" @click="changeToolUsagePage(-1)">上一页</button>
+              <button type="button" :disabled="dataLoading || toolUsagePagination.page >= toolUsagePageCount" @click="changeToolUsagePage(1)">下一页</button>
+            </div>
+          </footer>
+        </section>
+
         <section v-show="activePanel === 'config'" class="backoffice-config-card">
           <p class="backoffice-kicker">ROADMAP</p>
           <h2>此功能是未来研究开发功能</h2>
@@ -450,7 +695,7 @@ onBeforeUnmount(() => {
             </article>
             <article>
               <strong>历史分页</strong>
-              <span>反馈和账号活动日志目前只展示最近数据；后续可按页读取 MySQL 历史记录，并支持时间、账号、工具筛选。</span>
+              <span>用户反馈和天问AI账号活动日志目前只展示最近数据；后续可按页读取 MySQL 历史记录，并支持时间、账号、工具筛选。</span>
             </article>
           </div>
           <p class="config-doc-note">
@@ -1053,6 +1298,190 @@ onBeforeUnmount(() => {
   box-shadow: 0 18px 50px rgba(37, 49, 68, 0.07), inset 0 2px 0 rgba(76, 156, 255, 0.18);
 }
 
+.usage-log-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.usage-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid #dce9f6;
+  box-shadow: 0 14px 34px rgba(37, 49, 68, 0.06);
+}
+
+.usage-filter-bar label {
+  display: grid;
+  gap: 6px;
+  color: #59708a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.usage-filter-bar input,
+.usage-filter-bar select {
+  min-height: 38px;
+  padding: 0 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(155, 190, 223, 0.72);
+  background: rgba(255, 255, 255, 0.9);
+  color: #172033;
+  outline: none;
+}
+
+.backoffice-filter-select {
+  width: 100%;
+}
+
+.usage-filter-bar :deep(.glass-select) {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.usage-filter-bar :deep(.glass-select-trigger) {
+  position: relative;
+  width: 100%;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 11px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(155, 190, 223, 0.72);
+  background: rgba(255, 255, 255, 0.9);
+  color: #172033;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.usage-filter-bar :deep(.glass-select-trigger-text) {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.usage-filter-bar :deep(.glass-select-caret) {
+  flex: none;
+  color: #7391a9;
+}
+
+.usage-filter-bar :deep(.glass-select-menu) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 80;
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  padding: 8px;
+  overflow-y: auto;
+  border: 1px solid rgba(190, 214, 233, 0.94);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 48px rgba(90, 124, 164, 0.2);
+}
+
+.usage-filter-bar :deep(.glass-select.opens-up .glass-select-menu) {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
+.usage-filter-bar :deep(.glass-select-option) {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #172033;
+  cursor: pointer;
+}
+
+.usage-filter-bar :deep(.glass-select-option:hover),
+.usage-filter-bar :deep(.glass-select-option.active) {
+  background: rgba(93, 157, 255, 0.12);
+}
+
+.usage-filter-bar :deep(.glass-select-option.selected) {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.usage-filter-bar :deep(.glass-select.open .glass-select-trigger) {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14);
+}
+
+.usage-filter-bar input:focus,
+.usage-filter-bar select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14);
+}
+
+.usage-filter-actions {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+
+.usage-filter-actions button,
+.usage-pagination button {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f8cff, #6c5cff);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.usage-filter-actions .secondary-button {
+  background: rgba(255, 255, 255, 0.88);
+  color: #31516f;
+  border: 1px solid rgba(160, 191, 218, 0.55);
+}
+
+.usage-table-wrap {
+  flex: 1;
+}
+
+.usage-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #52657e;
+  font-size: 13px;
+}
+
+.usage-pagination div {
+  display: flex;
+  gap: 10px;
+}
+
+.usage-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .backoffice-config-card {
   flex: 1;
   min-height: 0;
@@ -1137,6 +1566,10 @@ onBeforeUnmount(() => {
 
 .logs-table {
   min-width: 860px;
+}
+
+.usage-table {
+  min-width: 1780px;
 }
 
 .backoffice-table th,
@@ -1250,6 +1683,63 @@ onBeforeUnmount(() => {
   width: 270px;
 }
 
+.usage-table th:nth-child(1),
+.usage-table td:nth-child(1) {
+  width: 162px;
+}
+
+.usage-table th:nth-child(2),
+.usage-table td:nth-child(2) {
+  width: 116px;
+}
+
+.usage-table th:nth-child(3),
+.usage-table td:nth-child(3) {
+  width: 150px;
+}
+
+.usage-table th:nth-child(4),
+.usage-table td:nth-child(4) {
+  width: 130px;
+}
+
+.usage-table th:nth-child(5),
+.usage-table td:nth-child(5) {
+  width: 150px;
+}
+
+.usage-table th:nth-child(6),
+.usage-table td:nth-child(6),
+.usage-table th:nth-child(7),
+.usage-table td:nth-child(7),
+.usage-table th:nth-child(8),
+.usage-table td:nth-child(8) {
+  width: 100px;
+}
+
+.usage-table th:nth-child(9),
+.usage-table td:nth-child(9),
+.usage-table th:nth-child(10),
+.usage-table td:nth-child(10),
+.usage-table th:nth-child(11),
+.usage-table td:nth-child(11),
+.usage-table th:nth-child(12),
+.usage-table td:nth-child(12) {
+  width: 96px;
+}
+
+.usage-table th:nth-child(13),
+.usage-table td:nth-child(13) {
+  width: 170px;
+}
+
+.usage-table th:nth-child(14),
+.usage-table td:nth-child(14),
+.usage-table th:nth-child(15),
+.usage-table td:nth-child(15) {
+  width: 230px;
+}
+
 .nowrap {
   white-space: nowrap;
 }
@@ -1308,6 +1798,21 @@ onBeforeUnmount(() => {
   border: 1px solid #e2e8f0;
   max-width: none;
   width: max-content;
+}
+
+.error-detail summary {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+
+.error-detail summary::-webkit-details-marker {
+  display: none;
+}
+
+.error-detail[open] summary {
+  margin-bottom: 8px;
 }
 
 .cell-scroll {
@@ -1383,6 +1888,17 @@ onBeforeUnmount(() => {
 
   .backoffice-refresh {
     width: 100%;
+  }
+
+  .usage-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-filter-actions,
+  .usage-pagination,
+  .usage-pagination div {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .config-roadmap-grid {

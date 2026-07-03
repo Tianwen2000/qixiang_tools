@@ -32,3 +32,7 @@ export function listBackofficeFeedback() {
 export function listBackofficeLogs() {
   return get("/backoffice/logs");
 }
+
+export function listBackofficeToolUsageLogs(params = {}) {
+  return get("/backoffice/tool-usage-logs", params);
+}
