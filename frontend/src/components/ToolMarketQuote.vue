@@ -637,6 +637,7 @@ async function submit() {
     return;
   }
 
+  payload.value = null;
   loading.value = true;
   const toastId = showToast({
     type: "loading",

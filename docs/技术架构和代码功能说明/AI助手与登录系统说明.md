@@ -87,14 +87,16 @@ frontend/src/components/ai-assistant/   # 自包含模块，只依赖 vue 与本
 | GET | `/api/chat/models` | 否 | `{models:[{id,name,description,badge}],default}` |
 | POST | `/api/chat` | Cookie | `{reply,model}`；`history` 仅允许 `user/assistant`、≤20 条 |
 | POST | `/api/feedback` | 否（登录则记账号） | `{id}`；落库到 `feedback` 表，空内容 400 |
+| POST | `/api/tool-usage-logs` | 否（登录则记账号） | `{id}`；只记录工具行为摘要，不保存完整输入输出 |
 | GET | `/api/backoffice/challenge` | 否 | `{question}`，后台入口问题 |
 | POST | `/api/backoffice/entry` | 否 | `{path}`，答案正确后返回一次性后台入口路径 |
 | POST | `/api/backoffice/entry/consume` | 否 | 消费一次性入口 ticket |
 | POST | `/api/backoffice/login` | 否 | `{user:{account,expires_at}}`，下发后台专用 Cookie |
 | GET | `/api/backoffice/me` | 后台 Cookie | `{user:{account,expires_at}}` |
 | POST | `/api/backoffice/logout` | 后台 Cookie | 清理后台登录态 |
-| GET | `/api/backoffice/feedback` | 后台 Cookie | `{items:[...]}`，反馈只读 |
-| GET | `/api/backoffice/logs` | 后台 Cookie | `{items:[...]}`，账号活动日志只读 |
+| GET | `/api/backoffice/feedback` | 后台 Cookie | `{items:[...]}`，反馈只读，固定最近 500 条 |
+| GET | `/api/backoffice/logs` | 后台管理员 Cookie | `{items:[...]}`，账号活动日志只读，固定最近 500 条 |
+| GET | `/api/backoffice/tool-usage-logs` | 后台管理员 Cookie | `{items,page,page_size,total}`，分页筛选工具使用日志 |
 
 统一响应壳 `{code,message,data}`，成功 `code=0`。错误码：`4001` 入参、`4010/4012/4013` 未登录/过期/无效、`4011` 账号或密码错、`4090` 账号已注册、`503x` 数据库不可用或后台未配置。
 
@@ -106,7 +108,7 @@ frontend/src/components/ai-assistant/   # 自包含模块，只依赖 vue 与本
 - **Cookie**：`httpOnly`（JS 读不到，降低 XSS 盗取）、`SameSite=Lax`、`Max-Age=30天`、`Secure` 可配。前端所有请求带 `credentials:"include"`，是否登录以 `/auth/me` 为准。
 - **退出登录**：删 `sessions` 行 → 旧令牌**立即失效**（已有测试验证：退登后拿旧令牌仍 401）。
 
-## 6. 配置项（`backend/.env`，参考 `.env.example`）
+## 6. 配置项（`../../backend/.env.local`，参考 `.env.example`）
 
 ```ini
 # 生产必填真实账号密码；连不上时仅登录功能降级，其它工具不受影响
@@ -125,13 +127,13 @@ BACKOFFICE_COOKIE_NAME=qx_backoffice_session
 BACKOFFICE_SESSION_HOURS=12
 ```
 
-不配 `.env` 时，`config.py` 默认指向 `mysql+pymysql://root:root@127.0.0.1:3306/qixiang_tools`。
+不配 `.env.local` 时，`config.py` 默认指向 `mysql+pymysql://root:root@127.0.0.1:3306/qixiang_tools`。
 
 ## 7. 本地开发跑通
 
 1. 装依赖：`backend/.venv/bin/pip install -r backend/requirements.txt`（新增 SQLAlchemy、pymysql）。
 2. 数据库二选一：
-   - 本地有 MySQL：建库 `CREATE DATABASE qixiang_tools DEFAULT CHARACTER SET utf8mb4;`，在 `backend/.env` 填 `DATABASE_URL`。
+   - 本地有 MySQL：建库 `CREATE DATABASE qixiang_tools DEFAULT CHARACTER SET utf8mb4;`，在 `../../backend/.env.local` 填 `DATABASE_URL`。
    - 本地没 MySQL 想快速验证：把 `DATABASE_URL=sqlite:///./local_ai.db`（引擎无关，自动建表）。
 3. 起后端、起前端（`npm run dev`），右侧机器人即可用。
 
@@ -149,7 +151,7 @@ BACKOFFICE_SESSION_HOURS=12
    FLUSH PRIVILEGES;
    ```
 2. **装新依赖**：`./backend/.server-venv/bin/pip install -r backend/requirements.txt`
-3. **写 `backend/.env`**：填真实 `DATABASE_URL`；站点是 HTTPS 就设 `SESSION_COOKIE_SECURE=true`。
+3. **写 `../../backend/.env.local`**：填真实 `DATABASE_URL`；站点是 HTTPS 就设 `SESSION_COOKIE_SECURE=true`。
 4. **前端**：本地先 `cd frontend && npm run build`，上传 `frontend/dist`（**含 `public` 里的机器人 png/gif**，构建后已在 `dist/`）。
 5. **重启后端**：`sudo systemctl restart qixiang-backend`。表会在首次登录时自动建。
 6. 注意 [部署与更新指南](../git和服务器部署/部署与更新指南.md) 里的**文件权限修正**（Mac 上传文件常带 600，nginx 读不了会 403）。
@@ -159,13 +161,14 @@ BACKOFFICE_SESSION_HOURS=12
 反馈不再走 serverless/外部表格，而是**直接落库主后端 MySQL**（取代旧的「无数据库 / Worker 落表」方案）。
 
 - **提交**：反馈页照旧，`api/feedback.js` 改为 `POST /api/feedback`，**匿名即可提交**；若带有效会话 Cookie，则顺带记下提交者账号。请求失败时仍会**暂存本浏览器**兜底，不丢内容。
-- **后台账号**：在 `backend/.env` 配置 `BACKOFFICE_ACCOUNTS`，格式为 `账号:密码:角色`，多个账号用英文逗号分隔；`admin` 可看全部，`viewer` 只能看反馈，不复用 AI 用户登录态。
-- **隐藏入口**：连续点击站点左上角「琦湘工具集合」品牌热区 5 次，弹出入口问答；答案正确后由后端返回一次性后台路径并新标签页打开。
-- **后台页面**：`BackofficePage.vue` 是独立后台，不显示工具站壁纸、导航、AI 机器人；左侧账号中心 + 菜单，右侧显示反馈与账号活动日志。
+- **后台账号**：在 `../../backend/.env.local` 配置 `BACKOFFICE_ACCOUNTS`，格式为 `账号:密码:角色`，多个账号用英文逗号分隔；`admin` 可看全部，`viewer` 只能看反馈，不复用 AI 用户登录态。
+- **隐藏入口**：连续点击站点左上角「琦湘工具集合」品牌热区 5 次，弹出入口问答。后端答案校验成功后会返回一次性后台路径；当前 `SiteHeader.vue` 实际写入两分钟的 `localStorage` gate，并打开固定的 `/qx-backoffice`，没有使用返回路径中的 ticket。直接打开 `/qx-backoffice/{ticket}` 时，后台页仍会消费该 ticket。
+- **后台页面**：`BackofficePage.vue` 是独立后台，不显示工具站壁纸、导航、AI 机器人；左侧账号中心 + 菜单，右侧可查看反馈、账号活动日志和分页工具使用日志。“后台配置管理”当前只是路线图占位内容，没有配置读写接口。
 - **后端鉴权**：`/api/backoffice/*` 使用后台专用 Cookie，不依赖 AI 用户，也没有 `is_admin` 字段。
 - **日志**：`logs` 表记录 register/login/logout（时间、账号、IP、UA），由 `auth.py` 路由在登录流程里**尽力而为**写入（写失败只告警，不影响登录）。
+- **工具使用日志**：`tool_usage_logs` 表保存 view/click/convert/copy/clear 等行为摘要；后台接口已支持分页和筛选，不保存用户完整输入输出。
 
-> 后台入口 ticket 仅用于打开后台登录页，不等于后台登录态；真正查看数据仍需后台账号密码登录。
+> 后台入口 gate/ticket 仅用于打开后台登录页，不等于后台登录态。当前前端入口主要使用 `localStorage` gate，真正查看数据仍需后台账号密码登录并取得 HttpOnly Cookie。
 
 ## 10. 后续接入真实模型
 

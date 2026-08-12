@@ -556,7 +556,7 @@ ToolFileForm.vue
 
 ## 11.3 动态背景体系
 
-全站背景由 `SiteWallpaper.vue` 统一管理，季节森林和大树动效由 `SeasonalForestScene.vue` 承担。
+全站背景由 `SiteWallpaper.vue` 统一管理。四季媒体素材位于 `frontend/public/wallpaper/`；`SeasonalForestScene.vue` 保留了旧的 CSS 季节森林实现，但当前常规四季模式不会进入该回退分支。
 
 当前四季主题：
 
@@ -565,14 +565,14 @@ ToolFileForm.vue
 - 秋分
 - 冬至
 
-背景层级统一为：
+当前常规四季背景层级为：
 
 ```text
 Base
+Static Photo
+Desktop Video（延迟加载，预热后淡入）
 Reading Veil
-Atmosphere
-Seasonal Forest
-Motion
+Media Shade
 Noise
 Vignette
 ```
@@ -588,8 +588,9 @@ Vignette
 
 - 是辅助层，不抢正文
 - 可在四季主题间切换
-- 支持 `prefers-reduced-motion`
-- 不使用视频背景
+- 手机端始终使用四季 JPG，不创建或下载视频
+- 桌面端先显示 JPG，页面空闲后加载 MP4，视频失败时继续保留 JPG
+- 支持 `prefers-reduced-motion`；减少动态效果时不加载视频
 - 不依赖重型 3D 引擎
 
 ## 11.4 品牌与装饰层

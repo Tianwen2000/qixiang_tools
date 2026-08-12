@@ -4,7 +4,7 @@ import json
 import re
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import httpx
@@ -48,6 +48,8 @@ EASTMONEY_ULIST_URL = "https://push2.eastmoney.com/api/qt/ulist.np/get"
 EASTMONEY_SUGGEST_URL = "https://searchapi.eastmoney.com/api/suggest/get"
 EASTMONEY_TRENDS_URL = "https://push2his.eastmoney.com/api/qt/stock/trends2/get"
 EASTMONEY_KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+CSINDEX_SEARCH_URL = "https://www.csindex.com.cn/csindex-home/indexInfo/index-fuzzy-search"
+CSINDEX_PERF_URL = "https://www.csindex.com.cn/csindex-home/perf/index-perf"
 SINA_KLINE_URL = "https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketDataService.getKLineData"
 SINA_HQ_URL = "https://hq.sinajs.cn/list="
 FUND_URL_TEMPLATE = "https://fundgz.1234567.com.cn/js/{code}.js"
@@ -67,10 +69,15 @@ SINA_HEADERS = {
     "Accept": DEFAULT_HEADERS["Accept"],
     "Referer": "https://finance.sina.com.cn/",
 }
+CSINDEX_HEADERS = {
+    **DEFAULT_HEADERS,
+    "Referer": "https://www.csindex.com.cn/",
+}
 MAX_SYMBOLS = 8
 MAX_CHART_POINTS = 150
 # 非精确匹配（前缀/包含）时要求的最少中文字数，避免“中证”“白酒”这类过短输入被误判
 MIN_FUZZY_NAME_LEN = 4
+CSINDEX_MIN_FUZZY_NAME_LEN = 3
 EASTMONEY_ULIST_FIELDS = ",".join(
     [
         "f1",
@@ -208,6 +215,63 @@ def _search_full_name(symbol: str, market: str, client: httpx.Client) -> tuple[d
         "quote_id": quote_id,
         "classify": classify,
     }, None
+
+
+def _search_csindex(symbol: str, client: httpx.Client) -> tuple[dict[str, str] | None, str | None]:
+    query = re.sub(r"(?:板块|指数)$", "", (symbol or "").strip())
+    if not query or (not _contains_cjk(query) and not re.fullmatch(r"(?:\d{6}|H\d{5})", query, re.I)):
+        return None, "中证指数官网未识别出可搜索的指数名称或代码"
+
+    try:
+        response = client.get(
+            CSINDEX_SEARCH_URL,
+            params={"searchInput": urllib.parse.quote(query), "pageNum": 1, "pageSize": 20},
+            headers=CSINDEX_HEADERS,
+            timeout=5,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        return None, f"中证指数名称搜索失败：{exc}"
+
+    rows = payload.get("data") if isinstance(payload, dict) else []
+    if not isinstance(rows, list) or not rows:
+        return None, "中证指数官网未匹配到相关指数"
+
+    query_norm = _normalize_name(query)
+    query_cjk_len = len(re.findall(r"[\u3400-\u9fff]", query))
+    best: tuple[tuple[int, int], str, str] | None = None
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("indexCode") or "").strip().upper()
+        name = str(item.get("indexName") or "").strip()
+        if not code or not name:
+            continue
+
+        if code == query_norm:
+            rank = (0, len(name))
+        else:
+            name_norm = _normalize_name(name)
+            core_name_norm = re.sub(r"^(?:CSI|CS|中证|国证)", "", name_norm)
+            scores = [
+                score
+                for candidate_name in dict.fromkeys((name_norm, core_name_norm))
+                if (score := _name_match_score(query_norm, candidate_name)) is not None
+            ]
+            score = min(scores) if scores else None
+            if score is None or (score != 0 and query_cjk_len < CSINDEX_MIN_FUZZY_NAME_LEN):
+                continue
+            rank = (score, len(core_name_norm))
+
+        if best is None or rank < best[0]:
+            best = (rank, code, name)
+
+    if best is None:
+        return None, "中证指数官网未匹配到足够精确的指数名称"
+
+    _rank, code, name = best
+    return {"code": code, "name": name}, None
 
 
 def _eastmoney_candidates(symbol: str, market: str = "auto") -> list[tuple[str, str]]:
@@ -1034,6 +1098,136 @@ def _query_eastmoney(symbol: str, market: str, client: httpx.Client) -> tuple[di
     return None, last_error
 
 
+def _query_csindex(code: str, client: httpx.Client) -> tuple[dict[str, Any] | None, str | None]:
+    now = datetime.now()
+    params = {
+        "indexCode": code.strip().upper(),
+        "startDate": (now - timedelta(days=45)).strftime("%Y%m%d"),
+        "endDate": now.strftime("%Y%m%d"),
+    }
+    try:
+        response = client.get(CSINDEX_PERF_URL, params=params, headers=CSINDEX_HEADERS, timeout=5)
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        return None, f"中证指数行情请求失败：{exc}"
+
+    raw_rows = payload.get("data") if isinstance(payload, dict) else []
+    if not isinstance(raw_rows, list):
+        raw_rows = []
+
+    rows_by_date: dict[str, dict[str, Any]] = {}
+    today_text = now.strftime("%Y%m%d")
+    for item in raw_rows:
+        if not isinstance(item, dict):
+            continue
+        trade_date = str(item.get("tradeDate") or "").strip()
+        if not re.fullmatch(r"\d{8}", trade_date) or trade_date > today_text:
+            continue
+        if _plain_number(item.get("close")) is None:
+            continue
+        rows_by_date[trade_date] = item
+
+    rows = [rows_by_date[key] for key in sorted(rows_by_date)]
+    if not rows:
+        return None, f"中证指数官网未返回 {code} 的近期行情"
+
+    visible_rows = rows[-MAX_CHART_POINTS:]
+    points: list[list[Any]] = []
+    for index, item in enumerate(visible_rows):
+        window = visible_rows[max(0, index - 4) : index + 1]
+        close_values = [_plain_number(row.get("close")) for row in window]
+        close_values = [value for value in close_values if value is not None]
+        ma5 = round(sum(close_values) / len(close_values), 4) if close_values else None
+        trade_date = str(item.get("tradeDate") or "")
+        formatted_date = f"{trade_date[:4]}-{trade_date[4:6]}-{trade_date[6:8]}"
+        points.append([formatted_date, _plain_number(item.get("close")), ma5, _plain_number(item.get("tradingVol")) or 0])
+
+    latest_row = visible_rows[-1]
+    previous_row = visible_rows[-2] if len(visible_rows) >= 2 else None
+    latest = _plain_number(latest_row.get("close"))
+    previous_close = _plain_number(previous_row.get("close")) if previous_row else None
+    change = _plain_number(latest_row.get("change"))
+    if change is None and latest is not None and previous_close is not None:
+        change = round(latest - previous_close, 4)
+    if previous_close is None and latest is not None and change is not None:
+        previous_close = round(latest - change, 4)
+
+    trade_date = str(latest_row.get("tradeDate") or "")
+    updated_at = f"{trade_date[:4]}-{trade_date[4:6]}-{trade_date[6:8]}"
+    index_code = str(latest_row.get("indexCode") or code).strip().upper()
+    name = str(latest_row.get("indexNameCn") or latest_row.get("indexNameCnAll") or index_code).strip()
+    source_url = f"{CSINDEX_PERF_URL}?{urllib.parse.urlencode(params)}"
+    latest_bar = {
+        "date": updated_at,
+        "open": _plain_number(latest_row.get("open")),
+        "close": latest,
+        "high": _plain_number(latest_row.get("high")),
+        "low": _plain_number(latest_row.get("low")),
+        "volume": _plain_number(latest_row.get("tradingVol")),
+        "amount": None,
+    }
+    chart = {
+        "kind": "daily_kline",
+        "point_format": ["date", "close", "ma5", "volume"],
+        "code": index_code,
+        "name": name,
+        "market_code": 2,
+        "points": points,
+        "point_count": len(rows),
+        "sampled": len(rows) > MAX_CHART_POINTS,
+        "pre_close": previous_close,
+        "start_time": str(points[0][0]),
+        "end_time": str(points[-1][0]),
+        "trade_date": updated_at,
+        "time_range": f"{points[0][0]} - {points[-1][0]}",
+        "updated_at": updated_at,
+        "source": "中证指数有限公司官网日行情",
+        "source_url": source_url,
+        "display_note": "实时行情端点不可用，当前展示最近交易日收盘数据",
+        "latest_bar": latest_bar,
+    }
+    if previous_row:
+        previous_trade_date = str(previous_row.get("tradeDate") or "")
+        chart["previous_bar"] = {
+            "date": f"{previous_trade_date[:4]}-{previous_trade_date[4:6]}-{previous_trade_date[6:8]}",
+            "close": previous_close,
+        }
+
+    card = {
+        "kind": "quote",
+        "asset_type": "指数",
+        "symbol": index_code,
+        "name": name,
+        "market": "中证指数",
+        "market_region": "CN",
+        "currency": "CNY",
+        "latest": latest,
+        "change": change,
+        "change_percent": _plain_number(latest_row.get("changePct")),
+        "open": latest_bar["open"],
+        "high": latest_bar["high"],
+        "low": latest_bar["low"],
+        "previous_close": previous_close,
+        "volume": latest_bar["volume"],
+        "amount": None,
+        "updated_at": updated_at,
+        "status": "最近交易日收盘数据",
+        "source": "中证指数有限公司官网（日行情兜底）",
+        "provider": "csindex",
+        "source_url": source_url,
+        "chart": chart,
+    }
+    return card, None
+
+
+def _query_csindex_fallback(symbol: str, client: httpx.Client) -> tuple[dict[str, Any] | None, str | None]:
+    searched, search_error = _search_csindex(symbol, client)
+    if not searched:
+        return None, search_error
+    return _query_csindex(searched["code"], client)
+
+
 def _parse_fund_response(text: str) -> dict[str, Any] | None:
     match = re.search(r"jsonpgz\((\{.*\})\);?", text.strip())
     if not match:
@@ -1129,8 +1323,21 @@ def _lookup_symbol(symbol: str, market: str, client: httpx.Client) -> tuple[dict
         quote_id = searched["quote_id"]
         if quote_id.startswith("150."):
             return _query_fund(searched["code"], client)
-        return _query_eastmoney(quote_id, "secid", client)
+        quote_card, quote_error = _query_eastmoney(quote_id, "secid", client)
+        if quote_card:
+            return quote_card, None
+        if market in {"auto", "cn"}:
+            csindex_card, csindex_error = _query_csindex_fallback(symbol, client)
+            if csindex_card:
+                return csindex_card, None
+            return None, "；".join(item for item in [quote_error, csindex_error] if item)
+        return None, quote_error
     if search_error:
+        if market in {"auto", "cn"}:
+            csindex_card, csindex_error = _query_csindex_fallback(symbol, client)
+            if csindex_card:
+                return csindex_card, None
+            return None, "；".join(item for item in [search_error, csindex_error] if item)
         return None, search_error
 
     if market == "fund" or (market == "auto" and _is_fund_like_code(_normalize_symbol(symbol))):
@@ -1140,8 +1347,15 @@ def _lookup_symbol(symbol: str, market: str, client: httpx.Client) -> tuple[dict
 
     if market in {"auto", "cn", "hk", "us", "secid"}:
         quote_card, quote_error = _query_eastmoney(symbol, market, client)
-        if quote_card or market != "auto":
-            return quote_card, quote_error
+        if quote_card:
+            return quote_card, None
+        if market in {"auto", "cn"}:
+            csindex_card, csindex_error = _query_csindex_fallback(symbol, client)
+            if csindex_card:
+                return csindex_card, None
+            quote_error = "；".join(item for item in [quote_error, csindex_error] if item)
+        if market != "auto":
+            return None, quote_error
         # auto 模式下东方财富没查到：仅当代码形似场外基金时才回退查天天基金，
         # 否则（如指数/股票代码 399997）直接返回东方财富的错误，避免误导性的基金 404
         if not _is_fund_like_code(_normalize_symbol(symbol)):

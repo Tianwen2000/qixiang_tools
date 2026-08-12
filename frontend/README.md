@@ -14,7 +14,7 @@ Vue 3 + Vite 前端目录，当前已经实现：
 
 ```bash
 cd frontend
-cp .env.example .env
+cp .env.local.example .env.local
 npm install
 npm run dev
 ```
@@ -27,4 +27,4 @@ npm run dev
 
 `http://127.0.0.1:8000/api`
 
-如果后端地址不同，修改 `.env` 中的 `VITE_API_BASE_URL` 即可。
+如果后端地址不同，修改 `.env.local` 中的 `VITE_API_BASE_URL` 即可。

@@ -13,7 +13,7 @@ APP_ROOT = PROJECT_ROOT / "app"
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=".env.local",
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     file_ttl_minutes: int = Field(default=30, alias="FILE_TTL_MINUTES")
     cors_origins: list[str] = ["*"]
 
-    # 登录/AI 模块用的数据库与会话配置（生产请在 .env 覆盖）。
+    # 登录/AI 模块用的数据库与会话配置（生产请在 .env.local 覆盖）。
     # 默认指向本地 MySQL；连不上时仅登录功能降级，其它工具不受影响。
     database_url: str = Field(
         default="mysql+pymysql://root:root@127.0.0.1:3306/qixiang_tools?charset=utf8mb4",
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     session_cookie_name: str = Field(default="qx_session", alias="SESSION_COOKIE_NAME")
     # 生产 HTTPS 下建议设为 true（仅经 https 发送 Cookie）；本地 http 调试保持 false。
     session_cookie_secure: bool = Field(default=False, alias="SESSION_COOKIE_SECURE")
-    # 独立后台管理系统配置。生产环境必须在 .env 中覆盖，不放进前端包。
+    # 独立后台管理系统配置。生产环境必须在 .env.local 中覆盖，不放进前端包。
     # 格式：账号:密码:角色，多账号用英文逗号分隔；角色支持 admin/viewer。
     backoffice_accounts: str = Field(default="", alias="BACKOFFICE_ACCOUNTS")
     # 兼容旧配置：未配置 BACKOFFICE_ACCOUNTS 时仍可使用单账号配置。

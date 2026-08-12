@@ -7,5 +7,6 @@ backend/app/temp/
 log/
 *.log
 .env
-backend/.env
+backend/.env.local
 backend/.mysql-*
+backend/local_ai.db

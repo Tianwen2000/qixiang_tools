@@ -1,6 +1,6 @@
 # GitHub 上传与配置模板说明
 
-> 目标：尽量把项目源码、文档、静态资源、配置模板都放到 GitHub；真实密钥、真实密码、数据库数据和本地生成产物不提交。这样别人 clone 后，按 example 文件补齐配置就能运行。
+> 目标：尽量把项目源码、文档、静态资源、配置模板都放到 GitHub；真实密钥、真实密码、数据库数据和大多数本地生成产物不提交。当前项目为配合现有 nginx/手动上传部署流程，例外地把 `frontend/dist` 纳入 Git 跟踪。
 
 ## 建议提交到 GitHub 的内容
 
@@ -15,6 +15,7 @@ backend/conftest.py
 backend/.env.example
 frontend/src/
 frontend/public/
+frontend/dist/
 frontend/index.html
 frontend/package.json
 frontend/package-lock.json
@@ -22,7 +23,7 @@ frontend/vite.config.js
 frontend/.env.example
 ```
 
-这些文件属于源码、文档、静态素材或可公开模板，应该提交。
+除 `frontend/dist` 外，这些文件属于源码、文档、静态素材或可公开模板。`frontend/dist` 是构建产物，但当前部署流程依赖仓库内产物，因此修改前端后要先运行 `npm run build`，再一起提交更新后的 `dist`。
 
 ## 不建议提交的内容
 
@@ -33,21 +34,28 @@ frontend/.env
 backend/.mysql-*
 backend/.venv/
 frontend/node_modules/
-frontend/dist/
 backend/app/temp/
 __pycache__/
 *.pyc
 *.log
 .DS_Store
+.idea/
 ```
 
 原因：
 
-- `.env`、`.mysql-*` 可能包含数据库账号、后台密码、Cookie 配置。
+- `.env.local`、`.mysql-*` 可能包含数据库账号、后台密码、Cookie 配置。
 - `.venv`、`node_modules` 可以通过依赖文件重新安装。
-- `dist` 是构建产物，代码仓库里一般只保留源码；部署服务器上可保留。
+- `dist` 通常可以不提交，但本项目当前把它作为部署交付物跟踪；不要在未同步修改部署流程前单独取消跟踪。
 - `backend/app/temp` 是上传和转换输出的临时文件。
-- 缓存、日志、系统文件没有长期维护价值。
+- 缓存、日志、系统文件和 IDE 配置没有长期维护价值。
+
+## 当前仓库状态说明
+
+截至 2026-08-10，仓库中已经跟踪 `frontend/dist`、`frontend/node_modules` 和部分 `.idea` 文件；当前 `.gitignore` 没有忽略这三个目录。
+
+- `frontend/dist`：与现有部署指南一致，当前视为有意跟踪的部署产物。
+- `frontend/node_modules`、`.idea`：属于历史遗留跟踪，不代表推荐做法。清理它们需要单独修改 `.gitignore` 并从 Git 索引移除，本文档调整不会代替该仓库清理操作。
 
 ## 当前 .gitignore 重点
 
@@ -58,20 +66,21 @@ __pycache__/
 *.py[cod]
 .venv/
 backend/app/temp/
+log/
 *.log
 .env
 backend/.env
 backend/.mysql-*
 ```
 
-这套规则的核心是保护真实配置和本地生成文件。后续如果新增本地密钥文件，也要追加到 `.gitignore`。
+上面是当前 `.gitignore` 的实际内容摘要，不包含 `frontend/node_modules/`、`frontend/dist/` 或 `.idea/`。这套规则已经保护真实配置和部分本地生成文件；如果后续决定清理依赖目录和 IDE 配置，需要同时更新 `.gitignore` 和 Git 索引。
 
 ## 后端配置模板
 
 后端已经有 `backend/.env.example`。新机器运行时复制一份：
 
 ```bash
-cp backend/.env.example backend/.env
+cp backend/.env.local.example backend/.env.local
 ```
 
 然后按实际环境修改：
@@ -105,7 +114,7 @@ BACKOFFICE_SESSION_HOURS=12
 前端已经有 `frontend/.env.example`。新机器运行时复制一份：
 
 ```bash
-cp frontend/.env.example frontend/.env
+cp frontend/.env.local.example frontend/.env.local
 ```
 
 本地开发常用：
@@ -140,8 +149,8 @@ docker exec -i qixiang-mysql mysql -uroot -p"$ROOT_PW" qixiang_tools < qixiang_t
 git clone git@github.com:用户名/仓库名.git
 cd qixiang_tools
 
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+cp backend/.env.local.example backend/.env.local
+cp frontend/.env.local.example frontend/.env.local
 
 cd backend
 python3 -m venv .venv
@@ -157,18 +166,18 @@ npm run build
 
 ```bash
 git status
-git diff -- .gitignore backend/.env.example frontend/.env.example
-git ls-files | grep -E '(^|/)(\\.env|\\.mysql-|node_modules|\\.venv|__pycache__|app/temp)'
+git diff -- .gitignore backend/.env.local.example frontend/.env.local.example
+git ls-files | grep -E '(^|/)(\\.env.local|\\.mysql-|node_modules|\\.venv|__pycache__|app/temp)'
 ```
 
-最后一条如果输出了真实 `.env`、密码文件、依赖目录或临时目录，就说明 `.gitignore` 或暂存区需要处理。
+最后一条如果输出真实 `.env.local`、密码文件或临时目录，必须立即处理。当前它也会输出已经被历史提交跟踪的 `frontend/node_modules`；这是已知仓库遗留，不应误判为本次新提交才引入。
 
 ## 处理误提交密钥
 
 如果真实配置已经被 `git add` 但还没提交：
 
 ```bash
-git restore --staged backend/.env frontend/.env
+git restore --staged backend/.env.local frontend/.env.local
 ```
 
 如果已经提交到 GitHub，需要立刻更换密码或密钥；历史提交里的密钥不能只靠删除文件解决。

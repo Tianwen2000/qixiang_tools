@@ -491,7 +491,8 @@ def run_stock_index(text: str = "", **_: dict) -> str:
     if not rows:
         raise AppException(message="未查询到股票指数", code=4001, status_code=400)
     updated = next((str(card.get("updated_at")) for card in cards if card.get("updated_at")), "")
-    return _format_snapshot("今日股票指数", rows, "东方财富/新浪公开行情聚合", updated, notes)
+    sources = "；".join(dict.fromkeys(str(card.get("source")) for card in cards if card.get("source")))
+    return _format_snapshot("今日股票指数", rows, sources or "公开行情聚合", updated, notes)
 
 
 def run_building_materials(text: str = "", **_: dict) -> str:

@@ -1,22 +1,20 @@
-# 琦湘工具集合无数据库反馈方案
+# 琦湘工具集合无数据库反馈方案（历史）
 
 > ⚠️ 已被取代：项目引入数据库后，反馈改为**主后端 MySQL 落库** + 独立后台管理页查看（见 [反馈遗留事项整理](./反馈遗留事项整理.md)、[数据库和数据表说明](../数据库和数据表说明.md) 与 [AI 助手与登录系统说明](../技术架构和代码功能说明/AI助手与登录系统说明.md)）。本文保留作历史参考。
 
-## 目标
+## 当时的目标
 
 - 保留当前自定义反馈页 UI
 - 不接传统数据库
 - 可写入第三方表格，方便直接查看
 - 可选同时发通知到 QQ / 钉钉 / 飞书
 
-## 当前已经接好的入口
+## 当时已有的入口
 
 - 独立反馈页：`/feedback?tool=<slug>&name=<toolName>&from=<toolUrl>`
 - 统一打赏页：`/support`
-- 前端环境变量：
-  - `VITE_FEEDBACK_ENDPOINT`
-- 如果没有配置：
-  - 前端会把反馈先暂存到浏览器 `localStorage`
+- 历史方案曾计划通过 `VITE_FEEDBACK_ENDPOINT` 指向外部 Worker；当前提交模块 `frontend/src/api/feedback.js` 不再读取该变量。`FeedbackPage.vue` 的 `deliveryHint` 仍用它生成旧 Serverless 提示，但这段提示不改变实际提交地址。
+- 当前 `frontend/src/api/feedback.js` 固定提交 `POST /api/feedback`，请求失败时才暂存到浏览器 `localStorage`。
 
 ## 推荐落地方式
 
@@ -124,11 +122,15 @@
 - 同一 IP 做轻量限流
 - 可接 Turnstile
 
-## 当前项目里的最佳接入方式
+## 当前实现
 
-1. 保留现有反馈页不动
-2. 配置 `VITE_FEEDBACK_ENDPOINT`
-3. 远端用 Worker 落到表格
-4. 需要时再加通知
+本文前面的 Worker、第三方表格和 `VITE_FEEDBACK_ENDPOINT` 内容只用于保留历史设计思路，不能作为当前部署步骤。反馈页目前仍有一段受该变量控制的旧提示文字，但提交逻辑不会因此切换到 Worker。
 
-这样不会污染主后端，也符合当前无数据库原则。
+当前链路为：
+
+1. 反馈页调用 `POST /api/feedback`。
+2. 主后端把反馈写入 MySQL 的 `feedback` 表。
+3. 独立后台通过 `GET /api/backoffice/feedback` 查看最近反馈。
+4. 主后端请求失败时，前端把草稿暂存在当前浏览器，避免内容丢失。
+
+如果以后重新采用 Worker 或第三方表格，需要新增明确的前端分流和服务端同步逻辑，不能只配置一个现已不使用的环境变量。

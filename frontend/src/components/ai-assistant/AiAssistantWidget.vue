@@ -1,6 +1,6 @@
 <script setup>
 // 文件说明：定义 AI 助手的 AiAssistantWidget 组件或辅助逻辑。
-import { nextTick, onMounted, onUnmounted, ref } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
 
 import AiChatPanel from "./AiChatPanel.vue";
 import AuthDialog from "./AuthDialog.vue";
@@ -11,12 +11,126 @@ const panelOpen = ref(false);
 const authOpen = ref(false);
 const authMode = ref("login");
 const panelRef = ref(null);
+const widgetRef = ref(null);
+const widgetPosition = ref({ x: 0, y: 0 });
+const positionReady = ref(false);
+const dragging = ref(false);
 let authChangeToastShown = false;
+let suppressNextClick = false;
+let resizeFrame = 0;
+
+const DRAG_THRESHOLD_PX = 5;
+const dragState = {
+  pointerId: null,
+  startX: 0,
+  startY: 0,
+  originX: 0,
+  originY: 0,
+  moved: false,
+};
 
 const AUTH_CHANGE_MESSAGE = "检测到当前账号已在其他标签页切换，请刷新页面后继续操作。";
+const widgetStyle = computed(() =>
+  positionReady.value
+    ? {
+        left: `${widgetPosition.value.x}px`,
+        top: `${widgetPosition.value.y}px`,
+      }
+    : undefined,
+);
 
 function togglePanel() {
   panelOpen.value = !panelOpen.value;
+}
+
+function clampWidgetPosition(x, y) {
+  const node = widgetRef.value;
+  const width = node?.offsetWidth || 0;
+  const height = node?.offsetHeight || 0;
+  const maxX = Math.max(0, window.innerWidth - width);
+  const maxY = Math.max(0, window.innerHeight - height);
+  return {
+    x: Math.round(Math.min(Math.max(0, x), maxX)),
+    y: Math.round(Math.min(Math.max(0, y), maxY)),
+  };
+}
+
+function setWidgetPosition(x, y) {
+  widgetPosition.value = clampWidgetPosition(x, y);
+}
+
+function initializeWidgetPosition() {
+  const node = widgetRef.value;
+  if (!node) return;
+  const rect = node.getBoundingClientRect();
+  setWidgetPosition(rect.left, rect.top);
+  positionReady.value = true;
+}
+
+function keepWidgetInViewport() {
+  if (!positionReady.value) return;
+  setWidgetPosition(widgetPosition.value.x, widgetPosition.value.y);
+}
+
+function handleViewportResize() {
+  window.cancelAnimationFrame(resizeFrame);
+  resizeFrame = window.requestAnimationFrame(keepWidgetInViewport);
+}
+
+function resetDragState() {
+  dragState.pointerId = null;
+  dragState.moved = false;
+  dragging.value = false;
+}
+
+function startRobotDrag(event) {
+  if ((event.pointerType === "mouse" && event.button !== 0) || dragState.pointerId !== null) {
+    return;
+  }
+  suppressNextClick = false;
+  dragState.pointerId = event.pointerId;
+  dragState.startX = event.clientX;
+  dragState.startY = event.clientY;
+  dragState.originX = widgetPosition.value.x;
+  dragState.originY = widgetPosition.value.y;
+  dragState.moved = false;
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+}
+
+function moveRobot(event) {
+  if (event.pointerId !== dragState.pointerId) return;
+  const deltaX = event.clientX - dragState.startX;
+  const deltaY = event.clientY - dragState.startY;
+  if (!dragState.moved && Math.hypot(deltaX, deltaY) < DRAG_THRESHOLD_PX) {
+    return;
+  }
+  dragState.moved = true;
+  dragging.value = true;
+  event.preventDefault();
+  setWidgetPosition(dragState.originX + deltaX, dragState.originY + deltaY);
+}
+
+function finishRobotDrag(event) {
+  if (event.pointerId !== dragState.pointerId) return;
+  suppressNextClick = dragState.moved;
+  if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+  resetDragState();
+}
+
+function cancelRobotDrag(event) {
+  if (event?.pointerId != null && event.pointerId !== dragState.pointerId) return;
+  resetDragState();
+}
+
+function handleRobotClick(event) {
+  if (suppressNextClick) {
+    suppressNextClick = false;
+    event.preventDefault();
+    return;
+  }
+  togglePanel();
 }
 
 function closePanel() {
@@ -44,12 +158,18 @@ onMounted(() => {
   window.addEventListener("focus", refreshCurrentUserOnResume);
   document.addEventListener("visibilitychange", handleVisibilityChange);
   window.addEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged);
+  window.addEventListener("resize", handleViewportResize);
+  window.addEventListener("blur", cancelRobotDrag);
+  nextTick(initializeWidgetPosition);
 });
 
 onUnmounted(() => {
   window.removeEventListener("focus", refreshCurrentUserOnResume);
   document.removeEventListener("visibilitychange", handleVisibilityChange);
   window.removeEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged);
+  window.removeEventListener("resize", handleViewportResize);
+  window.removeEventListener("blur", cancelRobotDrag);
+  window.cancelAnimationFrame(resizeFrame);
 });
 
 function handleVisibilityChange() {
@@ -75,14 +195,24 @@ function handleAuthStateChanged() {
 </script>
 
 <template>
-  <div class="qxai-widget">
+  <div
+    ref="widgetRef"
+    class="qxai-widget"
+    :class="{ 'has-position': positionReady, 'is-dragging': dragging }"
+    :style="widgetStyle"
+  >
     <button
       type="button"
       class="qxai-robot"
       :class="{ 'is-active': panelOpen }"
       :aria-label="panelOpen ? '关闭 AI 助手' : '打开 AI 助手'"
       :aria-expanded="panelOpen"
-      @click="togglePanel"
+      @click="handleRobotClick"
+      @pointerdown="startRobotDrag"
+      @pointermove="moveRobot"
+      @pointerup="finishRobotDrag"
+      @pointercancel="cancelRobotDrag"
+      @lostpointercapture="cancelRobotDrag"
     >
       <img
         class="qxai-robot-image"
@@ -117,23 +247,38 @@ function handleAuthStateChanged() {
   z-index: 950;
 }
 
+.qxai-widget.has-position {
+  right: auto;
+  transform: none;
+}
+
 .qxai-robot {
   position: relative;
   width: 152px;
   height: 152px;
   border: none;
-  cursor: pointer;
+  cursor: grab;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   background: transparent;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   animation: qxai-bob 3.4s ease-in-out infinite;
   transition: transform 0.18s;
 }
 
-.qxai-robot:hover {
+.qxai-widget:not(.is-dragging) .qxai-robot:hover {
   transform: translateY(-2px) scale(1.04);
+}
+
+.qxai-widget.is-dragging .qxai-robot {
+  cursor: grabbing;
+  animation: none;
+  transition: none;
+  transform: none;
 }
 
 /* 待机：缓慢上下浮动 */

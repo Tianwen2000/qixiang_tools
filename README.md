@@ -10,7 +10,7 @@
 - 配置驱动工具：工具名称、说明、参数和组件大多由后端配置控制，前端刷新即可同步。
 - 文件与格式转换：支持常见文档、图片、动图、音视频等转换场景，部分能力依赖 `FFmpeg`、`Playwright Chromium`。
 - AI 助手与登录：独立用户登录体系，使用服务端会话和 Cookie。
-- 独立后台管理：后台账号与工具站用户体系分离，当前包含反馈系统、账号活动日志和后台配置管理入口。
+- 独立后台管理：后台账号与工具站用户体系分离，当前可查看反馈、账号活动日志和分页工具使用日志；“后台配置管理”目前是路线图占位页。
 - 反馈系统：用户可提交反馈，后台可查看。
 - 本地收藏：收藏数据保存在当前浏览器本地。
 - 纯前端小游戏：如 2048、贪吃蛇、扫雷、推箱子、颜色排序等，进度保存在浏览器 `localStorage`。
@@ -19,7 +19,7 @@
 
 - 后端：`Python`、`FastAPI`、`SQLAlchemy`
 - 前端：`Vue 3`、`Vite`
-- 数据库：普通工具不依赖数据库；登录、反馈、后台相关功能使用 `MySQL`
+- 数据库：普通工具不依赖数据库；登录、反馈、账号活动日志和工具使用日志使用 `MySQL`
 - 可选运行环境：`Docker` 可用于本地或服务器启动 MySQL
 - 可选系统能力：`FFmpeg`、`Playwright Chromium` 用于部分音视频、动图、SVG 动画转换工具
 
@@ -62,8 +62,8 @@ python -m playwright install chromium
 真实配置不要提交到 GitHub。新环境先复制模板：
 
 ```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+cp backend/.env.local.example backend/.env.local
+cp frontend/.env.local.example frontend/.env.local
 ```
 
 后端常见配置：
@@ -177,8 +177,8 @@ backend/app/services/tool_loader.py
 
 ## 安全注意
 
-- 不提交 `backend/.env`、`frontend/.env`、数据库密码文件和真实密钥。
-- 后台账号、后台入口答案、数据库密码只放服务端环境变量或服务器 `.env`。
+- 不提交 `backend/.env.local`、`frontend/.env`、数据库密码文件和真实密钥。
+- 后台账号、后台入口答案、数据库密码只放服务端环境变量或服务器 `.env.local`。
 - `backend/app/temp/` 是临时上传和输出目录，不提交。
 - 数据库数据不靠 GitHub 保存，需要用 `mysqldump` 备份和恢复。
 - 如果误提交密钥，需要立即更换密钥或密码，不能只删除文件。

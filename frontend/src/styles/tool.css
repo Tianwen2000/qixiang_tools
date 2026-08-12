@@ -2619,7 +2619,7 @@
 
 .mini-game-pad-with-dpad {
   justify-content: center;
-  gap: 14px;
+  gap: 28px;
   align-items: center;
 }
 
@@ -2634,7 +2634,7 @@
     ". up ."
     "left center right"
     ". down .";
-  gap: 4px;
+  gap: 6px;
   border-radius: 34px;
   border: 1px solid rgba(156, 181, 209, 0.78);
   background:
@@ -2728,17 +2728,22 @@
 }
 
 .game-2048-board {
-  width: min(380px, 92vw);
+  width: min(420px, 100%);
   aspect-ratio: 1;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
   gap: 10px;
   padding: 10px;
+  box-sizing: border-box;
   border-radius: 18px;
   background: rgba(178, 197, 214, 0.65);
 }
 
 .game-2048-board .tile {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
   border: 0;
   border-radius: 12px;
   background: rgba(238, 242, 247, 0.92);
@@ -2777,10 +2782,12 @@
 .minesweeper-board,
 .sokoban-board {
   display: grid;
-  width: min(430px, 92vw);
+  width: min(420px, 100%);
   aspect-ratio: 1;
+  grid-auto-rows: minmax(0, 1fr);
   gap: 2px;
   padding: 8px;
+  box-sizing: border-box;
   border-radius: 18px;
   border: 1px solid rgba(197, 216, 235, 0.78);
   background: rgba(255, 255, 255, 0.76);
@@ -2788,6 +2795,8 @@
 
 .snake-board span,
 .sokoban-board span {
+  min-width: 0;
+  min-height: 0;
   border-radius: 5px;
   background: rgba(237, 244, 250, 0.95);
 }
@@ -2803,6 +2812,11 @@
 
 .minesweeper-board button {
   min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid rgba(197, 216, 235, 0.8);
   border-radius: 6px;
   background: rgba(232, 241, 249, 0.95);
@@ -2851,16 +2865,19 @@
   justify-content: center;
   align-items: flex-end;
   gap: 14px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: min(620px, 94vw);
-  min-height: 230px;
+  height: 230px;
   padding: 20px;
+  box-sizing: border-box;
   border-radius: 20px;
   border: 1px solid rgba(197, 216, 235, 0.78);
   background: rgba(255, 255, 255, 0.72);
 }
 
 .water-bottle {
+  flex: 0 1 58px;
+  min-width: 0;
   width: 58px;
   height: 168px;
   display: flex;
@@ -3092,13 +3109,23 @@
 
 
 @media (max-width: 560px) {
+  .mini-game-board-wrap {
+    width: 100%;
+    gap: 14px;
+  }
+
+  .mini-game-pad {
+    column-gap: 18px;
+    row-gap: 14px;
+  }
+
   .mini-game-pad-with-dpad {
-    gap: 10px;
+    gap: 28px;
   }
 
   .mini-game-dpad {
-    width: 116px;
-    height: 116px;
+    width: clamp(132px, 40vw, 144px);
+    height: clamp(132px, 40vw, 144px);
     border-radius: 30px;
   }
 
@@ -3107,8 +3134,27 @@
   }
 
   .mini-game-action-button {
-    min-width: 58px;
-    height: 40px;
+    min-width: 60px;
+    height: 44px;
     font-size: 15px;
+  }
+
+  .game-2048-board,
+  .snake-board,
+  .minesweeper-board,
+  .sokoban-board {
+    width: min(100%, calc(100dvh - 250px));
+  }
+
+  .water-sort-board {
+    width: 100%;
+    height: 210px;
+    gap: clamp(6px, 2vw, 12px);
+    padding: 16px;
+  }
+
+  .water-bottle {
+    height: 150px;
+    padding: 8px 6px 10px;
   }
 }

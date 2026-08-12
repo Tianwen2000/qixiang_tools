@@ -118,6 +118,10 @@ def make_pdf_bytes(text: str) -> bytes:
     return stream.getvalue()
 
 
+def fake_libreoffice_convert(_: str, target: Path) -> None:
+    target.write_bytes(make_pdf_bytes("Converted from Word"))
+
+
 def make_epub_bytes(title: str, text: str) -> bytes:
     book = epub.EpubBook()
     book.set_identifier("test-book")
@@ -457,6 +461,7 @@ def test_price_snapshot_tools_with_mocked_public_sources(monkeypatch) -> None:
                         "latest": 3384.5,
                         "change_percent": 0.35,
                         "updated_at": "2026-06-05 12:30:00",
+                        "source": "中证指数测试源",
                     }
                 ]
             },
@@ -471,7 +476,9 @@ def test_price_snapshot_tools_with_mocked_public_sources(monkeypatch) -> None:
     assert "100 USD -> CNY" in price_snapshot.run_exchange_rate("100美元兑人民币")
     assert "猪肉" in price_snapshot.run_food_price()
     assert "纽约白银折算" in price_snapshot.run_silver()
-    assert "上证指数(000001)" in price_snapshot.run_stock_index("")
+    stock_index = price_snapshot.run_stock_index("")
+    assert "上证指数(000001)" in stock_index
+    assert "数据源：中证指数测试源" in stock_index
     building_materials = price_snapshot.run_building_materials()
     assert "南京市场建筑钢材价格行情" in building_materials
     assert "南京市场建设用砂石价格行情" in building_materials
@@ -899,6 +906,118 @@ def test_market_quote_helpers() -> None:
     assert mixed_card["chart"]["time_range"] == "2026-06-04 14:55:00 - 2026-06-04 15:00:00"
 
 
+def test_market_quote_uses_csindex_fallback_for_index_name() -> None:
+    import httpx
+
+    from app.tools import market_quote
+
+    class FakeResponse:
+        def __init__(self, status_code: int, payload: object) -> None:
+            self.status_code = status_code
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            if self.status_code < 400:
+                return
+            request = httpx.Request("GET", "https://example.test")
+            response = httpx.Response(self.status_code, request=request)
+            raise httpx.HTTPStatusError("mock error", request=request, response=response)
+
+        def json(self) -> object:
+            return self._payload
+
+    now = market_quote.datetime.now()
+    trade_dates = [(now - market_quote.timedelta(days=days)).strftime("%Y%m%d") for days in (3, 2, 1)]
+
+    class FakeClient:
+        def __init__(self) -> None:
+            self.requests: list[tuple[str, dict[str, object]]] = []
+
+        def get(self, url: str, **kwargs: object) -> FakeResponse:
+            params = kwargs.get("params")
+            params = params if isinstance(params, dict) else {}
+            self.requests.append((url, params))
+            if url == market_quote.EASTMONEY_SUGGEST_URL:
+                return FakeResponse(502, {})
+            if url == market_quote.CSINDEX_SEARCH_URL:
+                return FakeResponse(
+                    200,
+                    {
+                        "code": "200",
+                        "data": [
+                            {"indexCode": "931440", "indexName": "创新药30", "indexNameEn": "Innovative Drug 30"},
+                            {"indexCode": "931152", "indexName": "CS创新药", "indexNameEn": "CS Brand Name Drug"},
+                            {"indexCode": "931409", "indexName": "港股通创新药", "indexNameEn": "HKC Innovative Drug"},
+                        ],
+                    },
+                )
+            if url == market_quote.CSINDEX_PERF_URL:
+                rows = []
+                for index, trade_date in enumerate(trade_dates):
+                    close = 5680.0 + index * 10
+                    rows.append(
+                        {
+                            "tradeDate": trade_date,
+                            "indexCode": "931152",
+                            "indexNameCn": "CS创新药",
+                            "open": close - 5,
+                            "high": close + 8,
+                            "low": close - 12,
+                            "close": close,
+                            "change": 10.0,
+                            "changePct": 0.18,
+                            "tradingVol": 30000000 + index,
+                        }
+                    )
+                return FakeResponse(200, {"code": "200", "data": rows})
+            raise AssertionError(f"unexpected URL: {url}")
+
+    fake_client = FakeClient()
+    card, error = market_quote._lookup_symbol("创新药", "auto", fake_client)  # type: ignore[arg-type]
+
+    assert error is None
+    assert card["symbol"] == "931152"
+    assert card["name"] == "CS创新药"
+    assert card["latest"] == 5700.0
+    assert card["provider"] == "csindex"
+    assert card["status"] == "最近交易日收盘数据"
+    assert card["chart"]["kind"] == "daily_kline"
+    assert card["chart"]["points"][-1][1] == 5700.0
+    assert [url for url, _params in fake_client.requests] == [
+        market_quote.EASTMONEY_SUGGEST_URL,
+        market_quote.CSINDEX_SEARCH_URL,
+        market_quote.CSINDEX_PERF_URL,
+    ]
+
+
+def test_market_quote_researches_original_name_after_eastmoney_quote_failure(monkeypatch) -> None:
+    from app.tools import market_quote
+
+    monkeypatch.setattr(
+        market_quote,
+        "_search_full_name",
+        lambda symbol, market, client: (
+            {"code": "980086", "name": "创新药", "quote_id": "1.980086", "classify": "Index"},
+            None,
+        ),
+    )
+    monkeypatch.setattr(market_quote, "_query_eastmoney", lambda symbol, market, client: (None, "东方财富行情不可用"))
+
+    fallback_queries: list[str] = []
+
+    def fake_csindex_fallback(symbol: str, client: object):
+        fallback_queries.append(symbol)
+        return {"symbol": "931152", "name": "CS创新药", "provider": "csindex"}, None
+
+    monkeypatch.setattr(market_quote, "_query_csindex_fallback", fake_csindex_fallback)
+
+    card, error = market_quote._lookup_symbol("创新药", "auto", object())  # type: ignore[arg-type]
+
+    assert error is None
+    assert card["symbol"] == "931152"
+    assert fallback_queries == ["创新药"]
+
+
 def test_douyin_id_extractor_execute_offline() -> None:
     sec_uid = "MS4wLjABAAAAabcdef1234567890"
     response = client.post(
@@ -1234,7 +1353,8 @@ def test_image_zip_and_office_extract_tools() -> None:
     assert "attachment" in ppt_response.headers.get("content-disposition", "")
 
 
-def test_document_conversion_tools_upload() -> None:
+def test_document_conversion_tools_upload(monkeypatch) -> None:
+    monkeypatch.setattr("app.tools.docx_to_pdf._convert_with_libreoffice", fake_libreoffice_convert)
     docx_response = client.post(
         "/api/tools/docx-to-pdf/upload",
         data={"params": "{}"},
@@ -1476,7 +1596,8 @@ def test_office_tabular_and_ppt_conversion_tools_upload() -> None:
     assert ppt_to_html_response.headers["content-type"].startswith("text/html")
 
 
-def test_more_office_to_document_conversion_tools_upload() -> None:
+def test_more_office_to_document_conversion_tools_upload(monkeypatch) -> None:
+    monkeypatch.setattr("app.tools.ppt_to_pdf._convert_with_libreoffice", fake_libreoffice_convert)
     xlsx_bytes = make_xlsx_bytes([["姓名", "分数"], ["张三", 95], ["李四", 88]], extra_sheet=True)
     csv_bytes = make_csv_bytes([["姓名", "城市"], ["张三", "上海"], ["李四", "深圳"]])
     pptx_bytes = make_pptx_bytes([["第一段内容", "第二段内容"], ["结论页", "谢谢观看"]])
@@ -1576,7 +1697,8 @@ def test_even_more_office_to_document_conversion_tools_upload() -> None:
     assert "application/epub+zip" in ppt_to_epub_response.headers["content-type"]
 
 
-def test_format_pair_conversion_tools_upload() -> None:
+def test_format_pair_conversion_tools_upload(monkeypatch) -> None:
+    monkeypatch.setattr("app.tools.docx_to_pdf._convert_with_libreoffice", fake_libreoffice_convert)
     word_pdf_response = client.post(
         "/api/tools/word-pdf-converter/upload",
         data={"params": json.dumps({"direction": "word_to_pdf"})},
@@ -1646,6 +1768,25 @@ def test_format_pair_conversion_tools_upload() -> None:
     )
     assert excel_pdf_response.status_code == 200
     assert "spreadsheetml.sheet" in excel_pdf_response.headers["content-type"]
+
+
+def test_ppt_pdf_pair_conversion_uses_libreoffice(monkeypatch) -> None:
+    monkeypatch.setattr("app.tools.ppt_to_pdf._convert_with_libreoffice", fake_libreoffice_convert)
+
+    response = client.post(
+        "/api/tools/ppt-pdf-converter/upload",
+        data={"params": json.dumps({"direction": "ppt_to_pdf"})},
+        files={
+            "file": (
+                "demo.pptx",
+                make_pptx_bytes([["标题", "正文"]]),
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/pdf")
 
 
 def test_media_conversion_tools_upload() -> None:
