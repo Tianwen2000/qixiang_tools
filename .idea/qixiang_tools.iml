@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/backend/.venv" />
     </content>
-    <orderEntry type="jdk" jdkName="D:\tianwen_project\GitHub_project\qixiang_tools\.venv" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="D:\tianwen_project\GitHub_project\qixiang_tools\backend\.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

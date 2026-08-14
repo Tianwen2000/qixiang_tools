@@ -34,7 +34,6 @@ import ToolUnicodeConverter from "../components/ToolUnicodeConverter.vue";
 import ToolWhiteboard from "../components/ToolWhiteboard.vue";
 import ToolWebsocketTester from "../components/ToolWebsocketTester.vue";
 import ToolWorldTimeClock from "../components/ToolWorldTimeClock.vue";
-import ToolTimestampConverter from "../components/ToolTimestampConverter.vue";
 import ToolAgeCalculator from "../components/ToolAgeCalculator.vue";
 import ToolBabyHundredDaysCalculator from "../components/ToolBabyHundredDaysCalculator.vue";
 import ToolChineseHistoryTable from "../components/ToolChineseHistoryTable.vue";
@@ -81,7 +80,6 @@ const formComponent = computed(() => {
     ToolSolarTermsViewer,
     ToolStopwatchTimer,
     ToolTimeConverter,
-    ToolTimestampConverter,
     ToolUnicodeConverter,
     ToolWorldTimeClock,
     ToolAgeCalculator,
