@@ -16,6 +16,17 @@ const props = defineProps({
 });
 
 const fileInputRef = ref(null);
+const MAX_UPLOAD_SIZE_MB = 200;
+const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+
+function showFileTooLargeToast() {
+  showToast({
+    type: "error",
+    title: "文件过大",
+    message: `单个文件不能超过 ${MAX_UPLOAD_SIZE_MB} MB，请压缩后重试。`,
+    duration: 3600,
+  });
+}
 
 function buildInitialParams(tool) {
   return Object.fromEntries((tool.params || []).map((item) => [item.key, item.default ?? ""]));
@@ -74,6 +85,10 @@ async function submit() {
   if (loading.value) {
     return;
   }
+  if (file.value.size > MAX_UPLOAD_SIZE_BYTES) {
+    showFileTooLargeToast();
+    return;
+  }
   loading.value = true;
   const toastId = showToast({
     type: "loading",
@@ -124,6 +139,17 @@ function toolResultMessage(resultType) {
   return resultType === "file" ? "结果文件已生成，可在下方下载。" : "结果已更新到下方结果区。";
 }
 
+function handleFileChange(event) {
+  const selectedFile = event.target.files?.[0] || null;
+  if (selectedFile && selectedFile.size > MAX_UPLOAD_SIZE_BYTES) {
+    file.value = null;
+    event.target.value = "";
+    showFileTooLargeToast();
+    return;
+  }
+  file.value = selectedFile;
+}
+
 function clearOutput() {
   reportToolUsageLog({
     ...buildToolUsageBase(props.tool),
@@ -162,7 +188,7 @@ function reportCopy(event) {
 <template>
   <section class="tool-form">
     <div class="file-picker">
-      <input ref="fileInputRef" type="file" @change="file = $event.target.files?.[0] || null" />
+      <input ref="fileInputRef" type="file" @change="handleFileChange" />
       <p v-if="file" class="file-name">已选择：{{ file.name }}</p>
     </div>
 

@@ -39,7 +39,11 @@ async def save_upload_file(file: UploadFile, request_id: str, tool_slug: str) ->
                 break
             size += len(chunk)
             if size > settings.max_upload_size_mb * 1024 * 1024:
-                raise AppException(message="文件过大", code=4003, status_code=400)
+                raise AppException(
+                    message=f"文件过大，单个文件不能超过 {settings.max_upload_size_mb} MB，请压缩后重试。",
+                    code=4003,
+                    status_code=400,
+                )
             stream.write(chunk)
 
     await file.close()

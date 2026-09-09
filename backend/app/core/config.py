@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     app_port: int = 8000
     api_prefix: str = Field(default="/api", alias="API_PREFIX")
     temp_dir: Path = Field(default=APP_ROOT / "temp", alias="TEMP_DIR")
-    max_upload_size_mb: int = Field(default=50, alias="MAX_UPLOAD_SIZE_MB")
+    max_upload_size_mb: int = Field(default=200, alias="MAX_UPLOAD_SIZE_MB")
     allowed_image_types: list[str] = Field(
         default=["jpg", "jpeg", "png", "webp", "gif", "bmp", "ico", "tif", "tiff"],
         alias="ALLOWED_IMAGE_TYPES",
