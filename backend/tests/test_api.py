@@ -1355,6 +1355,7 @@ def test_image_zip_and_office_extract_tools() -> None:
 
 def test_document_conversion_tools_upload(monkeypatch) -> None:
     monkeypatch.setattr("app.tools.docx_to_pdf._convert_with_libreoffice", fake_libreoffice_convert)
+    monkeypatch.setattr("app.tools.pdf_to_word._is_windows", lambda: False)
     docx_response = client.post(
         "/api/tools/docx-to-pdf/upload",
         data={"params": "{}"},
